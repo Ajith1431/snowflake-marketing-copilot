@@ -1,0 +1,72 @@
+segment_id,client_id,segment_name,age_band,gender_skew,income_level,interests_json,estimated_size
+S0001,C001,Budget Shoppers,18-34,Female-leaning,Low,"[""deals"", ""coupons"", ""fast fashion""]",105649
+S0002,C001,Premium Buyers,35-54,Balanced,High,"[""luxury"", ""quality"", ""brands""]",1227016
+S0003,C001,Online-First Millennials,25-39,Balanced,Medium,"[""ecommerce"", ""mobile shopping"", ""reviews""]",466992
+S0004,C001,Family Shoppers,30-49,Female-leaning,Medium,"[""kids"", ""home"", ""value packs""]",1551601
+S0005,C001,Loyalty Members,25-54,Balanced,Medium,"[""rewards"", ""repeat purchases"", ""exclusives""]",1412906
+S0006,C001,Gen Z Trendsetters,18-24,Balanced,Low-Medium,"[""social media"", ""sustainability"", ""viral products""]",1520785
+S0007,C002,Enterprise IT Leaders,35-54,Male-leaning,High,"[""cloud"", ""security"", ""enterprise""]",1192825
+S0008,C002,Startup Founders,25-39,Male-leaning,Medium-High,"[""SaaS"", ""growth"", ""automation""]",929796
+S0009,C002,Developer Community,22-39,Male-leaning,Medium,"[""APIs"", ""open source"", ""devtools""]",512297
+S0010,C002,SMB Decision Makers,30-49,Balanced,Medium,"[""cost-effective"", ""scalable"", ""integration""]",992059
+S0011,C002,Tech Enthusiasts,18-34,Male-leaning,Medium,"[""gadgets"", ""innovation"", ""early adopter""]",1285779
+S0012,C003,Health-Conscious Millennials,25-39,Female-leaning,Medium,"[""wellness"", ""fitness"", ""organic""]",633408
+S0013,C003,Senior Caregivers,40-65,Female-leaning,Medium,"[""eldercare"", ""telehealth"", ""insurance""]",1747498
+S0014,C003,Fitness Enthusiasts,18-34,Balanced,Medium,"[""gym"", ""wearables"", ""nutrition""]",1873054
+S0015,C003,Chronic Care Patients,45-65,Balanced,Medium-High,"[""medication"", ""monitoring"", ""support""]",63628
+S0016,C003,New Parents,25-39,Female-leaning,Medium,"[""baby health"", ""pediatrics"", ""safety""]",1641334
+S0017,C003,Mental Health Seekers,18-44,Balanced,Medium,"[""therapy"", ""meditation"", ""stress relief""]",1739925
+S0018,C004,Young Investors,22-34,Male-leaning,Medium,"[""stocks"", ""crypto"", ""apps""]",384829
+S0019,C004,High-Net-Worth Individuals,40-65,Male-leaning,High,"[""wealth management"", ""estate planning"", ""private banking""]",1514104
+S0020,C004,Small Business Owners,30-54,Balanced,Medium-High,"[""loans"", ""payments"", ""accounting""]",936286
+S0021,C004,First-Time Homebuyers,25-39,Balanced,Medium,"[""mortgage"", ""savings"", ""credit score""]",763557
+S0022,C004,Retirees,55-70,Balanced,Medium-High,"[""pension"", ""annuities"", ""low risk""]",632738
+S0023,C004,Digital-Native Bankers,18-29,Balanced,Low-Medium,"[""mobile banking"", ""neobank"", ""instant transfers""]",376064
+S0024,C004,Insurance Seekers,30-49,Balanced,Medium,"[""life insurance"", ""health coverage"", ""family protection""]",501545
+S0025,C005,Eco-Conscious Consumers,25-44,Female-leaning,Medium-High,"[""organic"", ""sustainable"", ""natural""]",1651163
+S0026,C005,Value Seekers,18-54,Balanced,Low-Medium,"[""bulk"", ""coupons"", ""store brand""]",755889
+S0027,C005,New Moms,25-39,Female-leaning,Medium,"[""baby products"", ""safety"", ""gentle""]",264350
+S0028,C005,Health & Beauty Enthusiasts,18-39,Female-leaning,Medium,"[""skincare"", ""wellness"", ""clean beauty""]",244502
+S0029,C005,Household Managers,30-54,Female-leaning,Medium,"[""cleaning"", ""organization"", ""family""]",846765
+S0030,C006,EV Early Adopters,30-49,Male-leaning,High,"[""electric"", ""sustainability"", ""tech""]",252828
+S0031,C006,Luxury Car Enthusiasts,35-59,Male-leaning,High,"[""performance"", ""prestige"", ""craftsmanship""]",802834
+S0032,C006,Family Vehicle Buyers,30-49,Balanced,Medium,"[""safety"", ""space"", ""reliability""]",1827324
+S0033,C006,First-Time Car Buyers,22-30,Balanced,Medium,"[""affordable"", ""financing"", ""compact""]",771327
+S0034,C006,Fleet Managers,35-54,Male-leaning,Medium-High,"[""commercial"", ""efficiency"", ""TCO""]",1316105
+S0035,C006,Performance Seekers,25-44,Male-leaning,Medium-High,"[""speed"", ""horsepower"", ""racing""]",604740
+S0036,C007,Luxury Travelers,35-59,Balanced,High,"[""five-star"", ""exclusive"", ""concierge""]",1742670
+S0037,C007,Backpackers,18-30,Balanced,Low,"[""hostels"", ""adventure"", ""budget""]",141122
+S0038,C007,Family Vacationers,30-49,Balanced,Medium,"[""kid-friendly"", ""resorts"", ""packages""]",1580358
+S0039,C007,Business Travelers,30-54,Male-leaning,High,"[""lounges"", ""efficiency"", ""loyalty programs""]",1013483
+S0040,C007,Adventure Seekers,22-39,Balanced,Medium,"[""hiking"", ""extreme sports"", ""nature""]",1174551
+S0041,C007,Cultural Explorers,25-54,Balanced,Medium-High,"[""museums"", ""local cuisine"", ""history""]",311779
+S0042,C007,Digital Nomads,25-39,Balanced,Medium,"[""coworking"", ""long stays"", ""wifi""]",1984193
+S0043,C008,Heavy Data Users,18-34,Male-leaning,Medium,"[""streaming"", ""gaming"", ""unlimited""]",843844
+S0044,C008,Family Plan Seekers,30-49,Balanced,Medium,"[""shared plans"", ""parental controls"", ""value""]",215255
+S0045,C008,Business Enterprises,30-54,Male-leaning,High,"[""SLA"", ""dedicated lines"", ""security""]",1207713
+S0046,C008,Prepaid Customers,18-29,Balanced,Low,"[""flexibility"", ""no contract"", ""affordable""]",664839
+S0047,C008,Rural Connectivity,25-65,Balanced,Medium,"[""coverage"", ""reliability"", ""fixed wireless""]",1789387
+S0048,C008,Tech-Savvy Upgraders,22-39,Balanced,Medium-High,"[""5G"", ""latest phones"", ""speed""]",1368353
+S0049,C009,Health-Conscious Eaters,25-44,Balanced,Medium-High,"[""organic"", ""plant-based"", ""low sugar""]",1347129
+S0050,C009,Foodies,22-39,Balanced,Medium,"[""gourmet"", ""craft"", ""artisanal""]",1906926
+S0051,C009,Busy Professionals,25-44,Balanced,Medium,"[""meal prep"", ""quick meals"", ""convenience""]",1857130
+S0052,C009,Parents with Kids,30-44,Female-leaning,Medium,"[""kid-friendly"", ""nutritious"", ""snacks""]",808403
+S0053,C009,Snack Lovers,18-34,Balanced,Low-Medium,"[""chips"", ""candy"", ""impulse buys""]",1260795
+S0054,C009,Craft Beer & Wine,25-49,Male-leaning,Medium-High,"[""microbrewery"", ""wine club"", ""tasting""]",453258
+S0055,C010,Luxury Fashion Buyers,25-49,Female-leaning,High,"[""designer"", ""runway"", ""exclusive""]",1527594
+S0056,C010,Streetwear Enthusiasts,18-29,Balanced,Medium,"[""sneakers"", ""hype drops"", ""urban""]",195867
+S0057,C010,Sustainable Fashion Advocates,22-39,Female-leaning,Medium,"[""ethical"", ""recycled"", ""slow fashion""]",146100
+S0058,C010,Athleisure Fans,22-39,Balanced,Medium,"[""yoga"", ""running"", ""comfortable""]",1436769
+S0059,C010,Basics Buyers,25-54,Balanced,Low-Medium,"[""essentials"", ""minimalist"", ""wardrobe staples""]",527937
+S0060,C010,Occasion Shoppers,25-44,Female-leaning,Medium-High,"[""wedding"", ""formal"", ""seasonal""]",1671241
+S0061,C011,Binge Watchers,18-34,Balanced,Medium,"[""streaming"", ""series"", ""movies""]",656890
+S0062,C011,Gamers,16-34,Male-leaning,Medium,"[""console"", ""PC"", ""esports""]",217335
+S0063,C011,Podcast Listeners,25-44,Balanced,Medium,"[""true crime"", ""business"", ""comedy""]",1843731
+S0064,C011,News Junkies,30-65,Balanced,Medium-High,"[""breaking news"", ""analysis"", ""politics""]",538197
+S0065,C011,Music Streamers,18-34,Balanced,Low-Medium,"[""playlists"", ""concerts"", ""new releases""]",1867147
+S0066,C011,Sports Fans,18-54,Male-leaning,Medium,"[""live sports"", ""fantasy"", ""highlights""]",261815
+S0067,C012,Homeowners Going Solar,35-59,Balanced,Medium-High,"[""solar panels"", ""tax credits"", ""savings""]",847182
+S0068,C012,Eco-Warriors,22-39,Balanced,Medium,"[""renewable"", ""carbon neutral"", ""activism""]",632952
+S0069,C012,Commercial Property Managers,35-54,Male-leaning,High,"[""energy efficiency"", ""HVAC"", ""smart building""]",1000870
+S0070,C012,EV Charging Adopters,30-49,Balanced,Medium-High,"[""home charging"", ""fast charging"", ""network""]",1383126
+S0071,C012,Off-Grid Enthusiasts,30-54,Balanced,Medium,"[""batteries"", ""independence"", ""rural""]",1799256

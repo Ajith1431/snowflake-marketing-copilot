@@ -1,0 +1,601 @@
+campaign_id,client_id,product_id,campaign_name,campaign_type,objective,start_date,end_date,total_budget_usd,status
+CAM0001,C001,P0001,LuminaRetail Q1 New Year Awareness 2023,awareness,Increase brand visibility,2023-10-13,2023-12-22,366100.0,active
+CAM0002,C001,P0001,LuminaRetail Q1 Spring Awareness 2025,awareness,Increase brand visibility,2025-06-09,2025-08-29,484000.0,planned
+CAM0003,C001,P0003,LuminaRetail Q2 Summer Retention 2024,retention,Win back lapsed customers,2024-10-19,2024-12-01,14700.0,completed
+CAM0004,C001,P0004,LuminaRetail Q2 Midyear Consideration 2024,consideration,Educate prospects,2024-10-09,2024-11-17,40600.0,completed
+CAM0005,C001,P0004,LuminaRetail Q3 Back-to-School Retention 2024,retention,Reduce churn,2024-02-04,2024-04-26,44400.0,active
+CAM0006,C001,P0001,LuminaRetail Q3 Fall Conversion 2025,conversion,Maximize ROAS,2025-02-12,2025-04-06,50700.0,completed
+CAM0007,C001,P0003,LuminaRetail Q4 Holiday Conversion 2024,conversion,Boost sign-ups,2024-09-04,2024-11-27,36800.0,active
+CAM0008,C001,P0003,LuminaRetail Q4 Year-End Conversion 2024,conversion,Drive store visits,2024-08-10,2024-09-15,74300.0,active
+CAM0009,C001,P0003,LuminaRetail Q1 New Year Retention 2023,retention,Win back lapsed customers,2023-10-29,2024-01-24,11600.0,planned
+CAM0010,C001,P0002,LuminaRetail Q1 Spring Retention 2023,retention,Reduce churn,2023-05-14,2023-06-17,54200.0,planned
+CAM0011,C001,P0003,LuminaRetail Q2 Summer Awareness 2024,awareness,Increase brand visibility,2024-02-25,2024-03-12,370600.0,completed
+CAM0012,C001,P0004,LuminaRetail Q2 Midyear Retention 2024,retention,Reduce churn,2024-04-14,2024-05-10,59600.0,planned
+CAM0013,C001,P0003,LuminaRetail Q3 Back-to-School Consideration 2023,consideration,Generate leads,2023-10-18,2023-11-08,107800.0,active
+CAM0014,C001,P0004,LuminaRetail Q3 Fall Consideration 2025,consideration,Boost engagement,2025-03-23,2025-06-20,33600.0,completed
+CAM0015,C001,P0002,LuminaRetail Q4 Holiday Conversion 2025,conversion,Boost sign-ups,2025-10-18,2025-11-30,122600.0,active
+CAM0016,C001,P0001,LuminaRetail Q4 Year-End Conversion 2024,conversion,Increase online sales,2024-06-03,2024-07-03,70800.0,active
+CAM0017,C001,P0004,LuminaRetail Q1 New Year Awareness 2025,awareness,Build market presence,2025-09-29,2025-12-04,74100.0,completed
+CAM0018,C001,P0002,LuminaRetail Q1 Spring Awareness 2024,awareness,Increase brand visibility,2024-04-29,2024-05-23,168400.0,completed
+CAM0019,C001,P0003,LuminaRetail Q2 Summer Conversion 2024,conversion,Drive store visits,2024-01-03,2024-02-17,70900.0,completed
+CAM0020,C001,P0003,LuminaRetail Q2 Midyear Retention 2025,retention,Win back lapsed customers,2025-03-07,2025-04-21,41500.0,completed
+CAM0021,C001,P0004,LuminaRetail Q3 Back-to-School Conversion 2025,conversion,Increase online sales,2025-07-10,2025-09-16,64300.0,completed
+CAM0022,C001,P0004,LuminaRetail Q3 Fall Retention 2023,retention,Build loyalty program,2023-01-01,2023-01-17,26500.0,completed
+CAM0023,C001,P0002,LuminaRetail Q4 Holiday Consideration 2023,consideration,Generate leads,2023-02-07,2023-04-12,151300.0,active
+CAM0024,C001,P0003,LuminaRetail Q4 Year-End Retention 2025,retention,Reduce churn,2025-01-28,2025-03-05,12800.0,planned
+CAM0025,C001,P0003,LuminaRetail Q1 New Year Consideration 2025,consideration,Drive website traffic,2025-10-28,2025-12-20,67700.0,completed
+CAM0026,C001,P0002,LuminaRetail Q1 Spring Retention 2024,retention,Increase repeat purchases,2024-09-27,2024-12-11,21700.0,completed
+CAM0027,C001,P0004,LuminaRetail Q2 Summer Conversion 2023,conversion,Increase online sales,2023-06-12,2023-09-05,65100.0,active
+CAM0028,C001,P0001,LuminaRetail Q2 Midyear Consideration 2023,consideration,Boost engagement,2023-07-23,2023-09-07,132100.0,planned
+CAM0029,C001,P0003,LuminaRetail Q3 Back-to-School Conversion 2024,conversion,Boost sign-ups,2024-06-10,2024-08-17,110100.0,completed
+CAM0030,C001,P0003,LuminaRetail Q3 Fall Conversion 2025,conversion,Maximize ROAS,2025-09-12,2025-11-16,141600.0,completed
+CAM0031,C001,P0003,LuminaRetail Q4 Holiday Retention 2023,retention,Increase repeat purchases,2023-04-22,2023-07-06,10400.0,completed
+CAM0032,C001,P0003,LuminaRetail Q4 Year-End Consideration 2025,consideration,Boost engagement,2025-10-12,2025-11-13,79000.0,planned
+CAM0033,C001,P0001,LuminaRetail Q1 New Year Retention 2025,retention,Reduce churn,2025-06-17,2025-08-11,51900.0,completed
+CAM0034,C001,P0001,LuminaRetail Q1 Spring Retention 2025,retention,Build loyalty program,2025-03-08,2025-05-03,41400.0,active
+CAM0035,C001,P0001,LuminaRetail Q2 Summer Conversion 2025,conversion,Maximize ROAS,2025-03-10,2025-05-01,41600.0,planned
+CAM0036,C001,P0004,LuminaRetail Q2 Midyear Consideration 2023,consideration,Drive website traffic,2023-05-26,2023-08-06,28400.0,active
+CAM0037,C001,P0002,LuminaRetail Q3 Back-to-School Consideration 2024,consideration,Generate leads,2024-03-13,2024-05-02,134700.0,completed
+CAM0038,C001,P0001,LuminaRetail Q3 Fall Conversion 2023,conversion,Boost sign-ups,2023-10-01,2023-11-20,64200.0,completed
+CAM0039,C001,P0001,LuminaRetail Q4 Holiday Consideration 2023,consideration,Boost engagement,2023-02-22,2023-04-16,107700.0,planned
+CAM0040,C001,P0003,LuminaRetail Q4 Year-End Conversion 2024,conversion,Boost sign-ups,2024-03-17,2024-04-13,23800.0,planned
+CAM0041,C001,P0003,LuminaRetail Q1 New Year Awareness 2025,awareness,Increase brand visibility,2025-07-08,2025-08-03,353100.0,active
+CAM0042,C001,P0002,LuminaRetail Q1 Spring Consideration 2025,consideration,Drive website traffic,2025-03-12,2025-04-16,189300.0,completed
+CAM0043,C001,P0001,LuminaRetail Q2 Summer Conversion 2025,conversion,Boost sign-ups,2025-07-15,2025-07-30,28900.0,active
+CAM0044,C001,P0001,LuminaRetail Q2 Midyear Awareness 2024,awareness,Launch new product,2024-02-12,2024-04-28,461500.0,active
+CAM0045,C001,P0001,LuminaRetail Q3 Back-to-School Conversion 2025,conversion,Drive store visits,2025-06-25,2025-07-09,105400.0,completed
+CAM0046,C001,P0001,LuminaRetail Q3 Fall Conversion 2025,conversion,Maximize ROAS,2025-08-09,2025-09-24,137700.0,completed
+CAM0047,C001,P0002,LuminaRetail Q4 Holiday Consideration 2025,consideration,Drive website traffic,2025-03-24,2025-06-22,50000.0,planned
+CAM0048,C001,P0004,LuminaRetail Q4 Year-End Awareness 2024,awareness,Expand brand recognition,2024-03-13,2024-04-08,196600.0,planned
+CAM0049,C001,P0002,LuminaRetail Q1 New Year Conversion 2023,conversion,Increase online sales,2023-03-20,2023-06-14,75000.0,completed
+CAM0050,C001,P0004,LuminaRetail Q1 Spring Conversion 2024,conversion,Drive store visits,2024-01-23,2024-03-17,145300.0,active
+CAM0051,C002,P0008,TechVista Q1 New Year Awareness 2023,awareness,Launch new product,2023-10-19,2024-01-11,194100.0,completed
+CAM0052,C002,P0005,TechVista Q1 Spring Retention 2023,retention,Reduce churn,2023-03-12,2023-06-04,32400.0,active
+CAM0053,C002,P0009,TechVista Q2 Summer Awareness 2025,awareness,Increase brand visibility,2025-10-22,2025-12-31,56100.0,planned
+CAM0054,C002,P0006,TechVista Q2 Midyear Consideration 2023,consideration,Drive website traffic,2023-03-16,2023-05-11,102100.0,completed
+CAM0055,C002,P0006,TechVista Q3 Back-to-School Retention 2025,retention,Win back lapsed customers,2025-04-11,2025-05-15,8800.0,completed
+CAM0056,C002,P0009,TechVista Q3 Fall Awareness 2023,awareness,Expand brand recognition,2023-06-08,2023-06-29,78100.0,active
+CAM0057,C002,P0008,TechVista Q4 Holiday Consideration 2023,consideration,Generate leads,2023-06-21,2023-09-18,88100.0,planned
+CAM0058,C002,P0007,TechVista Q4 Year-End Retention 2023,retention,Increase repeat purchases,2023-09-01,2023-10-31,10200.0,planned
+CAM0059,C002,P0006,TechVista Q1 New Year Awareness 2024,awareness,Increase brand visibility,2024-08-30,2024-09-13,254500.0,completed
+CAM0060,C002,P0008,TechVista Q1 Spring Consideration 2023,consideration,Boost engagement,2023-02-12,2023-05-08,59000.0,active
+CAM0061,C002,P0008,TechVista Q2 Summer Consideration 2025,consideration,Boost engagement,2025-09-05,2025-10-10,56000.0,active
+CAM0062,C002,P0007,TechVista Q2 Midyear Retention 2025,retention,Build loyalty program,2025-03-06,2025-04-30,50700.0,completed
+CAM0063,C002,P0007,TechVista Q3 Back-to-School Consideration 2023,consideration,Generate leads,2023-01-31,2023-04-01,172900.0,active
+CAM0064,C002,P0006,TechVista Q3 Fall Conversion 2023,conversion,Maximize ROAS,2023-04-24,2023-07-12,46800.0,planned
+CAM0065,C002,P0009,TechVista Q4 Holiday Consideration 2024,consideration,Drive website traffic,2024-02-03,2024-02-27,24800.0,completed
+CAM0066,C002,P0006,TechVista Q4 Year-End Retention 2023,retention,Build loyalty program,2023-05-27,2023-06-12,49000.0,completed
+CAM0067,C002,P0005,TechVista Q1 New Year Conversion 2025,conversion,Increase online sales,2025-02-18,2025-04-11,70000.0,active
+CAM0068,C002,P0006,TechVista Q1 Spring Conversion 2025,conversion,Drive store visits,2025-04-18,2025-05-07,75000.0,active
+CAM0069,C002,P0009,TechVista Q2 Summer Awareness 2024,awareness,Build market presence,2024-01-25,2024-03-12,86400.0,completed
+CAM0070,C002,P0009,TechVista Q2 Midyear Awareness 2025,awareness,Expand brand recognition,2025-05-13,2025-06-16,175800.0,active
+CAM0071,C002,P0007,TechVista Q3 Back-to-School Conversion 2024,conversion,Maximize ROAS,2024-01-12,2024-04-10,16000.0,completed
+CAM0072,C002,P0009,TechVista Q3 Fall Consideration 2023,consideration,Educate prospects,2023-08-16,2023-11-08,194600.0,completed
+CAM0073,C002,P0005,TechVista Q4 Holiday Awareness 2025,awareness,Expand brand recognition,2025-04-02,2025-05-09,422700.0,active
+CAM0074,C002,P0005,TechVista Q4 Year-End Awareness 2024,awareness,Build market presence,2024-07-04,2024-07-20,306400.0,active
+CAM0075,C002,P0008,TechVista Q1 New Year Conversion 2025,conversion,Drive store visits,2025-07-08,2025-09-01,55000.0,completed
+CAM0076,C002,P0008,TechVista Q1 Spring Consideration 2024,consideration,Boost engagement,2024-09-18,2024-11-18,110000.0,planned
+CAM0077,C002,P0005,TechVista Q2 Summer Conversion 2025,conversion,Maximize ROAS,2025-10-23,2025-11-07,24600.0,planned
+CAM0078,C002,P0006,TechVista Q2 Midyear Awareness 2023,awareness,Launch new product,2023-02-09,2023-04-12,172900.0,completed
+CAM0079,C002,P0005,TechVista Q3 Back-to-School Conversion 2024,conversion,Boost sign-ups,2024-01-04,2024-01-22,29000.0,completed
+CAM0080,C002,P0006,TechVista Q3 Fall Awareness 2024,awareness,Increase brand visibility,2024-01-24,2024-04-04,188700.0,completed
+CAM0081,C002,P0008,TechVista Q4 Holiday Retention 2025,retention,Reduce churn,2025-04-14,2025-06-13,56700.0,completed
+CAM0082,C002,P0008,TechVista Q4 Year-End Conversion 2024,conversion,Maximize ROAS,2024-10-18,2024-12-07,64100.0,completed
+CAM0083,C002,P0009,TechVista Q1 New Year Consideration 2024,consideration,Boost engagement,2024-01-03,2024-02-02,128600.0,active
+CAM0084,C002,P0006,TechVista Q1 Spring Awareness 2023,awareness,Increase brand visibility,2023-09-16,2023-11-22,170200.0,active
+CAM0085,C002,P0007,TechVista Q2 Summer Conversion 2025,conversion,Increase online sales,2025-08-15,2025-08-30,134500.0,completed
+CAM0086,C002,P0005,TechVista Q2 Midyear Awareness 2023,awareness,Launch new product,2023-01-17,2023-02-24,192200.0,active
+CAM0087,C002,P0006,TechVista Q3 Back-to-School Retention 2024,retention,Build loyalty program,2024-02-07,2024-03-23,78800.0,active
+CAM0088,C002,P0008,TechVista Q3 Fall Consideration 2024,consideration,Educate prospects,2024-03-22,2024-05-19,84800.0,completed
+CAM0089,C002,P0008,TechVista Q4 Holiday Conversion 2024,conversion,Drive store visits,2024-07-21,2024-10-08,88000.0,active
+CAM0090,C002,P0008,TechVista Q4 Year-End Conversion 2025,conversion,Increase online sales,2025-01-03,2025-03-12,47400.0,active
+CAM0091,C002,P0007,TechVista Q1 New Year Retention 2025,retention,Increase repeat purchases,2025-05-26,2025-07-30,70600.0,active
+CAM0092,C002,P0005,TechVista Q1 Spring Retention 2023,retention,Reduce churn,2023-08-23,2023-09-11,9000.0,completed
+CAM0093,C002,P0007,TechVista Q2 Summer Conversion 2024,conversion,Boost sign-ups,2024-07-20,2024-09-05,128800.0,completed
+CAM0094,C002,P0007,TechVista Q2 Midyear Conversion 2025,conversion,Maximize ROAS,2025-10-23,2025-12-31,29100.0,completed
+CAM0095,C002,P0007,TechVista Q3 Back-to-School Conversion 2024,conversion,Boost sign-ups,2024-04-13,2024-04-27,124600.0,planned
+CAM0096,C002,P0008,TechVista Q3 Fall Conversion 2023,conversion,Boost sign-ups,2023-07-08,2023-09-02,39700.0,completed
+CAM0097,C002,P0005,TechVista Q4 Holiday Retention 2024,retention,Reduce churn,2024-07-02,2024-08-27,69000.0,active
+CAM0098,C002,P0006,TechVista Q4 Year-End Awareness 2025,awareness,Expand brand recognition,2025-10-21,2025-11-19,290700.0,active
+CAM0099,C002,P0007,TechVista Q1 New Year Conversion 2024,conversion,Boost sign-ups,2024-05-10,2024-08-04,32900.0,active
+CAM0100,C002,P0007,TechVista Q1 Spring Awareness 2023,awareness,Launch new product,2023-08-23,2023-09-25,84500.0,planned
+CAM0101,C003,P0010,CareWell Q1 New Year Retention 2025,retention,Win back lapsed customers,2025-06-16,2025-07-11,44000.0,completed
+CAM0102,C003,P0012,CareWell Q1 Spring Retention 2025,retention,Win back lapsed customers,2025-05-11,2025-07-22,75600.0,completed
+CAM0103,C003,P0010,CareWell Q2 Summer Retention 2024,retention,Reduce churn,2024-05-23,2024-08-14,70000.0,active
+CAM0104,C003,P0012,CareWell Q2 Midyear Conversion 2024,conversion,Drive store visits,2024-09-21,2024-10-17,41300.0,active
+CAM0105,C003,P0012,CareWell Q3 Back-to-School Conversion 2024,conversion,Maximize ROAS,2024-05-13,2024-06-22,118600.0,active
+CAM0106,C003,P0010,CareWell Q3 Fall Consideration 2023,consideration,Educate prospects,2023-05-03,2023-07-06,146100.0,active
+CAM0107,C003,P0012,CareWell Q4 Holiday Retention 2024,retention,Win back lapsed customers,2024-04-03,2024-05-26,44300.0,completed
+CAM0108,C003,P0012,CareWell Q4 Year-End Conversion 2023,conversion,Drive store visits,2023-05-21,2023-07-27,32800.0,completed
+CAM0109,C003,P0012,CareWell Q1 New Year Retention 2025,retention,Reduce churn,2025-09-16,2025-10-03,19500.0,completed
+CAM0110,C003,P0012,CareWell Q1 Spring Consideration 2023,consideration,Educate prospects,2023-06-04,2023-08-04,145400.0,active
+CAM0111,C003,P0012,CareWell Q2 Summer Conversion 2023,conversion,Increase online sales,2023-05-27,2023-08-17,139700.0,active
+CAM0112,C003,P0012,CareWell Q2 Midyear Conversion 2024,conversion,Maximize ROAS,2024-08-25,2024-11-20,62400.0,completed
+CAM0113,C003,P0011,CareWell Q3 Back-to-School Consideration 2025,consideration,Educate prospects,2025-01-23,2025-02-17,26300.0,active
+CAM0114,C003,P0011,CareWell Q3 Fall Consideration 2023,consideration,Educate prospects,2023-05-19,2023-06-15,82700.0,completed
+CAM0115,C003,P0012,CareWell Q4 Holiday Awareness 2025,awareness,Launch new product,2025-05-09,2025-06-22,197500.0,planned
+CAM0116,C003,P0010,CareWell Q4 Year-End Consideration 2023,consideration,Generate leads,2023-02-08,2023-04-10,193600.0,completed
+CAM0117,C003,P0010,CareWell Q1 New Year Conversion 2024,conversion,Boost sign-ups,2024-01-02,2024-03-19,138400.0,active
+CAM0118,C003,P0012,CareWell Q1 Spring Consideration 2024,consideration,Educate prospects,2024-06-26,2024-08-05,38500.0,completed
+CAM0119,C003,P0013,CareWell Q2 Summer Consideration 2023,consideration,Educate prospects,2023-09-29,2023-10-30,146200.0,completed
+CAM0120,C003,P0010,CareWell Q2 Midyear Consideration 2024,consideration,Drive website traffic,2024-06-05,2024-07-21,43300.0,planned
+CAM0121,C003,P0013,CareWell Q3 Back-to-School Awareness 2024,awareness,Increase brand visibility,2024-10-08,2024-10-22,224500.0,completed
+CAM0122,C003,P0013,CareWell Q3 Fall Conversion 2023,conversion,Drive store visits,2023-02-23,2023-04-13,10300.0,planned
+CAM0123,C003,P0013,CareWell Q4 Holiday Retention 2023,retention,Increase repeat purchases,2023-01-10,2023-03-11,25800.0,planned
+CAM0124,C003,P0013,CareWell Q4 Year-End Retention 2025,retention,Increase repeat purchases,2025-08-22,2025-11-14,7800.0,completed
+CAM0125,C003,P0010,CareWell Q1 New Year Conversion 2023,conversion,Drive store visits,2023-02-17,2023-04-18,47700.0,planned
+CAM0126,C003,P0011,CareWell Q1 Spring Consideration 2023,consideration,Boost engagement,2023-07-26,2023-10-08,136900.0,planned
+CAM0127,C003,P0012,CareWell Q2 Summer Retention 2023,retention,Build loyalty program,2023-04-19,2023-06-05,45200.0,completed
+CAM0128,C003,P0011,CareWell Q2 Midyear Retention 2025,retention,Reduce churn,2025-09-29,2025-10-31,30000.0,planned
+CAM0129,C003,P0010,CareWell Q3 Back-to-School Retention 2023,retention,Increase repeat purchases,2023-10-19,2023-12-04,71900.0,planned
+CAM0130,C003,P0010,CareWell Q3 Fall Conversion 2023,conversion,Drive store visits,2023-04-07,2023-06-11,144600.0,completed
+CAM0131,C003,P0011,CareWell Q4 Holiday Awareness 2024,awareness,Increase brand visibility,2024-05-23,2024-07-22,263000.0,planned
+CAM0132,C003,P0013,CareWell Q4 Year-End Consideration 2024,consideration,Generate leads,2024-06-24,2024-07-14,26400.0,completed
+CAM0133,C003,P0012,CareWell Q1 New Year Retention 2023,retention,Increase repeat purchases,2023-08-29,2023-10-24,76300.0,active
+CAM0134,C003,P0010,CareWell Q1 Spring Consideration 2025,consideration,Boost engagement,2025-09-24,2025-12-18,114600.0,completed
+CAM0135,C003,P0013,CareWell Q2 Summer Conversion 2025,conversion,Drive store visits,2025-09-13,2025-12-08,51600.0,active
+CAM0136,C003,P0013,CareWell Q2 Midyear Awareness 2024,awareness,Increase brand visibility,2024-07-03,2024-09-01,370100.0,completed
+CAM0137,C003,P0013,CareWell Q3 Back-to-School Consideration 2024,consideration,Drive website traffic,2024-07-18,2024-08-17,133300.0,completed
+CAM0138,C003,P0013,CareWell Q3 Fall Conversion 2024,conversion,Increase online sales,2024-06-09,2024-07-25,133800.0,completed
+CAM0139,C003,P0010,CareWell Q4 Holiday Awareness 2024,awareness,Increase brand visibility,2024-09-13,2024-11-06,199900.0,planned
+CAM0140,C003,P0010,CareWell Q4 Year-End Retention 2024,retention,Build loyalty program,2024-03-13,2024-06-01,53400.0,completed
+CAM0141,C003,P0011,CareWell Q1 New Year Retention 2025,retention,Win back lapsed customers,2025-01-02,2025-02-02,20100.0,completed
+CAM0142,C003,P0010,CareWell Q1 Spring Consideration 2024,consideration,Drive website traffic,2024-09-04,2024-10-18,31000.0,completed
+CAM0143,C003,P0013,CareWell Q2 Summer Awareness 2023,awareness,Increase brand visibility,2023-05-06,2023-07-13,427200.0,completed
+CAM0144,C003,P0010,CareWell Q2 Midyear Consideration 2023,consideration,Educate prospects,2023-01-07,2023-03-05,157100.0,completed
+CAM0145,C003,P0013,CareWell Q3 Back-to-School Conversion 2023,conversion,Drive store visits,2023-09-04,2023-10-07,25200.0,completed
+CAM0146,C003,P0010,CareWell Q3 Fall Consideration 2025,consideration,Generate leads,2025-05-20,2025-07-25,68500.0,planned
+CAM0147,C003,P0011,CareWell Q4 Holiday Consideration 2024,consideration,Boost engagement,2024-01-18,2024-03-10,46200.0,planned
+CAM0148,C003,P0010,CareWell Q4 Year-End Consideration 2024,consideration,Generate leads,2024-10-12,2024-11-25,46800.0,planned
+CAM0149,C003,P0010,CareWell Q1 New Year Consideration 2023,consideration,Drive website traffic,2023-05-07,2023-05-24,54300.0,active
+CAM0150,C003,P0012,CareWell Q1 Spring Consideration 2024,consideration,Generate leads,2024-09-20,2024-11-03,31000.0,active
+CAM0151,C004,P0016,FinEdge Q1 New Year Retention 2025,retention,Reduce churn,2025-06-22,2025-08-04,22300.0,completed
+CAM0152,C004,P0017,FinEdge Q1 Spring Conversion 2023,conversion,Maximize ROAS,2023-04-01,2023-06-16,35700.0,completed
+CAM0153,C004,P0017,FinEdge Q2 Summer Conversion 2025,conversion,Maximize ROAS,2025-08-24,2025-11-08,50000.0,active
+CAM0154,C004,P0015,FinEdge Q2 Midyear Retention 2025,retention,Win back lapsed customers,2025-07-08,2025-09-06,33200.0,completed
+CAM0155,C004,P0014,FinEdge Q3 Back-to-School Awareness 2023,awareness,Launch new product,2023-06-05,2023-08-17,318800.0,active
+CAM0156,C004,P0015,FinEdge Q3 Fall Consideration 2024,consideration,Generate leads,2024-10-14,2024-11-04,107300.0,completed
+CAM0157,C004,P0015,FinEdge Q4 Holiday Awareness 2024,awareness,Build market presence,2024-08-25,2024-11-07,239600.0,active
+CAM0158,C004,P0015,FinEdge Q4 Year-End Consideration 2023,consideration,Educate prospects,2023-02-01,2023-05-01,72500.0,active
+CAM0159,C004,P0018,FinEdge Q1 New Year Retention 2024,retention,Win back lapsed customers,2024-05-15,2024-06-23,59500.0,completed
+CAM0160,C004,P0014,FinEdge Q1 Spring Conversion 2025,conversion,Drive store visits,2025-06-16,2025-07-19,49100.0,completed
+CAM0161,C004,P0018,FinEdge Q2 Summer Consideration 2023,consideration,Generate leads,2023-07-04,2023-08-07,173700.0,completed
+CAM0162,C004,P0015,FinEdge Q2 Midyear Awareness 2025,awareness,Launch new product,2025-09-13,2025-11-07,374800.0,completed
+CAM0163,C004,P0017,FinEdge Q3 Back-to-School Conversion 2024,conversion,Increase online sales,2024-09-28,2024-10-30,105400.0,active
+CAM0164,C004,P0016,FinEdge Q3 Fall Conversion 2025,conversion,Increase online sales,2025-02-09,2025-03-07,51900.0,completed
+CAM0165,C004,P0018,FinEdge Q4 Holiday Conversion 2023,conversion,Boost sign-ups,2023-10-13,2023-11-19,148200.0,completed
+CAM0166,C004,P0018,FinEdge Q4 Year-End Conversion 2024,conversion,Maximize ROAS,2024-05-29,2024-06-15,103100.0,planned
+CAM0167,C004,P0014,FinEdge Q1 New Year Consideration 2025,consideration,Generate leads,2025-04-25,2025-06-22,70300.0,completed
+CAM0168,C004,P0016,FinEdge Q1 Spring Consideration 2025,consideration,Generate leads,2025-08-24,2025-11-04,40300.0,completed
+CAM0169,C004,P0017,FinEdge Q2 Summer Conversion 2023,conversion,Drive store visits,2023-03-17,2023-06-05,81200.0,active
+CAM0170,C004,P0016,FinEdge Q2 Midyear Conversion 2025,conversion,Increase online sales,2025-10-04,2025-10-20,43900.0,completed
+CAM0171,C004,P0016,FinEdge Q3 Back-to-School Conversion 2025,conversion,Boost sign-ups,2025-02-25,2025-05-11,89900.0,completed
+CAM0172,C004,P0015,FinEdge Q3 Fall Consideration 2024,consideration,Boost engagement,2024-07-20,2024-08-19,52700.0,planned
+CAM0173,C004,P0014,FinEdge Q4 Holiday Consideration 2023,consideration,Drive website traffic,2023-08-11,2023-10-25,120700.0,completed
+CAM0174,C004,P0017,FinEdge Q4 Year-End Retention 2025,retention,Build loyalty program,2025-10-06,2025-11-27,56100.0,completed
+CAM0175,C004,P0016,FinEdge Q1 New Year Retention 2023,retention,Build loyalty program,2023-07-15,2023-08-10,46100.0,planned
+CAM0176,C004,P0018,FinEdge Q1 Spring Conversion 2024,conversion,Maximize ROAS,2024-01-13,2024-02-01,99300.0,active
+CAM0177,C004,P0015,FinEdge Q2 Summer Consideration 2024,consideration,Generate leads,2024-02-19,2024-03-04,79900.0,completed
+CAM0178,C004,P0014,FinEdge Q2 Midyear Conversion 2025,conversion,Boost sign-ups,2025-07-13,2025-08-09,114400.0,completed
+CAM0179,C004,P0015,FinEdge Q3 Back-to-School Conversion 2025,conversion,Boost sign-ups,2025-02-03,2025-04-10,101500.0,completed
+CAM0180,C004,P0017,FinEdge Q3 Fall Consideration 2025,consideration,Educate prospects,2025-04-28,2025-07-03,95800.0,planned
+CAM0181,C004,P0018,FinEdge Q4 Holiday Awareness 2023,awareness,Build market presence,2023-09-19,2023-11-12,231000.0,active
+CAM0182,C004,P0016,FinEdge Q4 Year-End Awareness 2023,awareness,Launch new product,2023-08-02,2023-10-09,126700.0,completed
+CAM0183,C004,P0014,FinEdge Q1 New Year Conversion 2025,conversion,Drive store visits,2025-07-01,2025-08-03,70200.0,completed
+CAM0184,C004,P0016,FinEdge Q1 Spring Consideration 2024,consideration,Generate leads,2024-03-06,2024-03-28,197900.0,completed
+CAM0185,C004,P0016,FinEdge Q2 Summer Awareness 2024,awareness,Launch new product,2024-06-22,2024-07-15,117200.0,planned
+CAM0186,C004,P0018,FinEdge Q2 Midyear Conversion 2023,conversion,Drive store visits,2023-02-14,2023-03-05,19100.0,planned
+CAM0187,C004,P0018,FinEdge Q3 Back-to-School Retention 2025,retention,Increase repeat purchases,2025-07-07,2025-07-24,73500.0,planned
+CAM0188,C004,P0015,FinEdge Q3 Fall Conversion 2025,conversion,Drive store visits,2025-09-15,2025-10-08,32900.0,completed
+CAM0189,C004,P0017,FinEdge Q4 Holiday Consideration 2024,consideration,Educate prospects,2024-07-28,2024-10-25,70700.0,active
+CAM0190,C004,P0017,FinEdge Q4 Year-End Retention 2024,retention,Reduce churn,2024-04-03,2024-06-12,26800.0,completed
+CAM0191,C004,P0014,FinEdge Q1 New Year Retention 2023,retention,Increase repeat purchases,2023-04-05,2023-06-17,39500.0,completed
+CAM0192,C004,P0014,FinEdge Q1 Spring Awareness 2025,awareness,Increase brand visibility,2025-03-24,2025-04-11,110800.0,completed
+CAM0193,C004,P0015,FinEdge Q2 Summer Awareness 2024,awareness,Build market presence,2024-03-07,2024-04-28,97200.0,planned
+CAM0194,C004,P0014,FinEdge Q2 Midyear Retention 2025,retention,Build loyalty program,2025-10-20,2025-12-31,6900.0,completed
+CAM0195,C004,P0017,FinEdge Q3 Back-to-School Awareness 2025,awareness,Increase brand visibility,2025-09-14,2025-10-05,126300.0,completed
+CAM0196,C004,P0014,FinEdge Q3 Fall Awareness 2025,awareness,Build market presence,2025-09-29,2025-11-04,177500.0,active
+CAM0197,C004,P0016,FinEdge Q4 Holiday Consideration 2025,consideration,Drive website traffic,2025-02-04,2025-04-12,30200.0,completed
+CAM0198,C004,P0017,FinEdge Q4 Year-End Awareness 2023,awareness,Launch new product,2023-02-10,2023-03-03,68000.0,completed
+CAM0199,C004,P0016,FinEdge Q1 New Year Consideration 2023,consideration,Drive website traffic,2023-06-18,2023-08-15,161500.0,completed
+CAM0200,C004,P0018,FinEdge Q1 Spring Awareness 2025,awareness,Build market presence,2025-10-05,2025-12-24,255100.0,completed
+CAM0201,C005,P0022,PureLife Q1 New Year Awareness 2024,awareness,Expand brand recognition,2024-01-12,2024-01-27,250200.0,completed
+CAM0202,C005,P0020,PureLife Q1 Spring Awareness 2023,awareness,Build market presence,2023-03-04,2023-04-20,205500.0,completed
+CAM0203,C005,P0021,PureLife Q2 Summer Conversion 2023,conversion,Maximize ROAS,2023-05-07,2023-08-01,26900.0,planned
+CAM0204,C005,P0020,PureLife Q2 Midyear Consideration 2024,consideration,Educate prospects,2024-05-28,2024-06-17,31700.0,completed
+CAM0205,C005,P0019,PureLife Q3 Back-to-School Retention 2023,retention,Reduce churn,2023-10-25,2023-12-20,13800.0,planned
+CAM0206,C005,P0019,PureLife Q3 Fall Retention 2025,retention,Increase repeat purchases,2025-04-19,2025-07-02,24200.0,completed
+CAM0207,C005,P0022,PureLife Q4 Holiday Consideration 2023,consideration,Boost engagement,2023-03-27,2023-04-14,38900.0,active
+CAM0208,C005,P0022,PureLife Q4 Year-End Conversion 2025,conversion,Increase online sales,2025-10-07,2025-11-22,36100.0,completed
+CAM0209,C005,P0022,PureLife Q1 New Year Conversion 2023,conversion,Drive store visits,2023-04-11,2023-04-29,38000.0,completed
+CAM0210,C005,P0020,PureLife Q1 Spring Consideration 2023,consideration,Generate leads,2023-09-16,2023-11-25,77900.0,completed
+CAM0211,C005,P0021,PureLife Q2 Summer Conversion 2025,conversion,Boost sign-ups,2025-07-04,2025-08-09,139700.0,active
+CAM0212,C005,P0020,PureLife Q2 Midyear Retention 2025,retention,Reduce churn,2025-09-18,2025-11-25,28800.0,completed
+CAM0213,C005,P0019,PureLife Q3 Back-to-School Consideration 2023,consideration,Educate prospects,2023-02-17,2023-03-15,186100.0,active
+CAM0214,C005,P0021,PureLife Q3 Fall Consideration 2025,consideration,Drive website traffic,2025-09-16,2025-10-12,159100.0,completed
+CAM0215,C005,P0019,PureLife Q4 Holiday Awareness 2025,awareness,Launch new product,2025-02-22,2025-05-04,497300.0,active
+CAM0216,C005,P0022,PureLife Q4 Year-End Consideration 2025,consideration,Generate leads,2025-07-27,2025-10-15,174400.0,completed
+CAM0217,C005,P0021,PureLife Q1 New Year Awareness 2025,awareness,Build market presence,2025-09-04,2025-12-02,330200.0,completed
+CAM0218,C005,P0019,PureLife Q1 Spring Conversion 2024,conversion,Drive store visits,2024-10-08,2024-12-03,30800.0,active
+CAM0219,C005,P0022,PureLife Q2 Summer Conversion 2024,conversion,Drive store visits,2024-07-10,2024-08-24,97500.0,active
+CAM0220,C005,P0019,PureLife Q2 Midyear Retention 2025,retention,Build loyalty program,2025-02-05,2025-02-27,7800.0,completed
+CAM0221,C005,P0020,PureLife Q3 Back-to-School Consideration 2025,consideration,Generate leads,2025-09-26,2025-12-08,167500.0,completed
+CAM0222,C005,P0022,PureLife Q3 Fall Awareness 2024,awareness,Expand brand recognition,2024-05-09,2024-07-22,327900.0,completed
+CAM0223,C005,P0019,PureLife Q4 Holiday Retention 2024,retention,Win back lapsed customers,2024-03-27,2024-06-13,5900.0,completed
+CAM0224,C005,P0020,PureLife Q4 Year-End Consideration 2023,consideration,Boost engagement,2023-08-12,2023-10-29,133900.0,completed
+CAM0225,C005,P0021,PureLife Q1 New Year Consideration 2025,consideration,Generate leads,2025-10-25,2025-11-20,101800.0,completed
+CAM0226,C005,P0022,PureLife Q1 Spring Awareness 2025,awareness,Launch new product,2025-08-22,2025-10-06,223400.0,planned
+CAM0227,C005,P0022,PureLife Q2 Summer Retention 2023,retention,Increase repeat purchases,2023-01-26,2023-02-19,67000.0,completed
+CAM0228,C005,P0022,PureLife Q2 Midyear Conversion 2025,conversion,Increase online sales,2025-09-08,2025-10-09,100200.0,active
+CAM0229,C005,P0019,PureLife Q3 Back-to-School Awareness 2025,awareness,Expand brand recognition,2025-05-14,2025-07-21,489900.0,completed
+CAM0230,C005,P0019,PureLife Q3 Fall Conversion 2025,conversion,Increase online sales,2025-05-27,2025-07-10,113900.0,completed
+CAM0231,C005,P0022,PureLife Q4 Holiday Retention 2024,retention,Win back lapsed customers,2024-10-05,2024-11-15,6500.0,active
+CAM0232,C005,P0021,PureLife Q4 Year-End Retention 2023,retention,Increase repeat purchases,2023-10-16,2023-11-26,8300.0,active
+CAM0233,C005,P0021,PureLife Q1 New Year Retention 2024,retention,Win back lapsed customers,2024-10-12,2024-10-27,31600.0,active
+CAM0234,C005,P0019,PureLife Q1 Spring Awareness 2024,awareness,Increase brand visibility,2024-10-08,2024-10-28,296800.0,completed
+CAM0235,C005,P0019,PureLife Q2 Summer Retention 2024,retention,Increase repeat purchases,2024-05-28,2024-06-17,31400.0,completed
+CAM0236,C005,P0021,PureLife Q2 Midyear Retention 2024,retention,Build loyalty program,2024-09-10,2024-10-03,63100.0,completed
+CAM0237,C005,P0022,PureLife Q3 Back-to-School Conversion 2024,conversion,Drive store visits,2024-09-06,2024-09-28,16700.0,completed
+CAM0238,C005,P0019,PureLife Q3 Fall Consideration 2024,consideration,Drive website traffic,2024-10-31,2025-01-04,124600.0,planned
+CAM0239,C005,P0020,PureLife Q4 Holiday Awareness 2025,awareness,Build market presence,2025-08-07,2025-10-28,235900.0,active
+CAM0240,C005,P0019,PureLife Q4 Year-End Conversion 2023,conversion,Increase online sales,2023-06-19,2023-07-20,73000.0,completed
+CAM0241,C005,P0022,PureLife Q1 New Year Awareness 2024,awareness,Increase brand visibility,2024-03-31,2024-06-08,199800.0,completed
+CAM0242,C005,P0021,PureLife Q1 Spring Awareness 2023,awareness,Build market presence,2023-03-28,2023-06-13,338800.0,completed
+CAM0243,C005,P0020,PureLife Q2 Summer Awareness 2024,awareness,Build market presence,2024-04-10,2024-06-08,451900.0,active
+CAM0244,C005,P0020,PureLife Q2 Midyear Conversion 2025,conversion,Increase online sales,2025-02-14,2025-05-07,125300.0,active
+CAM0245,C005,P0020,PureLife Q3 Back-to-School Awareness 2025,awareness,Launch new product,2025-04-24,2025-05-15,241000.0,completed
+CAM0246,C005,P0022,PureLife Q3 Fall Retention 2024,retention,Win back lapsed customers,2024-02-04,2024-04-08,76400.0,completed
+CAM0247,C005,P0021,PureLife Q4 Holiday Conversion 2024,conversion,Increase online sales,2024-02-13,2024-03-29,102600.0,active
+CAM0248,C005,P0022,PureLife Q4 Year-End Conversion 2025,conversion,Drive store visits,2025-02-04,2025-03-07,10100.0,completed
+CAM0249,C005,P0019,PureLife Q1 New Year Consideration 2024,consideration,Drive website traffic,2024-05-12,2024-08-03,157300.0,planned
+CAM0250,C005,P0019,PureLife Q1 Spring Awareness 2024,awareness,Launch new product,2024-10-14,2025-01-05,435300.0,completed
+CAM0251,C006,P0023,DriveMax Q1 New Year Awareness 2025,awareness,Launch new product,2025-08-18,2025-09-19,276300.0,completed
+CAM0252,C006,P0023,DriveMax Q1 Spring Conversion 2024,conversion,Increase online sales,2024-03-14,2024-03-29,90800.0,completed
+CAM0253,C006,P0026,DriveMax Q2 Summer Retention 2023,retention,Build loyalty program,2023-10-17,2023-12-21,11300.0,completed
+CAM0254,C006,P0025,DriveMax Q2 Midyear Retention 2024,retention,Win back lapsed customers,2024-02-15,2024-04-08,72200.0,completed
+CAM0255,C006,P0026,DriveMax Q3 Back-to-School Conversion 2025,conversion,Drive store visits,2025-08-11,2025-09-30,110500.0,active
+CAM0256,C006,P0026,DriveMax Q3 Fall Consideration 2025,consideration,Generate leads,2025-05-23,2025-06-27,144200.0,active
+CAM0257,C006,P0025,DriveMax Q4 Holiday Consideration 2023,consideration,Educate prospects,2023-02-19,2023-03-07,68300.0,planned
+CAM0258,C006,P0023,DriveMax Q4 Year-End Awareness 2025,awareness,Launch new product,2025-05-02,2025-07-03,385500.0,completed
+CAM0259,C006,P0024,DriveMax Q1 New Year Conversion 2024,conversion,Maximize ROAS,2024-05-27,2024-07-22,136400.0,planned
+CAM0260,C006,P0026,DriveMax Q1 Spring Conversion 2025,conversion,Maximize ROAS,2025-08-13,2025-10-30,136500.0,active
+CAM0261,C006,P0026,DriveMax Q2 Summer Consideration 2025,consideration,Generate leads,2025-10-14,2025-12-31,196300.0,completed
+CAM0262,C006,P0024,DriveMax Q2 Midyear Consideration 2025,consideration,Drive website traffic,2025-01-01,2025-01-20,62000.0,completed
+CAM0263,C006,P0025,DriveMax Q3 Back-to-School Retention 2023,retention,Win back lapsed customers,2023-05-01,2023-06-22,24100.0,planned
+CAM0264,C006,P0023,DriveMax Q3 Fall Consideration 2023,consideration,Educate prospects,2023-01-25,2023-03-28,131700.0,completed
+CAM0265,C006,P0026,DriveMax Q4 Holiday Conversion 2024,conversion,Maximize ROAS,2024-08-17,2024-09-28,94400.0,active
+CAM0266,C006,P0024,DriveMax Q4 Year-End Retention 2023,retention,Increase repeat purchases,2023-07-28,2023-10-17,54000.0,completed
+CAM0267,C006,P0024,DriveMax Q1 New Year Awareness 2023,awareness,Increase brand visibility,2023-03-15,2023-05-04,339000.0,active
+CAM0268,C006,P0026,DriveMax Q1 Spring Conversion 2023,conversion,Drive store visits,2023-05-31,2023-07-21,111400.0,planned
+CAM0269,C006,P0023,DriveMax Q2 Summer Awareness 2023,awareness,Build market presence,2023-06-14,2023-07-18,390000.0,active
+CAM0270,C006,P0026,DriveMax Q2 Midyear Retention 2025,retention,Win back lapsed customers,2025-05-05,2025-05-19,8300.0,completed
+CAM0271,C006,P0026,DriveMax Q3 Back-to-School Retention 2024,retention,Win back lapsed customers,2024-10-26,2025-01-12,42700.0,completed
+CAM0272,C006,P0026,DriveMax Q3 Fall Conversion 2025,conversion,Drive store visits,2025-05-22,2025-07-22,60500.0,completed
+CAM0273,C006,P0025,DriveMax Q4 Holiday Consideration 2024,consideration,Boost engagement,2024-09-20,2024-10-09,149900.0,planned
+CAM0274,C006,P0026,DriveMax Q4 Year-End Conversion 2025,conversion,Increase online sales,2025-02-19,2025-04-03,37100.0,completed
+CAM0275,C006,P0023,DriveMax Q1 New Year Conversion 2024,conversion,Maximize ROAS,2024-07-20,2024-08-05,149900.0,completed
+CAM0276,C006,P0025,DriveMax Q1 Spring Retention 2023,retention,Reduce churn,2023-09-15,2023-11-19,79100.0,completed
+CAM0277,C006,P0023,DriveMax Q2 Summer Consideration 2024,consideration,Drive website traffic,2024-08-21,2024-09-29,106300.0,active
+CAM0278,C006,P0026,DriveMax Q2 Midyear Awareness 2024,awareness,Increase brand visibility,2024-08-17,2024-11-06,282400.0,completed
+CAM0279,C006,P0024,DriveMax Q3 Back-to-School Awareness 2023,awareness,Build market presence,2023-03-28,2023-06-15,460400.0,completed
+CAM0280,C006,P0024,DriveMax Q3 Fall Conversion 2023,conversion,Boost sign-ups,2023-02-11,2023-03-19,94400.0,planned
+CAM0281,C006,P0024,DriveMax Q4 Holiday Conversion 2024,conversion,Boost sign-ups,2024-06-02,2024-06-27,37900.0,active
+CAM0282,C006,P0025,DriveMax Q4 Year-End Awareness 2025,awareness,Build market presence,2025-01-04,2025-03-21,115100.0,completed
+CAM0283,C006,P0024,DriveMax Q1 New Year Awareness 2024,awareness,Expand brand recognition,2024-07-28,2024-09-08,70600.0,completed
+CAM0284,C006,P0026,DriveMax Q1 Spring Conversion 2025,conversion,Increase online sales,2025-06-28,2025-07-19,81200.0,active
+CAM0285,C006,P0023,DriveMax Q2 Summer Retention 2024,retention,Build loyalty program,2024-05-02,2024-05-16,63300.0,completed
+CAM0286,C006,P0023,DriveMax Q2 Midyear Conversion 2025,conversion,Maximize ROAS,2025-02-26,2025-04-30,101300.0,active
+CAM0287,C006,P0023,DriveMax Q3 Back-to-School Retention 2023,retention,Increase repeat purchases,2023-04-26,2023-06-28,25200.0,completed
+CAM0288,C006,P0023,DriveMax Q3 Fall Retention 2023,retention,Build loyalty program,2023-03-27,2023-05-25,67300.0,planned
+CAM0289,C006,P0026,DriveMax Q4 Holiday Consideration 2025,consideration,Generate leads,2025-07-14,2025-09-06,94800.0,completed
+CAM0290,C006,P0024,DriveMax Q4 Year-End Conversion 2025,conversion,Drive store visits,2025-09-22,2025-11-08,68300.0,active
+CAM0291,C006,P0024,DriveMax Q1 New Year Conversion 2024,conversion,Increase online sales,2024-06-26,2024-09-15,107400.0,planned
+CAM0292,C006,P0023,DriveMax Q1 Spring Conversion 2024,conversion,Maximize ROAS,2024-02-27,2024-04-06,116700.0,completed
+CAM0293,C006,P0026,DriveMax Q2 Summer Conversion 2023,conversion,Maximize ROAS,2023-08-22,2023-09-15,103800.0,completed
+CAM0294,C006,P0023,DriveMax Q2 Midyear Retention 2023,retention,Build loyalty program,2023-04-21,2023-05-12,66900.0,active
+CAM0295,C006,P0024,DriveMax Q3 Back-to-School Consideration 2024,consideration,Boost engagement,2024-02-26,2024-05-15,182900.0,planned
+CAM0296,C006,P0024,DriveMax Q3 Fall Conversion 2023,conversion,Maximize ROAS,2023-10-18,2023-12-28,97600.0,active
+CAM0297,C006,P0025,DriveMax Q4 Holiday Retention 2024,retention,Win back lapsed customers,2024-09-15,2024-11-16,24600.0,completed
+CAM0298,C006,P0025,DriveMax Q4 Year-End Consideration 2024,consideration,Boost engagement,2024-09-30,2024-10-29,82000.0,completed
+CAM0299,C006,P0024,DriveMax Q1 New Year Retention 2025,retention,Build loyalty program,2025-01-14,2025-01-28,44900.0,completed
+CAM0300,C006,P0025,DriveMax Q1 Spring Retention 2025,retention,Build loyalty program,2025-08-21,2025-10-29,18600.0,completed
+CAM0301,C007,P0028,Wanderlux Q1 New Year Retention 2024,retention,Win back lapsed customers,2024-05-04,2024-07-06,39100.0,completed
+CAM0302,C007,P0029,Wanderlux Q1 Spring Conversion 2023,conversion,Boost sign-ups,2023-04-30,2023-06-12,91800.0,active
+CAM0303,C007,P0029,Wanderlux Q2 Summer Consideration 2024,consideration,Educate prospects,2024-07-14,2024-09-11,62600.0,planned
+CAM0304,C007,P0031,Wanderlux Q2 Midyear Conversion 2023,conversion,Drive store visits,2023-09-25,2023-10-15,46700.0,completed
+CAM0305,C007,P0030,Wanderlux Q3 Back-to-School Conversion 2024,conversion,Boost sign-ups,2024-02-17,2024-05-04,60100.0,planned
+CAM0306,C007,P0030,Wanderlux Q3 Fall Consideration 2023,consideration,Drive website traffic,2023-04-17,2023-07-11,89300.0,planned
+CAM0307,C007,P0028,Wanderlux Q4 Holiday Consideration 2023,consideration,Educate prospects,2023-10-02,2023-11-19,112100.0,completed
+CAM0308,C007,P0031,Wanderlux Q4 Year-End Consideration 2023,consideration,Educate prospects,2023-08-11,2023-10-09,62000.0,planned
+CAM0309,C007,P0031,Wanderlux Q1 New Year Conversion 2023,conversion,Drive store visits,2023-07-05,2023-08-04,96800.0,planned
+CAM0310,C007,P0029,Wanderlux Q1 Spring Retention 2025,retention,Increase repeat purchases,2025-09-03,2025-10-27,25300.0,completed
+CAM0311,C007,P0031,Wanderlux Q2 Summer Conversion 2023,conversion,Increase online sales,2023-03-25,2023-05-11,117100.0,completed
+CAM0312,C007,P0031,Wanderlux Q2 Midyear Retention 2025,retention,Win back lapsed customers,2025-07-12,2025-10-05,8500.0,planned
+CAM0313,C007,P0028,Wanderlux Q3 Back-to-School Retention 2023,retention,Win back lapsed customers,2023-04-24,2023-06-09,41600.0,completed
+CAM0314,C007,P0029,Wanderlux Q3 Fall Retention 2023,retention,Win back lapsed customers,2023-10-01,2023-10-29,38400.0,active
+CAM0315,C007,P0029,Wanderlux Q4 Holiday Consideration 2025,consideration,Educate prospects,2025-05-27,2025-06-20,180100.0,completed
+CAM0316,C007,P0028,Wanderlux Q4 Year-End Retention 2023,retention,Increase repeat purchases,2023-01-23,2023-04-09,33400.0,active
+CAM0317,C007,P0030,Wanderlux Q1 New Year Awareness 2025,awareness,Launch new product,2025-05-10,2025-07-30,138900.0,completed
+CAM0318,C007,P0027,Wanderlux Q1 Spring Awareness 2023,awareness,Launch new product,2023-03-01,2023-05-26,229000.0,active
+CAM0319,C007,P0030,Wanderlux Q2 Summer Awareness 2023,awareness,Expand brand recognition,2023-10-06,2023-11-28,327800.0,active
+CAM0320,C007,P0027,Wanderlux Q2 Midyear Retention 2024,retention,Win back lapsed customers,2024-03-22,2024-04-27,42700.0,completed
+CAM0321,C007,P0028,Wanderlux Q3 Back-to-School Conversion 2025,conversion,Maximize ROAS,2025-10-12,2025-11-18,46100.0,active
+CAM0322,C007,P0027,Wanderlux Q3 Fall Retention 2023,retention,Win back lapsed customers,2023-03-29,2023-06-09,34400.0,active
+CAM0323,C007,P0029,Wanderlux Q4 Holiday Awareness 2025,awareness,Build market presence,2025-09-30,2025-12-26,257100.0,completed
+CAM0324,C007,P0028,Wanderlux Q4 Year-End Conversion 2025,conversion,Maximize ROAS,2025-10-13,2025-12-13,36900.0,completed
+CAM0325,C007,P0029,Wanderlux Q1 New Year Consideration 2023,consideration,Drive website traffic,2023-01-21,2023-02-28,156500.0,completed
+CAM0326,C007,P0029,Wanderlux Q1 Spring Retention 2024,retention,Increase repeat purchases,2024-10-28,2024-12-24,14600.0,completed
+CAM0327,C007,P0029,Wanderlux Q2 Summer Retention 2023,retention,Reduce churn,2023-03-11,2023-05-08,43800.0,completed
+CAM0328,C007,P0031,Wanderlux Q2 Midyear Consideration 2025,consideration,Drive website traffic,2025-07-09,2025-08-06,80000.0,active
+CAM0329,C007,P0030,Wanderlux Q3 Back-to-School Awareness 2024,awareness,Increase brand visibility,2024-10-09,2024-10-26,255300.0,planned
+CAM0330,C007,P0027,Wanderlux Q3 Fall Retention 2023,retention,Increase repeat purchases,2023-06-02,2023-07-12,64500.0,active
+CAM0331,C007,P0028,Wanderlux Q4 Holiday Conversion 2023,conversion,Boost sign-ups,2023-04-27,2023-07-20,37000.0,completed
+CAM0332,C007,P0028,Wanderlux Q4 Year-End Consideration 2024,consideration,Boost engagement,2024-09-13,2024-09-28,193000.0,completed
+CAM0333,C007,P0027,Wanderlux Q1 New Year Consideration 2025,consideration,Generate leads,2025-03-03,2025-03-28,38000.0,completed
+CAM0334,C007,P0031,Wanderlux Q1 Spring Conversion 2024,conversion,Maximize ROAS,2024-01-09,2024-03-04,19700.0,active
+CAM0335,C007,P0028,Wanderlux Q2 Summer Conversion 2024,conversion,Maximize ROAS,2024-07-31,2024-08-19,23300.0,active
+CAM0336,C007,P0028,Wanderlux Q2 Midyear Awareness 2024,awareness,Build market presence,2024-06-01,2024-08-22,216400.0,completed
+CAM0337,C007,P0028,Wanderlux Q3 Back-to-School Consideration 2023,consideration,Drive website traffic,2023-05-12,2023-06-29,79400.0,completed
+CAM0338,C007,P0031,Wanderlux Q3 Fall Retention 2024,retention,Increase repeat purchases,2024-06-13,2024-08-26,43300.0,planned
+CAM0339,C007,P0028,Wanderlux Q4 Holiday Consideration 2025,consideration,Educate prospects,2025-09-21,2025-11-29,95500.0,completed
+CAM0340,C007,P0027,Wanderlux Q4 Year-End Conversion 2025,conversion,Boost sign-ups,2025-07-03,2025-09-19,14300.0,active
+CAM0341,C007,P0028,Wanderlux Q1 New Year Consideration 2024,consideration,Generate leads,2024-05-15,2024-07-25,121600.0,planned
+CAM0342,C007,P0029,Wanderlux Q1 Spring Awareness 2025,awareness,Expand brand recognition,2025-10-22,2025-11-07,113300.0,active
+CAM0343,C007,P0027,Wanderlux Q2 Summer Conversion 2025,conversion,Drive store visits,2025-06-01,2025-07-02,22500.0,completed
+CAM0344,C007,P0029,Wanderlux Q2 Midyear Conversion 2024,conversion,Maximize ROAS,2024-05-31,2024-07-11,17000.0,active
+CAM0345,C007,P0031,Wanderlux Q3 Back-to-School Retention 2023,retention,Increase repeat purchases,2023-01-28,2023-04-25,60300.0,active
+CAM0346,C007,P0028,Wanderlux Q3 Fall Retention 2023,retention,Increase repeat purchases,2023-07-24,2023-08-19,74800.0,completed
+CAM0347,C007,P0027,Wanderlux Q4 Holiday Consideration 2025,consideration,Generate leads,2025-10-10,2025-12-31,38900.0,completed
+CAM0348,C007,P0030,Wanderlux Q4 Year-End Conversion 2024,conversion,Boost sign-ups,2024-04-19,2024-07-04,21000.0,active
+CAM0349,C007,P0028,Wanderlux Q1 New Year Awareness 2025,awareness,Expand brand recognition,2025-04-20,2025-05-08,67200.0,planned
+CAM0350,C007,P0030,Wanderlux Q1 Spring Awareness 2024,awareness,Increase brand visibility,2024-09-27,2024-11-14,284400.0,completed
+CAM0351,C008,P0033,ConnectSphere Q1 New Year Consideration 2024,consideration,Drive website traffic,2024-03-16,2024-04-26,94900.0,completed
+CAM0352,C008,P0032,ConnectSphere Q1 Spring Retention 2023,retention,Build loyalty program,2023-09-30,2023-11-06,60200.0,completed
+CAM0353,C008,P0034,ConnectSphere Q2 Summer Awareness 2024,awareness,Build market presence,2024-07-31,2024-10-26,328800.0,planned
+CAM0354,C008,P0032,ConnectSphere Q2 Midyear Consideration 2025,consideration,Drive website traffic,2025-06-02,2025-08-15,127300.0,active
+CAM0355,C008,P0034,ConnectSphere Q3 Back-to-School Awareness 2023,awareness,Increase brand visibility,2023-02-07,2023-04-10,79600.0,planned
+CAM0356,C008,P0033,ConnectSphere Q3 Fall Retention 2025,retention,Build loyalty program,2025-02-20,2025-05-17,6400.0,completed
+CAM0357,C008,P0032,ConnectSphere Q4 Holiday Conversion 2024,conversion,Drive store visits,2024-05-05,2024-05-22,134600.0,completed
+CAM0358,C008,P0034,ConnectSphere Q4 Year-End Retention 2023,retention,Reduce churn,2023-10-20,2023-11-13,72000.0,planned
+CAM0359,C008,P0034,ConnectSphere Q1 New Year Consideration 2023,consideration,Educate prospects,2023-08-14,2023-10-16,57800.0,completed
+CAM0360,C008,P0035,ConnectSphere Q1 Spring Conversion 2025,conversion,Drive store visits,2025-01-22,2025-03-11,39100.0,completed
+CAM0361,C008,P0034,ConnectSphere Q2 Summer Awareness 2023,awareness,Expand brand recognition,2023-10-03,2023-10-31,138400.0,completed
+CAM0362,C008,P0034,ConnectSphere Q2 Midyear Awareness 2023,awareness,Build market presence,2023-04-29,2023-06-04,484400.0,planned
+CAM0363,C008,P0032,ConnectSphere Q3 Back-to-School Consideration 2025,consideration,Boost engagement,2025-06-27,2025-09-20,175500.0,completed
+CAM0364,C008,P0034,ConnectSphere Q3 Fall Retention 2024,retention,Reduce churn,2024-09-11,2024-11-16,46400.0,planned
+CAM0365,C008,P0035,ConnectSphere Q4 Holiday Conversion 2024,conversion,Boost sign-ups,2024-03-04,2024-03-30,89800.0,completed
+CAM0366,C008,P0035,ConnectSphere Q4 Year-End Consideration 2023,consideration,Boost engagement,2023-08-13,2023-10-08,156200.0,planned
+CAM0367,C008,P0033,ConnectSphere Q1 New Year Conversion 2023,conversion,Increase online sales,2023-02-23,2023-05-20,61700.0,active
+CAM0368,C008,P0032,ConnectSphere Q1 Spring Awareness 2023,awareness,Increase brand visibility,2023-06-21,2023-09-08,362100.0,active
+CAM0369,C008,P0034,ConnectSphere Q2 Summer Retention 2025,retention,Win back lapsed customers,2025-09-28,2025-10-15,16600.0,active
+CAM0370,C008,P0034,ConnectSphere Q2 Midyear Conversion 2025,conversion,Maximize ROAS,2025-07-07,2025-07-26,107300.0,completed
+CAM0371,C008,P0032,ConnectSphere Q3 Back-to-School Conversion 2025,conversion,Drive store visits,2025-04-24,2025-05-09,149500.0,active
+CAM0372,C008,P0035,ConnectSphere Q3 Fall Consideration 2025,consideration,Boost engagement,2025-02-26,2025-04-22,112500.0,completed
+CAM0373,C008,P0033,ConnectSphere Q4 Holiday Awareness 2024,awareness,Launch new product,2024-03-22,2024-04-08,253500.0,completed
+CAM0374,C008,P0035,ConnectSphere Q4 Year-End Awareness 2023,awareness,Launch new product,2023-03-26,2023-05-26,305100.0,planned
+CAM0375,C008,P0035,ConnectSphere Q1 New Year Conversion 2023,conversion,Boost sign-ups,2023-10-18,2023-11-08,45300.0,active
+CAM0376,C008,P0034,ConnectSphere Q1 Spring Awareness 2024,awareness,Launch new product,2024-03-16,2024-04-01,361100.0,completed
+CAM0377,C008,P0032,ConnectSphere Q2 Summer Conversion 2024,conversion,Increase online sales,2024-10-12,2024-11-02,87500.0,completed
+CAM0378,C008,P0032,ConnectSphere Q2 Midyear Retention 2024,retention,Reduce churn,2024-09-09,2024-09-27,7800.0,completed
+CAM0379,C008,P0033,ConnectSphere Q3 Back-to-School Conversion 2025,conversion,Boost sign-ups,2025-01-04,2025-01-31,105500.0,planned
+CAM0380,C008,P0034,ConnectSphere Q3 Fall Conversion 2023,conversion,Increase online sales,2023-05-21,2023-08-17,105000.0,completed
+CAM0381,C008,P0035,ConnectSphere Q4 Holiday Conversion 2023,conversion,Boost sign-ups,2023-10-09,2024-01-04,30500.0,completed
+CAM0382,C008,P0032,ConnectSphere Q4 Year-End Retention 2024,retention,Reduce churn,2024-08-11,2024-09-28,75300.0,planned
+CAM0383,C008,P0033,ConnectSphere Q1 New Year Retention 2023,retention,Reduce churn,2023-02-09,2023-03-02,54600.0,completed
+CAM0384,C008,P0032,ConnectSphere Q1 Spring Conversion 2025,conversion,Drive store visits,2025-09-21,2025-11-06,79500.0,active
+CAM0385,C008,P0033,ConnectSphere Q2 Summer Awareness 2023,awareness,Increase brand visibility,2023-02-27,2023-04-21,120900.0,planned
+CAM0386,C008,P0033,ConnectSphere Q2 Midyear Awareness 2025,awareness,Expand brand recognition,2025-05-27,2025-07-23,469100.0,active
+CAM0387,C008,P0035,ConnectSphere Q3 Back-to-School Awareness 2023,awareness,Launch new product,2023-06-15,2023-08-17,498300.0,active
+CAM0388,C008,P0032,ConnectSphere Q3 Fall Conversion 2025,conversion,Increase online sales,2025-09-21,2025-10-12,20800.0,completed
+CAM0389,C008,P0032,ConnectSphere Q4 Holiday Consideration 2025,consideration,Generate leads,2025-03-07,2025-03-23,95600.0,active
+CAM0390,C008,P0035,ConnectSphere Q4 Year-End Retention 2024,retention,Build loyalty program,2024-01-22,2024-03-25,72900.0,completed
+CAM0391,C008,P0034,ConnectSphere Q1 New Year Consideration 2024,consideration,Generate leads,2024-02-07,2024-04-25,37900.0,completed
+CAM0392,C008,P0033,ConnectSphere Q1 Spring Conversion 2024,conversion,Boost sign-ups,2024-05-18,2024-06-22,122300.0,completed
+CAM0393,C008,P0034,ConnectSphere Q2 Summer Retention 2025,retention,Build loyalty program,2025-07-04,2025-07-25,78600.0,active
+CAM0394,C008,P0032,ConnectSphere Q2 Midyear Awareness 2025,awareness,Build market presence,2025-03-11,2025-05-11,326600.0,planned
+CAM0395,C008,P0035,ConnectSphere Q3 Back-to-School Conversion 2025,conversion,Drive store visits,2025-01-21,2025-02-12,86100.0,active
+CAM0396,C008,P0033,ConnectSphere Q3 Fall Consideration 2024,consideration,Boost engagement,2024-02-15,2024-05-01,35400.0,planned
+CAM0397,C008,P0032,ConnectSphere Q4 Holiday Retention 2024,retention,Increase repeat purchases,2024-07-19,2024-09-07,76500.0,completed
+CAM0398,C008,P0032,ConnectSphere Q4 Year-End Awareness 2025,awareness,Build market presence,2025-09-10,2025-11-21,217900.0,completed
+CAM0399,C008,P0034,ConnectSphere Q1 New Year Awareness 2025,awareness,Build market presence,2025-05-12,2025-07-10,125400.0,active
+CAM0400,C008,P0033,ConnectSphere Q1 Spring Conversion 2025,conversion,Drive store visits,2025-08-19,2025-10-12,29300.0,active
+CAM0401,C009,P0037,FlavorCo Q1 New Year Consideration 2025,consideration,Generate leads,2025-06-18,2025-08-10,67600.0,active
+CAM0402,C009,P0036,FlavorCo Q1 Spring Retention 2025,retention,Increase repeat purchases,2025-02-27,2025-05-20,54700.0,completed
+CAM0403,C009,P0037,FlavorCo Q2 Summer Consideration 2025,consideration,Drive website traffic,2025-09-01,2025-11-12,89100.0,completed
+CAM0404,C009,P0038,FlavorCo Q2 Midyear Consideration 2023,consideration,Boost engagement,2023-10-08,2023-10-26,132500.0,active
+CAM0405,C009,P0038,FlavorCo Q3 Back-to-School Awareness 2023,awareness,Launch new product,2023-06-06,2023-07-27,481500.0,active
+CAM0406,C009,P0037,FlavorCo Q3 Fall Consideration 2023,consideration,Boost engagement,2023-04-06,2023-04-27,30900.0,completed
+CAM0407,C009,P0036,FlavorCo Q4 Holiday Conversion 2023,conversion,Increase online sales,2023-01-14,2023-01-30,26200.0,completed
+CAM0408,C009,P0038,FlavorCo Q4 Year-End Awareness 2024,awareness,Build market presence,2024-02-16,2024-04-08,133200.0,completed
+CAM0409,C009,P0036,FlavorCo Q1 New Year Consideration 2025,consideration,Educate prospects,2025-04-04,2025-06-18,193600.0,completed
+CAM0410,C009,P0039,FlavorCo Q1 Spring Conversion 2025,conversion,Drive store visits,2025-06-04,2025-07-05,145200.0,completed
+CAM0411,C009,P0039,FlavorCo Q2 Summer Consideration 2023,consideration,Educate prospects,2023-07-09,2023-08-31,91900.0,planned
+CAM0412,C009,P0038,FlavorCo Q2 Midyear Retention 2025,retention,Win back lapsed customers,2025-04-28,2025-06-04,35200.0,active
+CAM0413,C009,P0037,FlavorCo Q3 Back-to-School Retention 2023,retention,Build loyalty program,2023-09-25,2023-10-17,31100.0,active
+CAM0414,C009,P0039,FlavorCo Q3 Fall Retention 2025,retention,Build loyalty program,2025-08-20,2025-10-21,17600.0,active
+CAM0415,C009,P0039,FlavorCo Q4 Holiday Retention 2023,retention,Increase repeat purchases,2023-03-08,2023-06-02,43000.0,completed
+CAM0416,C009,P0039,FlavorCo Q4 Year-End Retention 2023,retention,Reduce churn,2023-09-11,2023-10-31,28600.0,planned
+CAM0417,C009,P0036,FlavorCo Q1 New Year Conversion 2023,conversion,Drive store visits,2023-10-17,2023-11-05,19200.0,active
+CAM0418,C009,P0038,FlavorCo Q1 Spring Awareness 2023,awareness,Build market presence,2023-05-26,2023-06-25,469400.0,planned
+CAM0419,C009,P0037,FlavorCo Q2 Summer Consideration 2025,consideration,Generate leads,2025-10-29,2025-11-29,157500.0,completed
+CAM0420,C009,P0039,FlavorCo Q2 Midyear Conversion 2023,conversion,Drive store visits,2023-09-26,2023-10-24,135300.0,completed
+CAM0421,C009,P0038,FlavorCo Q3 Back-to-School Retention 2025,retention,Win back lapsed customers,2025-09-18,2025-12-01,55900.0,active
+CAM0422,C009,P0036,FlavorCo Q3 Fall Retention 2024,retention,Reduce churn,2024-09-12,2024-10-10,50300.0,active
+CAM0423,C009,P0038,FlavorCo Q4 Holiday Conversion 2023,conversion,Increase online sales,2023-02-04,2023-03-05,79200.0,active
+CAM0424,C009,P0037,FlavorCo Q4 Year-End Consideration 2025,consideration,Generate leads,2025-10-30,2025-11-20,109000.0,completed
+CAM0425,C009,P0039,FlavorCo Q1 New Year Conversion 2023,conversion,Maximize ROAS,2023-06-30,2023-08-06,52200.0,completed
+CAM0426,C009,P0038,FlavorCo Q1 Spring Retention 2025,retention,Increase repeat purchases,2025-09-10,2025-11-01,64800.0,active
+CAM0427,C009,P0037,FlavorCo Q2 Summer Conversion 2025,conversion,Maximize ROAS,2025-05-29,2025-08-25,72400.0,completed
+CAM0428,C009,P0036,FlavorCo Q2 Midyear Retention 2024,retention,Win back lapsed customers,2024-04-16,2024-05-03,31800.0,planned
+CAM0429,C009,P0038,FlavorCo Q3 Back-to-School Retention 2023,retention,Reduce churn,2023-09-03,2023-11-19,52400.0,completed
+CAM0430,C009,P0038,FlavorCo Q3 Fall Awareness 2023,awareness,Increase brand visibility,2023-09-11,2023-11-26,398200.0,active
+CAM0431,C009,P0037,FlavorCo Q4 Holiday Conversion 2024,conversion,Drive store visits,2024-06-21,2024-08-13,71800.0,completed
+CAM0432,C009,P0038,FlavorCo Q4 Year-End Retention 2024,retention,Win back lapsed customers,2024-05-22,2024-06-11,28200.0,active
+CAM0433,C009,P0036,FlavorCo Q1 New Year Retention 2023,retention,Reduce churn,2023-01-05,2023-03-28,35500.0,active
+CAM0434,C009,P0037,FlavorCo Q1 Spring Consideration 2025,consideration,Educate prospects,2025-02-16,2025-04-27,73300.0,active
+CAM0435,C009,P0039,FlavorCo Q2 Summer Retention 2025,retention,Build loyalty program,2025-02-15,2025-04-23,77900.0,planned
+CAM0436,C009,P0039,FlavorCo Q2 Midyear Conversion 2025,conversion,Boost sign-ups,2025-02-02,2025-03-04,135400.0,planned
+CAM0437,C009,P0036,FlavorCo Q3 Back-to-School Consideration 2025,consideration,Drive website traffic,2025-02-17,2025-05-08,77200.0,active
+CAM0438,C009,P0038,FlavorCo Q3 Fall Conversion 2023,conversion,Boost sign-ups,2023-07-09,2023-08-19,48800.0,planned
+CAM0439,C009,P0039,FlavorCo Q4 Holiday Conversion 2025,conversion,Boost sign-ups,2025-09-07,2025-11-16,99100.0,completed
+CAM0440,C009,P0036,FlavorCo Q4 Year-End Retention 2024,retention,Reduce churn,2024-09-16,2024-11-25,67400.0,planned
+CAM0441,C009,P0036,FlavorCo Q1 New Year Conversion 2023,conversion,Boost sign-ups,2023-07-17,2023-08-03,20000.0,completed
+CAM0442,C009,P0039,FlavorCo Q1 Spring Awareness 2023,awareness,Build market presence,2023-03-29,2023-05-01,127400.0,completed
+CAM0443,C009,P0038,FlavorCo Q2 Summer Consideration 2025,consideration,Drive website traffic,2025-01-09,2025-02-15,88700.0,planned
+CAM0444,C009,P0038,FlavorCo Q2 Midyear Consideration 2023,consideration,Boost engagement,2023-08-16,2023-10-15,81500.0,planned
+CAM0445,C009,P0039,FlavorCo Q3 Back-to-School Consideration 2023,consideration,Boost engagement,2023-08-11,2023-10-27,72000.0,active
+CAM0446,C009,P0039,FlavorCo Q3 Fall Conversion 2024,conversion,Maximize ROAS,2024-08-10,2024-09-12,53100.0,completed
+CAM0447,C009,P0037,FlavorCo Q4 Holiday Conversion 2024,conversion,Drive store visits,2024-07-05,2024-08-27,80700.0,completed
+CAM0448,C009,P0036,FlavorCo Q4 Year-End Consideration 2023,consideration,Drive website traffic,2023-04-17,2023-05-17,69500.0,completed
+CAM0449,C009,P0036,FlavorCo Q1 New Year Retention 2025,retention,Build loyalty program,2025-09-27,2025-12-01,39300.0,active
+CAM0450,C009,P0036,FlavorCo Q1 Spring Conversion 2025,conversion,Drive store visits,2025-10-17,2025-11-07,111400.0,active
+CAM0451,C010,P0043,UrbanThread Q1 New Year Retention 2023,retention,Win back lapsed customers,2023-02-06,2023-04-13,76300.0,active
+CAM0452,C010,P0044,UrbanThread Q1 Spring Consideration 2023,consideration,Boost engagement,2023-08-19,2023-09-09,63000.0,completed
+CAM0453,C010,P0041,UrbanThread Q2 Summer Awareness 2024,awareness,Build market presence,2024-03-11,2024-04-18,76600.0,planned
+CAM0454,C010,P0040,UrbanThread Q2 Midyear Awareness 2025,awareness,Expand brand recognition,2025-05-30,2025-07-27,228600.0,active
+CAM0455,C010,P0044,UrbanThread Q3 Back-to-School Retention 2025,retention,Reduce churn,2025-07-08,2025-09-02,44000.0,completed
+CAM0456,C010,P0042,UrbanThread Q3 Fall Conversion 2023,conversion,Drive store visits,2023-09-08,2023-11-11,91300.0,completed
+CAM0457,C010,P0040,UrbanThread Q4 Holiday Awareness 2025,awareness,Increase brand visibility,2025-09-30,2025-10-17,407600.0,planned
+CAM0458,C010,P0043,UrbanThread Q4 Year-End Consideration 2025,consideration,Drive website traffic,2025-06-18,2025-09-12,108500.0,planned
+CAM0459,C010,P0041,UrbanThread Q1 New Year Awareness 2023,awareness,Build market presence,2023-04-26,2023-07-01,160200.0,completed
+CAM0460,C010,P0042,UrbanThread Q1 Spring Awareness 2023,awareness,Build market presence,2023-08-10,2023-10-22,106100.0,active
+CAM0461,C010,P0040,UrbanThread Q2 Summer Retention 2025,retention,Increase repeat purchases,2025-02-18,2025-04-25,30300.0,active
+CAM0462,C010,P0041,UrbanThread Q2 Midyear Conversion 2023,conversion,Drive store visits,2023-02-08,2023-03-28,47900.0,completed
+CAM0463,C010,P0042,UrbanThread Q3 Back-to-School Consideration 2024,consideration,Drive website traffic,2024-05-06,2024-05-25,59100.0,planned
+CAM0464,C010,P0041,UrbanThread Q3 Fall Awareness 2024,awareness,Expand brand recognition,2024-01-25,2024-02-29,114500.0,active
+CAM0465,C010,P0041,UrbanThread Q4 Holiday Conversion 2025,conversion,Boost sign-ups,2025-10-05,2025-12-30,112700.0,active
+CAM0466,C010,P0040,UrbanThread Q4 Year-End Conversion 2025,conversion,Drive store visits,2025-07-28,2025-09-30,21500.0,active
+CAM0467,C010,P0044,UrbanThread Q1 New Year Retention 2023,retention,Win back lapsed customers,2023-03-13,2023-05-30,9300.0,completed
+CAM0468,C010,P0041,UrbanThread Q1 Spring Awareness 2023,awareness,Launch new product,2023-06-07,2023-08-04,359200.0,active
+CAM0469,C010,P0042,UrbanThread Q2 Summer Consideration 2025,consideration,Generate leads,2025-09-30,2025-11-11,186300.0,completed
+CAM0470,C010,P0042,UrbanThread Q2 Midyear Consideration 2024,consideration,Generate leads,2024-01-08,2024-03-25,28000.0,completed
+CAM0471,C010,P0041,UrbanThread Q3 Back-to-School Awareness 2025,awareness,Expand brand recognition,2025-06-02,2025-07-16,168800.0,active
+CAM0472,C010,P0042,UrbanThread Q3 Fall Retention 2024,retention,Build loyalty program,2024-08-03,2024-08-21,68300.0,planned
+CAM0473,C010,P0042,UrbanThread Q4 Holiday Consideration 2023,consideration,Educate prospects,2023-07-28,2023-09-30,78500.0,completed
+CAM0474,C010,P0041,UrbanThread Q4 Year-End Consideration 2025,consideration,Educate prospects,2025-07-25,2025-09-08,138600.0,active
+CAM0475,C010,P0042,UrbanThread Q1 New Year Retention 2023,retention,Reduce churn,2023-07-09,2023-08-07,55300.0,completed
+CAM0476,C010,P0043,UrbanThread Q1 Spring Retention 2024,retention,Reduce churn,2024-01-25,2024-04-08,10500.0,completed
+CAM0477,C010,P0040,UrbanThread Q2 Summer Retention 2024,retention,Build loyalty program,2024-07-20,2024-09-09,49000.0,completed
+CAM0478,C010,P0040,UrbanThread Q2 Midyear Conversion 2024,conversion,Drive store visits,2024-08-15,2024-10-27,33400.0,planned
+CAM0479,C010,P0040,UrbanThread Q3 Back-to-School Retention 2023,retention,Win back lapsed customers,2023-07-29,2023-09-23,20400.0,active
+CAM0480,C010,P0042,UrbanThread Q3 Fall Consideration 2024,consideration,Generate leads,2024-10-04,2024-11-10,91500.0,completed
+CAM0481,C010,P0044,UrbanThread Q4 Holiday Conversion 2023,conversion,Maximize ROAS,2023-09-11,2023-11-01,116400.0,completed
+CAM0482,C010,P0040,UrbanThread Q4 Year-End Awareness 2025,awareness,Increase brand visibility,2025-02-18,2025-05-18,460100.0,completed
+CAM0483,C010,P0043,UrbanThread Q1 New Year Retention 2023,retention,Increase repeat purchases,2023-10-20,2023-11-26,41400.0,completed
+CAM0484,C010,P0042,UrbanThread Q1 Spring Awareness 2024,awareness,Increase brand visibility,2024-10-19,2025-01-06,101300.0,completed
+CAM0485,C010,P0040,UrbanThread Q2 Summer Consideration 2023,consideration,Educate prospects,2023-03-22,2023-06-18,93000.0,completed
+CAM0486,C010,P0042,UrbanThread Q2 Midyear Consideration 2023,consideration,Generate leads,2023-09-13,2023-10-15,64400.0,completed
+CAM0487,C010,P0043,UrbanThread Q3 Back-to-School Awareness 2024,awareness,Expand brand recognition,2024-02-15,2024-04-30,89000.0,active
+CAM0488,C010,P0042,UrbanThread Q3 Fall Conversion 2023,conversion,Maximize ROAS,2023-03-12,2023-04-15,130800.0,completed
+CAM0489,C010,P0043,UrbanThread Q4 Holiday Consideration 2024,consideration,Educate prospects,2024-08-20,2024-09-04,125400.0,completed
+CAM0490,C010,P0041,UrbanThread Q4 Year-End Consideration 2023,consideration,Boost engagement,2023-09-27,2023-12-15,152000.0,completed
+CAM0491,C010,P0042,UrbanThread Q1 New Year Retention 2024,retention,Increase repeat purchases,2024-03-10,2024-04-07,67500.0,active
+CAM0492,C010,P0043,UrbanThread Q1 Spring Consideration 2024,consideration,Educate prospects,2024-01-03,2024-03-23,88900.0,active
+CAM0493,C010,P0042,UrbanThread Q2 Summer Awareness 2024,awareness,Increase brand visibility,2024-08-03,2024-10-31,237700.0,completed
+CAM0494,C010,P0041,UrbanThread Q2 Midyear Awareness 2023,awareness,Increase brand visibility,2023-06-23,2023-07-30,268000.0,completed
+CAM0495,C010,P0040,UrbanThread Q3 Back-to-School Awareness 2025,awareness,Launch new product,2025-05-03,2025-07-08,176400.0,completed
+CAM0496,C010,P0043,UrbanThread Q3 Fall Consideration 2023,consideration,Drive website traffic,2023-02-17,2023-03-31,164300.0,completed
+CAM0497,C010,P0042,UrbanThread Q4 Holiday Consideration 2023,consideration,Drive website traffic,2023-01-16,2023-03-31,100900.0,completed
+CAM0498,C010,P0041,UrbanThread Q4 Year-End Retention 2025,retention,Increase repeat purchases,2025-02-20,2025-03-28,56400.0,planned
+CAM0499,C010,P0043,UrbanThread Q1 New Year Conversion 2024,conversion,Boost sign-ups,2024-08-11,2024-09-14,125300.0,planned
+CAM0500,C010,P0043,UrbanThread Q1 Spring Consideration 2025,consideration,Generate leads,2025-03-22,2025-05-06,151600.0,active
+CAM0501,C011,P0048,MediaPulse Q1 New Year Consideration 2024,consideration,Generate leads,2024-09-10,2024-09-27,51300.0,active
+CAM0502,C011,P0045,MediaPulse Q1 Spring Awareness 2025,awareness,Build market presence,2025-03-04,2025-05-21,333800.0,planned
+CAM0503,C011,P0045,MediaPulse Q2 Summer Retention 2025,retention,Reduce churn,2025-02-04,2025-04-23,49200.0,active
+CAM0504,C011,P0046,MediaPulse Q2 Midyear Awareness 2024,awareness,Increase brand visibility,2024-08-06,2024-08-22,154000.0,planned
+CAM0505,C011,P0047,MediaPulse Q3 Back-to-School Consideration 2023,consideration,Educate prospects,2023-04-10,2023-05-28,79300.0,completed
+CAM0506,C011,P0046,MediaPulse Q3 Fall Consideration 2024,consideration,Educate prospects,2024-10-19,2024-12-05,90100.0,completed
+CAM0507,C011,P0046,MediaPulse Q4 Holiday Consideration 2023,consideration,Educate prospects,2023-01-14,2023-02-20,38300.0,completed
+CAM0508,C011,P0045,MediaPulse Q4 Year-End Conversion 2023,conversion,Drive store visits,2023-02-02,2023-03-28,118800.0,active
+CAM0509,C011,P0047,MediaPulse Q1 New Year Consideration 2025,consideration,Generate leads,2025-02-18,2025-04-29,85100.0,completed
+CAM0510,C011,P0048,MediaPulse Q1 Spring Retention 2025,retention,Build loyalty program,2025-07-16,2025-08-07,5300.0,active
+CAM0511,C011,P0045,MediaPulse Q2 Summer Consideration 2025,consideration,Boost engagement,2025-04-26,2025-06-20,60500.0,active
+CAM0512,C011,P0047,MediaPulse Q2 Midyear Retention 2025,retention,Win back lapsed customers,2025-05-22,2025-06-05,67100.0,completed
+CAM0513,C011,P0048,MediaPulse Q3 Back-to-School Consideration 2024,consideration,Educate prospects,2024-07-30,2024-09-21,31800.0,planned
+CAM0514,C011,P0045,MediaPulse Q3 Fall Awareness 2023,awareness,Increase brand visibility,2023-03-08,2023-04-08,254100.0,completed
+CAM0515,C011,P0048,MediaPulse Q4 Holiday Awareness 2025,awareness,Increase brand visibility,2025-06-14,2025-07-31,198300.0,completed
+CAM0516,C011,P0047,MediaPulse Q4 Year-End Awareness 2023,awareness,Expand brand recognition,2023-09-13,2023-11-21,498600.0,completed
+CAM0517,C011,P0047,MediaPulse Q1 New Year Retention 2025,retention,Win back lapsed customers,2025-01-01,2025-03-09,31600.0,active
+CAM0518,C011,P0048,MediaPulse Q1 Spring Awareness 2024,awareness,Expand brand recognition,2024-04-06,2024-07-03,232700.0,planned
+CAM0519,C011,P0047,MediaPulse Q2 Summer Consideration 2023,consideration,Generate leads,2023-04-27,2023-06-28,197000.0,active
+CAM0520,C011,P0048,MediaPulse Q2 Midyear Conversion 2024,conversion,Increase online sales,2024-01-18,2024-03-02,103300.0,planned
+CAM0521,C011,P0046,MediaPulse Q3 Back-to-School Conversion 2025,conversion,Drive store visits,2025-07-21,2025-09-05,51500.0,completed
+CAM0522,C011,P0045,MediaPulse Q3 Fall Retention 2024,retention,Increase repeat purchases,2024-10-31,2024-12-09,42300.0,active
+CAM0523,C011,P0046,MediaPulse Q4 Holiday Conversion 2023,conversion,Boost sign-ups,2023-04-24,2023-05-31,23800.0,completed
+CAM0524,C011,P0048,MediaPulse Q4 Year-End Conversion 2025,conversion,Drive store visits,2025-09-13,2025-10-10,36900.0,active
+CAM0525,C011,P0048,MediaPulse Q1 New Year Awareness 2023,awareness,Increase brand visibility,2023-07-27,2023-09-11,141800.0,active
+CAM0526,C011,P0047,MediaPulse Q1 Spring Conversion 2023,conversion,Increase online sales,2023-06-22,2023-07-28,85700.0,planned
+CAM0527,C011,P0046,MediaPulse Q2 Summer Conversion 2025,conversion,Increase online sales,2025-02-24,2025-04-05,33600.0,completed
+CAM0528,C011,P0047,MediaPulse Q2 Midyear Awareness 2024,awareness,Build market presence,2024-08-12,2024-09-21,89400.0,completed
+CAM0529,C011,P0047,MediaPulse Q3 Back-to-School Conversion 2025,conversion,Maximize ROAS,2025-07-10,2025-08-18,149500.0,completed
+CAM0530,C011,P0048,MediaPulse Q3 Fall Retention 2025,retention,Reduce churn,2025-09-27,2025-10-19,22300.0,completed
+CAM0531,C011,P0047,MediaPulse Q4 Holiday Conversion 2024,conversion,Boost sign-ups,2024-05-01,2024-05-25,132000.0,completed
+CAM0532,C011,P0045,MediaPulse Q4 Year-End Consideration 2024,consideration,Generate leads,2024-07-21,2024-09-11,107300.0,active
+CAM0533,C011,P0046,MediaPulse Q1 New Year Consideration 2023,consideration,Generate leads,2023-05-17,2023-07-20,122500.0,planned
+CAM0534,C011,P0046,MediaPulse Q1 Spring Conversion 2025,conversion,Boost sign-ups,2025-08-24,2025-09-12,140100.0,completed
+CAM0535,C011,P0048,MediaPulse Q2 Summer Conversion 2023,conversion,Maximize ROAS,2023-07-29,2023-10-22,90200.0,planned
+CAM0536,C011,P0047,MediaPulse Q2 Midyear Awareness 2024,awareness,Increase brand visibility,2024-07-17,2024-08-22,473600.0,active
+CAM0537,C011,P0046,MediaPulse Q3 Back-to-School Consideration 2024,consideration,Drive website traffic,2024-03-22,2024-05-16,151300.0,completed
+CAM0538,C011,P0048,MediaPulse Q3 Fall Awareness 2023,awareness,Launch new product,2023-09-25,2023-12-14,99900.0,completed
+CAM0539,C011,P0048,MediaPulse Q4 Holiday Retention 2025,retention,Win back lapsed customers,2025-02-08,2025-03-31,11100.0,completed
+CAM0540,C011,P0046,MediaPulse Q4 Year-End Retention 2024,retention,Reduce churn,2024-09-14,2024-11-01,22000.0,planned
+CAM0541,C011,P0048,MediaPulse Q1 New Year Awareness 2025,awareness,Expand brand recognition,2025-01-18,2025-03-03,261300.0,completed
+CAM0542,C011,P0048,MediaPulse Q1 Spring Retention 2024,retention,Build loyalty program,2024-04-02,2024-04-16,50400.0,completed
+CAM0543,C011,P0048,MediaPulse Q2 Summer Consideration 2023,consideration,Drive website traffic,2023-01-15,2023-02-11,162100.0,active
+CAM0544,C011,P0048,MediaPulse Q2 Midyear Conversion 2025,conversion,Increase online sales,2025-03-15,2025-05-17,29700.0,active
+CAM0545,C011,P0047,MediaPulse Q3 Back-to-School Retention 2023,retention,Win back lapsed customers,2023-02-25,2023-03-17,11700.0,active
+CAM0546,C011,P0048,MediaPulse Q3 Fall Consideration 2023,consideration,Generate leads,2023-04-27,2023-05-24,180000.0,active
+CAM0547,C011,P0048,MediaPulse Q4 Holiday Retention 2025,retention,Build loyalty program,2025-03-25,2025-06-18,56800.0,active
+CAM0548,C011,P0047,MediaPulse Q4 Year-End Conversion 2023,conversion,Increase online sales,2023-02-22,2023-03-26,58200.0,completed
+CAM0549,C011,P0047,MediaPulse Q1 New Year Retention 2024,retention,Build loyalty program,2024-08-21,2024-09-04,34300.0,completed
+CAM0550,C011,P0047,MediaPulse Q1 Spring Retention 2024,retention,Reduce churn,2024-08-02,2024-09-14,8700.0,active
+CAM0551,C012,P0051,GreenCore Q1 New Year Retention 2024,retention,Increase repeat purchases,2024-03-24,2024-06-07,26100.0,active
+CAM0552,C012,P0049,GreenCore Q1 Spring Retention 2025,retention,Reduce churn,2025-08-18,2025-10-08,24300.0,completed
+CAM0553,C012,P0052,GreenCore Q2 Summer Awareness 2024,awareness,Build market presence,2024-05-19,2024-06-27,354800.0,completed
+CAM0554,C012,P0050,GreenCore Q2 Midyear Consideration 2025,consideration,Boost engagement,2025-04-18,2025-06-12,111300.0,active
+CAM0555,C012,P0050,GreenCore Q3 Back-to-School Consideration 2023,consideration,Generate leads,2023-02-19,2023-03-31,131200.0,active
+CAM0556,C012,P0051,GreenCore Q3 Fall Retention 2024,retention,Increase repeat purchases,2024-10-10,2024-11-18,45200.0,planned
+CAM0557,C012,P0052,GreenCore Q4 Holiday Conversion 2025,conversion,Increase online sales,2025-08-30,2025-11-11,67300.0,active
+CAM0558,C012,P0050,GreenCore Q4 Year-End Conversion 2025,conversion,Maximize ROAS,2025-06-13,2025-09-08,29800.0,planned
+CAM0559,C012,P0050,GreenCore Q1 New Year Conversion 2024,conversion,Drive store visits,2024-01-29,2024-04-04,68900.0,completed
+CAM0560,C012,P0049,GreenCore Q1 Spring Retention 2023,retention,Reduce churn,2023-08-02,2023-10-14,77400.0,active
+CAM0561,C012,P0051,GreenCore Q2 Summer Conversion 2025,conversion,Drive store visits,2025-04-10,2025-06-06,58600.0,completed
+CAM0562,C012,P0051,GreenCore Q2 Midyear Conversion 2023,conversion,Boost sign-ups,2023-04-12,2023-06-19,80400.0,planned
+CAM0563,C012,P0050,GreenCore Q3 Back-to-School Consideration 2025,consideration,Boost engagement,2025-05-29,2025-08-03,160700.0,completed
+CAM0564,C012,P0051,GreenCore Q3 Fall Retention 2025,retention,Increase repeat purchases,2025-09-10,2025-11-05,57100.0,completed
+CAM0565,C012,P0051,GreenCore Q4 Holiday Awareness 2025,awareness,Expand brand recognition,2025-03-05,2025-04-14,460600.0,completed
+CAM0566,C012,P0049,GreenCore Q4 Year-End Conversion 2024,conversion,Increase online sales,2024-06-04,2024-07-08,59900.0,completed
+CAM0567,C012,P0050,GreenCore Q1 New Year Awareness 2024,awareness,Expand brand recognition,2024-06-26,2024-08-28,190100.0,completed
+CAM0568,C012,P0051,GreenCore Q1 Spring Conversion 2024,conversion,Maximize ROAS,2024-02-02,2024-02-20,13200.0,completed
+CAM0569,C012,P0049,GreenCore Q2 Summer Consideration 2025,consideration,Educate prospects,2025-04-09,2025-06-21,56200.0,completed
+CAM0570,C012,P0049,GreenCore Q2 Midyear Retention 2024,retention,Win back lapsed customers,2024-09-19,2024-11-01,77400.0,planned
+CAM0571,C012,P0049,GreenCore Q3 Back-to-School Retention 2024,retention,Win back lapsed customers,2024-06-14,2024-07-07,48700.0,active
+CAM0572,C012,P0049,GreenCore Q3 Fall Conversion 2025,conversion,Increase online sales,2025-09-27,2025-11-16,78300.0,completed
+CAM0573,C012,P0049,GreenCore Q4 Holiday Conversion 2023,conversion,Maximize ROAS,2023-02-25,2023-04-26,48100.0,planned
+CAM0574,C012,P0050,GreenCore Q4 Year-End Awareness 2023,awareness,Expand brand recognition,2023-07-28,2023-10-15,303600.0,completed
+CAM0575,C012,P0050,GreenCore Q1 New Year Awareness 2024,awareness,Launch new product,2024-03-20,2024-04-14,328200.0,completed
+CAM0576,C012,P0049,GreenCore Q1 Spring Consideration 2023,consideration,Boost engagement,2023-01-28,2023-02-19,74700.0,completed
+CAM0577,C012,P0049,GreenCore Q2 Summer Retention 2025,retention,Increase repeat purchases,2025-09-02,2025-11-28,58100.0,completed
+CAM0578,C012,P0050,GreenCore Q2 Midyear Conversion 2023,conversion,Drive store visits,2023-10-12,2023-12-26,107200.0,completed
+CAM0579,C012,P0051,GreenCore Q3 Back-to-School Conversion 2024,conversion,Maximize ROAS,2024-04-14,2024-06-28,53900.0,active
+CAM0580,C012,P0050,GreenCore Q3 Fall Conversion 2023,conversion,Boost sign-ups,2023-09-03,2023-11-04,37400.0,completed
+CAM0581,C012,P0049,GreenCore Q4 Holiday Conversion 2024,conversion,Maximize ROAS,2024-09-27,2024-10-19,39000.0,completed
+CAM0582,C012,P0051,GreenCore Q4 Year-End Consideration 2025,consideration,Drive website traffic,2025-09-08,2025-10-09,36100.0,completed
+CAM0583,C012,P0051,GreenCore Q1 New Year Awareness 2023,awareness,Expand brand recognition,2023-03-16,2023-05-20,347700.0,planned
+CAM0584,C012,P0050,GreenCore Q1 Spring Conversion 2023,conversion,Increase online sales,2023-10-05,2023-12-04,132400.0,completed
+CAM0585,C012,P0050,GreenCore Q2 Summer Awareness 2025,awareness,Expand brand recognition,2025-05-25,2025-08-08,141800.0,planned
+CAM0586,C012,P0049,GreenCore Q2 Midyear Consideration 2025,consideration,Drive website traffic,2025-08-07,2025-10-18,118500.0,completed
+CAM0587,C012,P0049,GreenCore Q3 Back-to-School Awareness 2023,awareness,Launch new product,2023-09-13,2023-11-15,448100.0,planned
+CAM0588,C012,P0052,GreenCore Q3 Fall Consideration 2023,consideration,Generate leads,2023-09-09,2023-10-01,103000.0,planned
+CAM0589,C012,P0049,GreenCore Q4 Holiday Awareness 2025,awareness,Increase brand visibility,2025-07-18,2025-08-04,119400.0,completed
+CAM0590,C012,P0049,GreenCore Q4 Year-End Consideration 2025,consideration,Educate prospects,2025-08-23,2025-11-06,158700.0,completed
+CAM0591,C012,P0050,GreenCore Q1 New Year Conversion 2025,conversion,Maximize ROAS,2025-03-05,2025-04-28,119500.0,active
+CAM0592,C012,P0049,GreenCore Q1 Spring Conversion 2025,conversion,Boost sign-ups,2025-06-12,2025-07-04,94800.0,planned
+CAM0593,C012,P0050,GreenCore Q2 Summer Consideration 2024,consideration,Boost engagement,2024-02-29,2024-05-10,114200.0,completed
+CAM0594,C012,P0050,GreenCore Q2 Midyear Retention 2024,retention,Increase repeat purchases,2024-05-02,2024-05-18,22400.0,planned
+CAM0595,C012,P0049,GreenCore Q3 Back-to-School Conversion 2023,conversion,Drive store visits,2023-06-18,2023-07-30,76500.0,completed
+CAM0596,C012,P0049,GreenCore Q3 Fall Awareness 2024,awareness,Build market presence,2024-05-27,2024-06-11,320700.0,completed
+CAM0597,C012,P0052,GreenCore Q4 Holiday Consideration 2024,consideration,Boost engagement,2024-01-11,2024-02-11,130800.0,active
+CAM0598,C012,P0049,GreenCore Q4 Year-End Conversion 2025,conversion,Drive store visits,2025-08-23,2025-09-17,63600.0,planned
+CAM0599,C012,P0050,GreenCore Q1 New Year Retention 2023,retention,Increase repeat purchases,2023-04-07,2023-05-18,38300.0,completed
+CAM0600,C012,P0050,GreenCore Q1 Spring Consideration 2025,consideration,Boost engagement,2025-01-31,2025-02-20,144600.0,active
