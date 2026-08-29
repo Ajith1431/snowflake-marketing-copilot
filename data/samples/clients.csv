@@ -1,0 +1,13 @@
+client_id,client_name,industry,region,annual_revenue_usd,contract_start_date,primary_contact,status
+C001,LuminaRetail,Retail,North America,3215200000.0,2025-05-18,Patrick Sanchez,active
+C002,TechVista,Technology,Global,173800000.0,2023-04-02,Megan Mcclain,active
+C003,CareWell,Healthcare,North America,1411400000.0,2023-01-11,Amanda Davis,active
+C004,FinEdge,Finance,Europe,1154900000.0,2023-08-25,Alyssa Gonzalez,active
+C005,PureLife,CPG,North America,3695500000.0,2025-06-03,Jennifer Cole,active
+C006,DriveMax,Automotive,Global,3399700000.0,2023-11-04,Abigail Shaffer,active
+C007,Wanderlux,Travel,Europe,4466300000.0,2025-08-17,Donald Lewis,active
+C008,ConnectSphere,Telecom,Asia Pacific,480300000.0,2024-02-02,James Howard,active
+C009,FlavorCo,Food & Beverage,North America,2138500000.0,2024-02-14,Renee Blair,active
+C010,UrbanThread,Fashion,Europe,197500000.0,2024-12-09,Thomas Miller,active
+C011,MediaPulse,Media & Entertainment,Global,1132300000.0,2023-11-27,Lisa Hensley,active
+C012,GreenCore,Energy,North America,2551500000.0,2025-02-10,Benjamin Stanley,active

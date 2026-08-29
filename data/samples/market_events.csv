@@ -1,0 +1,54 @@
+event_id,event_type,event_name,region,start_date,end_date,impact_level,description,affected_industries
+EV001,holiday,New Year's Day,Global,2023-01-01,2023-01-02,medium,New Year celebrations drive retail and travel spending spikes globally.,"Retail,Travel,Food & Beverage"
+EV002,holiday,Valentine's Day,Global,2023-02-14,2023-02-14,medium,"Consumer spending on gifts, dining, and experiences increases significantly.","Retail,Food & Beverage,Fashion"
+EV003,holiday,Easter Weekend,North America,2023-04-07,2023-04-09,medium,"Family-focused spending on food, travel, and gifts.","Retail,Food & Beverage,Travel"
+EV004,holiday,Diwali,Asia Pacific,2023-11-12,2023-11-14,high,"Major consumer spending event across South Asia covering electronics, gold, clothing, and sweets.","Retail,Fashion,Technology"
+EV005,holiday,Christmas Season,Global,2023-12-01,2023-12-31,high,Peak retail spending season with major e-commerce and in-store promotions.,"Retail,CPG,Fashion,Technology"
+EV006,holiday,Black Friday / Cyber Monday,North America,2023-11-24,2023-11-27,high,Largest shopping weekend of the year with deep discounts across all categories.,"Retail,Technology,Fashion,CPG"
+EV007,holiday,Chinese New Year,Asia Pacific,2024-02-10,2024-02-17,high,Extended holiday period with major consumer spending in APAC markets.,"Retail,Travel,Food & Beverage"
+EV008,holiday,Mother's Day,North America,2024-05-12,2024-05-12,medium,"Gift-giving occasion boosting retail, floral, dining, and spa industries.","Retail,Food & Beverage,Healthcare"
+EV009,holiday,Summer Solstice Sales,Europe,2024-06-21,2024-06-30,low,European summer sales season begins with outdoor and travel promotions.,"Fashion,Travel,Retail"
+EV010,holiday,Thanksgiving,North America,2024-11-28,2024-11-28,medium,"Family gatherings drive food and beverage sales, precedes Black Friday.","Food & Beverage,Retail"
+EV011,holiday,New Year 2025,Global,2025-01-01,2025-01-02,medium,"New Year resolutions drive fitness, health, and self-improvement spending.","Healthcare,Retail,Technology"
+EV012,holiday,Ramadan,Middle East & Africa,2025-03-01,2025-03-30,high,Month-long observance with increased evening consumer activity and charitable giving.,"Food & Beverage,Retail,Fashion"
+EV013,holiday,Independence Day,North America,2024-07-04,2024-07-04,low,"Outdoor celebrations, barbecue season, and patriotic merchandise.","Food & Beverage,Retail"
+EV014,holiday,Halloween,North America,2024-10-31,2024-10-31,medium,"Costume, candy, and decoration spending plus themed marketing campaigns.","Retail,Food & Beverage,Media & Entertainment"
+EV015,holiday,Singles Day 11.11,Asia Pacific,2024-11-11,2024-11-11,high,World's largest online shopping event originating from China.,"Retail,Technology,Fashion"
+EV016,economic,Fed Interest Rate Hike Q1 2023,North America,2023-02-01,2023-02-01,high,"Federal Reserve raises interest rates, impacting consumer borrowing and spending patterns.","Finance,Automotive,Retail"
+EV017,economic,EU Inflation Peak,Europe,2023-03-15,2023-06-30,high,"Eurozone inflation reaches peak levels, consumer confidence drops significantly.","Finance,Retail,CPG,Energy"
+EV018,economic,US Consumer Confidence Rebound,North America,2023-09-01,2023-12-31,medium,"Consumer confidence index rises, signaling increased willingness to spend.","Retail,Automotive,Travel"
+EV019,economic,Global Supply Chain Recovery,Global,2024-01-01,2024-06-30,medium,Post-pandemic supply chain normalization reduces costs and improves availability.,"Technology,Automotive,CPG,Retail"
+EV020,economic,AI Investment Boom,Global,2024-03-01,2024-12-31,high,Massive investment in AI technologies reshapes enterprise and consumer tech markets.,"Technology,Media & Entertainment,Finance"
+EV021,economic,Oil Price Surge,Global,2024-06-01,2024-08-31,medium,Rising oil prices impact energy costs and consumer transportation spending.,"Energy,Automotive,Travel"
+EV022,economic,Housing Market Cooldown,North America,2024-09-01,2025-03-31,medium,"Mortgage rates remain elevated, slowing housing market and related spending.","Finance,Retail"
+EV023,economic,Green Energy Tax Credits Extended,North America,2025-01-15,2025-12-31,high,US government extends renewable energy tax credits boosting solar and EV adoption.,"Energy,Automotive"
+EV024,economic,APAC GDP Growth Acceleration,Asia Pacific,2025-04-01,2025-12-31,medium,Strong GDP growth in Southeast Asia creates new consumer markets.,"Telecom,Technology,Retail"
+EV025,economic,Crypto Market Rally,Global,2024-11-01,2025-03-31,medium,"Cryptocurrency markets surge, driving fintech adoption and digital asset interest.","Finance,Technology"
+EV026,competitor_launch,Rival Retail Chain Digital Overhaul,North America,2023-03-01,2023-03-15,medium,Major competitor launches redesigned e-commerce platform with AI recommendations.,Retail
+EV027,competitor_launch,New EV Model by Competitor,Global,2023-06-01,2023-06-15,high,Leading competitor unveils affordable EV targeting mass market segment.,Automotive
+EV028,competitor_launch,Streaming Wars: New Platform Launch,Global,2023-09-15,2023-09-30,high,Major tech company enters streaming market with aggressive pricing and exclusive content.,Media & Entertainment
+EV029,competitor_launch,Competitor Telehealth Expansion,North America,2024-01-10,2024-01-31,medium,Healthcare competitor expands telehealth services to 20 new states.,Healthcare
+EV030,competitor_launch,FinTech Super App Launch,Europe,2024-04-01,2024-04-15,high,"European fintech launches all-in-one financial super app with banking, investing, and insurance.",Finance
+EV031,competitor_launch,Fast Fashion Brand Goes Sustainable,Global,2024-07-01,2024-07-31,medium,Major fast fashion brand announces full sustainability pivot with recycled materials.,Fashion
+EV032,competitor_launch,Competitor 5G Home Internet,North America,2024-10-01,2024-10-15,medium,Telecom rival launches unlimited 5G home internet at disruptive price point.,Telecom
+EV033,competitor_launch,Plant-Based Protein Mainstream Push,North America,2025-02-01,2025-02-28,medium,Food competitor launches plant-based line in all major grocery chains.,"Food & Beverage,CPG"
+EV034,competitor_launch,Competitor Solar-as-a-Service,North America,2025-05-01,2025-05-15,medium,Energy competitor launches zero-down solar leasing program.,Energy
+EV035,competitor_launch,Luxury Travel NFT Experiences,Global,2025-03-15,2025-04-15,low,Travel competitor offers blockchain-verified exclusive destination experiences.,Travel
+EV036,regulatory,GDPR Enforcement Tightening,Europe,2023-01-15,2023-12-31,high,EU tightens GDPR enforcement with larger fines for data privacy violations in advertising.,"Technology,Telecom,Retail"
+EV037,regulatory,FDA New Supplement Labeling Rules,North America,2023-05-01,2023-12-31,medium,FDA introduces stricter labeling requirements for health supplements and wellness products.,"Healthcare,CPG"
+EV038,regulatory,Digital Services Act Implementation,Europe,2024-02-17,2024-12-31,high,EU DSA takes full effect requiring platforms to increase ad transparency and content moderation.,"Technology,Media & Entertainment"
+EV039,regulatory,California Privacy Rights Act Update,North America,2024-07-01,2024-12-31,medium,CPRA amendments restrict third-party data sharing for targeted advertising.,"Technology,Retail,Finance"
+EV040,regulatory,EV Emission Standards Tightened,Global,2024-09-01,2025-12-31,high,New global emission standards accelerate transition to electric vehicles.,"Automotive,Energy"
+EV041,regulatory,AI Transparency Act,Europe,2025-03-01,2025-12-31,high,EU mandates AI transparency in consumer-facing applications including ad targeting.,"Technology,Finance,Healthcare"
+EV042,regulatory,Sugar Tax Expansion,Europe,2025-01-01,2025-12-31,medium,Multiple European countries expand sugar tax to more beverage and snack categories.,"Food & Beverage,CPG"
+EV043,regulatory,Cross-Border Data Flow Agreement,Global,2025-06-01,2025-12-31,medium,New international data flow framework eases compliance for global advertising campaigns.,"Technology,Telecom"
+EV044,cultural,Super Bowl LVII,North America,2023-02-12,2023-02-12,high,Most-watched US sporting event. Premium ad slots and massive social media engagement.,"Media & Entertainment,Food & Beverage,Automotive"
+EV045,cultural,FIFA Women's World Cup,Global,2023-07-20,2023-08-20,high,Global sporting event driving women's sports marketing and brand sponsorship opportunities.,"Fashion,CPG,Telecom"
+EV046,cultural,Met Gala,North America,2024-05-06,2024-05-06,medium,High-profile fashion event generating massive social media buzz and luxury brand visibility.,"Fashion,Media & Entertainment"
+EV047,cultural,Paris Olympics 2024,Global,2024-07-26,2024-08-11,high,Global event with massive advertising opportunities across all media channels.,"Automotive,Technology,Fashion,Food & Beverage"
+EV048,cultural,Grammy Awards,Global,2024-02-04,2024-02-04,medium,Music industry's biggest night driving entertainment and fashion conversations.,"Media & Entertainment,Fashion"
+EV049,cultural,Coachella Music Festival,North America,2024-04-12,2024-04-21,medium,"Major cultural moment for youth marketing, fashion collaborations, and brand activations.","Fashion,Food & Beverage,Technology"
+EV050,cultural,Back to School Season,North America,2024-08-01,2024-09-15,medium,"Major retail season for technology, clothing, and supplies.","Retail,Technology,Fashion"
+EV051,cultural,World Cup 2026 Qualifiers Buzz,Global,2025-03-01,2025-06-30,medium,Anticipation for 2026 World Cup drives sports marketing and sponsorship deals.,"Media & Entertainment,Telecom,Food & Beverage"
+EV052,cultural,Earth Day Awareness Campaign,Global,2025-04-22,2025-04-22,medium,Sustainability-focused marketing moment for eco-friendly brands and green initiatives.,"Energy,CPG,Fashion"
+EV053,cultural,Oscar Awards Ceremony,Global,2025-03-02,2025-03-02,medium,Film industry's premier event driving entertainment marketing and red carpet fashion.,"Media & Entertainment,Fashion"

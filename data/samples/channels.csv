@@ -1,0 +1,11 @@
+channel_id,channel_name,channel_type
+CH01,Instagram,Social
+CH02,YouTube,Video
+CH03,Google Search,Search
+CH04,Facebook,Social
+CH05,LinkedIn,Social
+CH06,TikTok,Social
+CH07,Email,Direct
+CH08,Programmatic Display,Display
+CH09,TV,Traditional
+CH10,Out-of-Home,Traditional
