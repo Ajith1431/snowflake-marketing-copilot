@@ -1,0 +1,152 @@
+# Marketing Co-Pilot Agent Definition
+# Deploy to: MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT
+# Tools: Cortex Analyst (semantic view), Cortex Search (brand + market), data_to_chart
+
+models:
+  orchestration: auto
+
+orchestration:
+  tool_not_accessible: accept
+  budget:
+    seconds: 60
+    tokens: 32000
+
+instructions:
+  response: |
+    You are an expert marketing strategist AI at NovaSpark Agency, a full-service marketing agency managing 12 major client brands across Retail, Technology, Healthcare, Finance, CPG, Automotive, Travel, Telecom, Food & Beverage, Fashion, Media & Entertainment, and Energy.
+
+    You help account directors and media strategists prepare data-backed campaign recommendations and client pitch documents.
+
+    You always:
+    - Ground recommendations in historical campaign data from the analytics database
+    - Reference brand guidelines before suggesting creative direction
+    - State your confidence level (HIGH/MEDIUM/LOW) based on available data volume
+    - Ask clarifying questions if client or product is ambiguous
+    - Structure outputs clearly with sections, bullet points, and tables
+    - Include specific metrics: ROAS, CTR, conversion rate, spend, revenue
+    - When presenting numerical data, create charts for visual clarity
+
+    You never:
+    - Make up metrics or invent campaign results
+    - Recommend strategies without data evidence
+    - Ignore brand guidelines when generating creative copy
+    - Provide financial projections without stating assumptions
+
+    Client brands you serve: LuminaRetail (Retail), TechVista (Technology), CareWell (Healthcare), FinEdge (Finance), PureLife (CPG), DriveMax (Automotive), Wanderlux (Travel), ConnectSphere (Telecom), FlavorCo (Food & Beverage), UrbanThread (Fashion), MediaPulse (Media & Entertainment), GreenCore (Energy).
+
+  orchestration: |
+    For any question about campaign performance, spend, revenue, ROAS, CTR, conversions, or budget:
+      Use the CampaignAnalytics tool to query the structured analytics data.
+
+    For any question about brand voice, tone, creative direction, messaging guidelines, dos and donts:
+      Use the BrandSearch tool to retrieve client-specific brand guidelines.
+
+    For any question about market events, seasonality, holidays, competitor activity, or regulatory changes:
+      Use the MarketSearch tool to find relevant market intelligence.
+
+    When generating a campaign pitch or recommendation:
+      1. First use CampaignAnalytics to get the client's historical performance data
+      2. Then use BrandSearch to retrieve the client's brand guidelines
+      3. Then use MarketSearch to find relevant upcoming market events
+      4. Synthesize all three into a data-backed recommendation
+      5. Use data_to_chart to visualize key metrics
+
+    When comparing scenarios or allocations:
+      Use CampaignAnalytics to get channel-level historical metrics, then compute projections.
+
+    Always provide visual charts when presenting performance data with 3 or more data points.
+
+  sample_questions:
+    - question: "What is the campaign performance summary for LuminaRetail?"
+    - question: "Which channels have the best ROAS for TechVista?"
+    - question: "Create a campaign recommendation for UrbanThread's new sustainable fashion line"
+    - question: "What are the brand guidelines for CareWell?"
+    - question: "Compare social media vs traditional channel performance across all clients"
+    - question: "What market events should we consider for Q1 2025 campaigns?"
+
+tools:
+  - tool_spec:
+      type: cortex_analyst_text_to_sql
+      name: CampaignAnalytics
+      description: >-
+        Query structured marketing campaign analytics data including campaign performance
+        metrics (ROAS, CTR, conversions, spend, revenue), client information, product
+        details, channel effectiveness, audience segment targeting, and budget allocation.
+        Covers 12 client brands with 600 campaigns and 76,000+ daily metric records.
+  - tool_spec:
+      type: cortex_search
+      name: BrandSearch
+      description: >-
+        Search brand guidelines for any client including brand voice and tone,
+        visual identity, messaging framework, social media guidelines, content
+        standards, crisis communication protocol, competitive positioning,
+        campaign approval process, and legal compliance requirements.
+  - tool_spec:
+      type: cortex_search
+      name: MarketSearch
+      description: >-
+        Search market intelligence including holidays, economic events,
+        competitor launches, regulatory changes, and cultural moments that
+        impact marketing campaigns across industries and regions.
+  - tool_spec:
+      type: data_to_chart
+      name: data_to_chart
+      description: Generates visualizations and charts from data returned by other tools.
+
+tool_resources:
+  CampaignAnalytics:
+    semantic_view: MARKETING_COPILOT.SEMANTIC.CAMPAIGN_ANALYTICS
+  BrandSearch:
+    search_service: MARKETING_COPILOT.SEMANTIC.BRAND_SEARCH
+    max_results: 5
+    title_column: SECTION_TITLE
+    columns_and_descriptions:
+      GUIDELINE_TEXT:
+        description: "Full text of the brand guideline section including rules, standards, and recommendations"
+        type: string
+        searchable: true
+        filterable: false
+      CLIENT_NAME:
+        description: "Name of the client brand. Values include: LuminaRetail, TechVista, CareWell, FinEdge, PureLife, DriveMax, Wanderlux, ConnectSphere, FlavorCo, UrbanThread, MediaPulse, GreenCore"
+        type: string
+        searchable: false
+        filterable: true
+      SECTION_TITLE:
+        description: "Section of the brand guidelines. Values include: Brand Voice & Tone, Visual Identity Standards, Target Audience Personas, Messaging Framework, Social Media Guidelines, Content Standards & Quality, Crisis Communication Protocol, Competitive Positioning, Campaign Approval Process, Legal & Compliance Requirements"
+        type: string
+        searchable: true
+        filterable: true
+      TONE_KEYWORDS:
+        description: "JSON array of tone keywords that define the brand personality"
+        type: string
+        searchable: true
+        filterable: false
+  MarketSearch:
+    search_service: MARKETING_COPILOT.SEMANTIC.MARKET_SEARCH
+    max_results: 5
+    columns_and_descriptions:
+      DESCRIPTION:
+        description: "Description of the market event and its impact on consumer behavior and marketing"
+        type: string
+        searchable: true
+        filterable: false
+      EVENT_TYPE:
+        description: "Type of market event. Values include: holiday, economic, competitor_launch, regulatory, cultural"
+        type: string
+        searchable: false
+        filterable: true
+      REGION:
+        description: "Geographic region affected. Values include: Global, North America, Europe, Asia Pacific, Middle East & Africa"
+        type: string
+        searchable: false
+        filterable: true
+      IMPACT_LEVEL:
+        description: "Level of impact on marketing. Values include: low, medium, high"
+        type: string
+        searchable: false
+        filterable: true
+      AFFECTED_INDUSTRIES:
+        description: "Comma-separated list of industries affected by this event"
+        type: string
+        searchable: true
+        filterable: false

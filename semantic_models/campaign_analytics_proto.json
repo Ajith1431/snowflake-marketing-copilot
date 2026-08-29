@@ -1,0 +1,99 @@
+{
+  "json_proto": {
+    "name": "CAMPAIGN_ANALYTICS",
+    "database": "MARKETING_COPILOT",
+    "schema": "SEMANTIC",
+    "semanticDescription": "Marketing campaign analytics model for NovaSpark Agency. Covers campaign performance metrics (spend, revenue, ROAS, CTR, conversions), audience segments, channels, products, and client data across 12 client brands. Use this to analyze campaign ROI, compare channel effectiveness, evaluate audience targeting, and build data-driven marketing recommendations.",
+    "tables": [
+      {
+        "database": "MARKETING_COPILOT",
+        "schema": "ANALYTICS",
+        "table": "FACT_CAMPAIGN_METRICS",
+        "columnNames": ["METRIC_ID", "CAMPAIGN_ID", "CLIENT_ID", "CLIENT_NAME", "CAMPAIGN_NAME", "CAMPAIGN_TYPE", "CHANNEL_ID", "CHANNEL_NAME", "CHANNEL_TYPE", "DATE", "IMPRESSIONS", "CLICKS", "CONVERSIONS", "SPEND_USD", "REVENUE_USD", "CTR", "ROAS", "CPC", "CONVERSION_RATE"]
+      },
+      {
+        "database": "MARKETING_COPILOT",
+        "schema": "ANALYTICS",
+        "table": "FACT_CAMPAIGN",
+        "columnNames": ["CAMPAIGN_ID", "CLIENT_ID", "CLIENT_NAME", "INDUSTRY", "PRODUCT_ID", "PRODUCT_NAME", "PRODUCT_CATEGORY", "CAMPAIGN_NAME", "CAMPAIGN_TYPE", "OBJECTIVE", "START_DATE", "END_DATE", "CAMPAIGN_DURATION_DAYS", "TOTAL_BUDGET_USD", "STATUS"]
+      },
+      {
+        "database": "MARKETING_COPILOT",
+        "schema": "ANALYTICS",
+        "table": "DIM_CLIENT",
+        "columnNames": ["CLIENT_ID", "CLIENT_NAME", "INDUSTRY", "REGION", "ANNUAL_REVENUE_USD", "CONTRACT_START_DATE", "PRIMARY_CONTACT", "STATUS"]
+      },
+      {
+        "database": "MARKETING_COPILOT",
+        "schema": "ANALYTICS",
+        "table": "DIM_PRODUCT",
+        "columnNames": ["PRODUCT_ID", "CLIENT_ID", "CLIENT_NAME", "PRODUCT_NAME", "CATEGORY", "LAUNCH_DATE", "PRICE_TIER", "DESCRIPTION"]
+      },
+      {
+        "database": "MARKETING_COPILOT",
+        "schema": "ANALYTICS",
+        "table": "DIM_CHANNEL",
+        "columnNames": ["CHANNEL_ID", "CHANNEL_NAME", "CHANNEL_TYPE"]
+      },
+      {
+        "database": "MARKETING_COPILOT",
+        "schema": "ANALYTICS",
+        "table": "DIM_AUDIENCE_SEGMENT",
+        "columnNames": ["SEGMENT_ID", "CLIENT_ID", "CLIENT_NAME", "SEGMENT_NAME", "AGE_BAND", "GENDER_SKEW", "INCOME_LEVEL", "INTERESTS", "ESTIMATED_SIZE"]
+      },
+      {
+        "database": "MARKETING_COPILOT",
+        "schema": "RAW",
+        "table": "RAW_BRIDGE_CAMPAIGN_SEGMENT",
+        "columnNames": ["CAMPAIGN_ID", "SEGMENT_ID", "ALLOCATION_PCT"]
+      }
+    ],
+    "sqlSource": {
+      "queries": [
+        {
+          "sqlText": "SELECT fc.CAMPAIGN_NAME, AVG(m.ROAS) AS avg_roas, SUM(m.REVENUE_USD) AS total_revenue, SUM(m.SPEND_USD) AS total_spend FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.CLIENT_NAME = 'LuminaRetail' GROUP BY fc.CAMPAIGN_NAME ORDER BY avg_roas DESC LIMIT 10",
+          "correspondingQuestion": "Which campaigns had the highest ROAS for LuminaRetail?"
+        },
+        {
+          "sqlText": "SELECT m.CHANNEL_NAME, SUM(m.SPEND_USD) AS total_spend FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m WHERE YEAR(m.DATE) = 2024 GROUP BY m.CHANNEL_NAME ORDER BY total_spend DESC",
+          "correspondingQuestion": "What is the total spend by channel in 2024?"
+        },
+        {
+          "sqlText": "SELECT seg.SEGMENT_NAME, AVG(m.CONVERSION_RATE) AS avg_conversion_rate FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.RAW.RAW_BRIDGE_CAMPAIGN_SEGMENT b ON m.CAMPAIGN_ID = b.CAMPAIGN_ID JOIN MARKETING_COPILOT.ANALYTICS.DIM_AUDIENCE_SEGMENT seg ON b.SEGMENT_ID = seg.SEGMENT_ID GROUP BY seg.SEGMENT_NAME ORDER BY avg_conversion_rate DESC",
+          "correspondingQuestion": "Which audience segment has the highest conversion rate?"
+        },
+        {
+          "sqlText": "SELECT fc.INDUSTRY, fc.CLIENT_NAME, SUM(m.SPEND_USD) AS total_spend, SUM(m.REVENUE_USD) AS total_revenue, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID GROUP BY fc.INDUSTRY, fc.CLIENT_NAME ORDER BY fc.INDUSTRY, total_revenue DESC",
+          "correspondingQuestion": "Compare campaign performance across all clients by industry"
+        },
+        {
+          "sqlText": "SELECT DATE_TRUNC('MONTH', m.DATE) AS month, SUM(m.REVENUE_USD) AS monthly_revenue FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m WHERE m.CLIENT_NAME = 'TechVista' GROUP BY month ORDER BY month",
+          "correspondingQuestion": "What is the monthly revenue trend for TechVista?"
+        },
+        {
+          "sqlText": "SELECT m.CHANNEL_NAME, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr, SUM(m.CONVERSIONS) AS total_conversions FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.INDUSTRY = 'Fashion' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC",
+          "correspondingQuestion": "Which channel performs best for fashion clients?"
+        },
+        {
+          "sqlText": "SELECT m.CAMPAIGN_TYPE, AVG(m.CTR) AS avg_ctr FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m GROUP BY m.CAMPAIGN_TYPE ORDER BY avg_ctr DESC",
+          "correspondingQuestion": "What is the average CTR by campaign type?"
+        },
+        {
+          "sqlText": "SELECT fc.CAMPAIGN_NAME, fc.CLIENT_NAME, SUM(m.REVENUE_USD) AS total_revenue, SUM(m.SPEND_USD) AS total_spend, ROUND((SUM(m.REVENUE_USD) - SUM(m.SPEND_USD)) / NULLIF(SUM(m.SPEND_USD), 0) * 100, 2) AS roi_pct FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID GROUP BY fc.CAMPAIGN_NAME, fc.CLIENT_NAME ORDER BY roi_pct DESC LIMIT 5",
+          "correspondingQuestion": "Show top 5 campaigns by ROI percentage"
+        },
+        {
+          "sqlText": "SELECT seg.SEGMENT_NAME, AVG(m.CPC) AS avg_cpc FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.RAW.RAW_BRIDGE_CAMPAIGN_SEGMENT b ON m.CAMPAIGN_ID = b.CAMPAIGN_ID JOIN MARKETING_COPILOT.ANALYTICS.DIM_AUDIENCE_SEGMENT seg ON b.SEGMENT_ID = seg.SEGMENT_ID GROUP BY seg.SEGMENT_NAME ORDER BY avg_cpc ASC",
+          "correspondingQuestion": "Which market segment has the lowest CPC?"
+        },
+        {
+          "sqlText": "SELECT fc.CLIENT_NAME, SUM(fc.TOTAL_BUDGET_USD) AS total_budget, SUM(m.SPEND_USD) AS actual_spend, ROUND(SUM(m.SPEND_USD) / NULLIF(SUM(fc.TOTAL_BUDGET_USD), 0) * 100, 2) AS budget_utilization_pct FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m ON fc.CAMPAIGN_ID = m.CAMPAIGN_ID GROUP BY fc.CLIENT_NAME ORDER BY budget_utilization_pct DESC",
+          "correspondingQuestion": "What is the total budget allocated vs actual spend by client?"
+        }
+      ]
+    },
+    "metadata": {
+      "warehouse": "MARKETING_WH"
+    }
+  }
+}
