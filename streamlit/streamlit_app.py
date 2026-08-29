@@ -121,6 +121,17 @@ def load_channel_history(client_id):
     """)
 
 
+INCOMPLETE_MARKERS = [
+    "time limit", "reached the time limit", "may be incomplete",
+    "continue working", "Would you like me to continue",
+    "I've reached the", "token limit",
+]
+
+
+def response_is_incomplete(text):
+    return any(m.lower() in text.lower() for m in INCOMPLETE_MARKERS)
+
+
 def call_agent(prompt):
     request_body = json.dumps(
         {"messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}]}
@@ -289,7 +300,20 @@ with tab2:
             st.session_state["recommendation_approved"] = False
 
     if "recommendation" in st.session_state:
-        st.markdown(st.session_state["recommendation"])
+        rec = st.session_state["recommendation"]
+        st.markdown(rec)
+
+        if response_is_incomplete(rec):
+            st.warning("The recommendation was cut short by the agent time limit.")
+            if st.button("🔄 Continue generating", key="continue_rec"):
+                with st.spinner("Continuing recommendation..."):
+                    continuation = call_agent(
+                        f"Continue the campaign recommendation you were writing for {selected_client}. "
+                        f"Pick up exactly where you left off. Do not repeat sections already written."
+                    )
+                    st.session_state["recommendation"] = rec.rstrip() + "\n\n" + continuation
+                    st.experimental_rerun()
+
         st.divider()
 
         col_a, col_b = st.columns([1, 4])
@@ -433,6 +457,19 @@ with tab4:
                     st.experimental_rerun()
         else:
             pitch = st.session_state["pitch_content"]
+
+            if response_is_incomplete(pitch):
+                st.warning("The pitch was cut short by the agent time limit. Click below to continue.")
+                if st.button("🔄 Continue generating pitch", key="continue_pitch"):
+                    with st.spinner("Continuing pitch generation..."):
+                        continuation = call_agent(
+                            f"Continue the campaign pitch document you were writing for {selected_client}, "
+                            f"product: {selected_product}. Pick up exactly where you left off. "
+                            f"Do not repeat sections already written. Complete the remaining sections."
+                        )
+                        st.session_state["pitch_content"] = pitch.rstrip() + "\n\n" + continuation
+                        st.experimental_rerun()
+
             sections = pitch.split("\n## ")
             if len(sections) > 1:
                 st.markdown(sections[0])
