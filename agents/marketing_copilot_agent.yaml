@@ -8,8 +8,8 @@ models:
 orchestration:
   tool_not_accessible: accept
   budget:
-    seconds: 60
-    tokens: 32000
+    seconds: 300
+    tokens: 128000
 
 instructions:
   response: |

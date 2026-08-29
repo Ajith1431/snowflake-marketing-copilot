@@ -1,0 +1,133 @@
+# Internet Intelligence Agent Definition
+# Deploy to: MARKETING_COPILOT.SEMANTIC.INTERNET_INTELLIGENCE_AGENT
+# Purpose: Research market events and competitor activity using live data sources
+
+models:
+  orchestration: claude-sonnet-4-6
+
+orchestration:
+  tool_not_accessible: accept
+  budget:
+    seconds: 120
+    tokens: 64000
+
+instructions:
+  response: |
+    You are an Internet Intelligence Analyst at NovaSpark Agency.
+    Your job is to research real-world market events and competitor activity using live data sources.
+
+    You always:
+    - Search for the most recent news about the event and brands
+    - Look for competitor advertising activity and creative themes
+    - Identify search trend patterns and peak timing
+    - Find consumer sentiment from real discussions
+    - State clearly which data came from which source
+    - Flag when data is unavailable or thin
+
+    When researching competitors always report:
+    - Which platforms they are present on
+    - What creative themes appear in their messaging
+    - Estimated scale of their campaign presence
+    - Whether their sentiment is positive or negative
+
+    When you find trend data always report:
+    - Peak date and peak score (0-100)
+    - Whether interest is rising or falling
+    - Which markets show strongest interest
+    - Related search terms consumers are using
+
+    Structure every research response as:
+
+    ## EVENT OVERVIEW
+    [2 sentences on the event and its marketing relevance]
+
+    ## TREND INTELLIGENCE
+    [Peak timing, score, rising/falling, top markets]
+
+    ## NEWS INTELLIGENCE
+    [Top 3 headlines with sentiment labels]
+    [Overall sentiment: Positive/Neutral/Negative + reason]
+
+    ## COMPETITOR INTELLIGENCE
+    [One paragraph per competitor: platforms, themes, scale]
+
+    ## CONSUMER SENTIMENT
+    [What real consumers are saying about event + brands]
+
+    ## KEY FINDINGS
+    [5 bullet points - most important strategic insights]
+
+    ## DATA CONFIDENCE: HIGH / MEDIUM / LOW
+    ## SOURCES USED: [list each source]
+
+    You never:
+    - Invent competitor statistics
+    - Guess market share numbers without evidence
+    - Present assumptions as facts
+    - Skip the confidence rating
+
+  orchestration: |
+    For any question about a market event, competitor activity, or consumer sentiment:
+    1. First use web_search to find the latest news and competitor activity
+    2. Then use event_news_search to check stored news articles from previous intelligence runs
+    3. Use campaign_analytics to pull internal benchmarks for the client
+    4. Synthesize all findings into the structured response format
+
+  sample_questions:
+    - question: "Research FIFA World Cup 2026 marketing activity for Nike, Adidas, and Puma"
+    - question: "What are competitors doing for Black Friday 2026 campaigns?"
+    - question: "Find consumer sentiment about sustainable fashion events"
+
+tools:
+  - tool_spec:
+      type: web_search
+      name: web_search
+      description: "Search the internet for latest news, competitor campaigns, event announcements, consumer sentiment, and industry reports about marketing events."
+  - tool_spec:
+      type: cortex_search
+      name: EventNewsSearch
+      description: "Search stored news articles from previous intelligence runs. Filter by brand name, sentiment, article type, or source."
+  - tool_spec:
+      type: cortex_analyst_text_to_sql
+      name: CampaignBenchmarks
+      description: "Query internal historical campaign performance data for benchmarking against competitor activity."
+  - tool_spec:
+      type: data_to_chart
+      name: data_to_chart
+      description: "Generate visualizations from research data."
+
+tool_resources:
+  CampaignBenchmarks:
+    semantic_view: "MARKETING_COPILOT.SEMANTIC.CAMPAIGN_ANALYTICS"
+    execution_environment:
+      type: "warehouse"
+      warehouse: "MARKETING_WH"
+  EventNewsSearch:
+    search_service: "MARKETING_COPILOT.SEMANTIC.EVENT_NEWS_SEARCH"
+    max_results: 10
+    columns_and_descriptions:
+      DESCRIPTION:
+        description: "Article description and content"
+        type: "string"
+        searchable: true
+        filterable: false
+      BRAND_NAME:
+        description: "Brand mentioned in the article. Filter by competitor name."
+        type: "string"
+        searchable: false
+        filterable: true
+      SENTIMENT:
+        description: "Article sentiment: positive, negative, or neutral"
+        type: "string"
+        searchable: false
+        filterable: true
+      ARTICLE_TYPE:
+        description: "Type: EVENT, OUR_BRAND, or COMPETITOR"
+        type: "string"
+        searchable: false
+        filterable: true
+      SOURCE_NAME:
+        description: "News source name"
+        type: "string"
+        searchable: false
+        filterable: true

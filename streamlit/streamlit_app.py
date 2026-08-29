@@ -132,14 +132,14 @@ def response_is_incomplete(text):
     return any(m.lower() in text.lower() for m in INCOMPLETE_MARKERS)
 
 
-def call_agent(prompt):
+def call_named_agent(agent_fqn, prompt):
     request_body = json.dumps(
         {"messages": [{"role": "user", "content": [{"type": "text", "text": prompt}]}]}
     )
     request_body = request_body.replace("$$", "$ $")
     sql = f"""
         SELECT SNOWFLAKE.CORTEX.DATA_AGENT_RUN(
-            'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
+            '{agent_fqn}',
             $${request_body}$$
         ) AS response
     """
@@ -162,6 +162,23 @@ def call_agent(prompt):
         return "\n\n".join(texts) if texts else raw
     except Exception:
         return raw
+
+
+def call_agent(prompt):
+    return call_named_agent('MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT', prompt)
+
+
+MAX_CONTINUATIONS = 3
+
+
+def call_agent_with_auto_continue(agent_fqn, initial_prompt, continue_prompt_fn):
+    result = call_named_agent(agent_fqn, initial_prompt)
+    for i in range(MAX_CONTINUATIONS):
+        if not response_is_incomplete(result):
+            break
+        continuation = call_named_agent(agent_fqn, continue_prompt_fn(i + 1))
+        result = result.rstrip() + "\n\n" + continuation
+    return result
 
 
 def format_usd(val):
@@ -215,11 +232,12 @@ with st.sidebar:
 # ============================
 st.title(f"📊 {selected_client} Marketing Dashboard")
 
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "📊 Client Intelligence",
     "🎯 Campaign Recommendation",
     "🔀 What-If Analysis",
-    "📋 Generate Pitch"
+    "📋 Generate Pitch",
+    "🌍 Event Intelligence"
 ])
 
 # ============================
@@ -285,7 +303,7 @@ with tab1:
 # ============================
 with tab2:
     if analyze_btn:
-        with st.spinner("Analyzing campaign data and generating recommendation..."):
+        with st.spinner("Analyzing campaign data and generating recommendation (auto-continues if needed)..."):
             prompt = (
                 f"Create a detailed campaign recommendation for {selected_client} "
                 f"for their product '{selected_product}'. "
@@ -295,7 +313,15 @@ with tab2:
                 f"target audience segments, expected KPIs (ROAS, impressions, conversions), "
                 f"and strategy rationale. Ground everything in historical performance data."
             )
-            response = call_agent(prompt)
+            response = call_agent_with_auto_continue(
+                'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
+                prompt,
+                lambda n: (
+                    f"Continue the campaign recommendation you were writing for {selected_client}. "
+                    f"Pick up exactly where you left off. Do not repeat sections already written. "
+                    f"This is continuation #{n}."
+                )
+            )
             st.session_state["recommendation"] = response
             st.session_state["recommendation_approved"] = False
 
@@ -304,15 +330,7 @@ with tab2:
         st.markdown(rec)
 
         if response_is_incomplete(rec):
-            st.warning("The recommendation was cut short by the agent time limit.")
-            if st.button("🔄 Continue generating", key="continue_rec"):
-                with st.spinner("Continuing recommendation..."):
-                    continuation = call_agent(
-                        f"Continue the campaign recommendation you were writing for {selected_client}. "
-                        f"Pick up exactly where you left off. Do not repeat sections already written."
-                    )
-                    st.session_state["recommendation"] = rec.rstrip() + "\n\n" + continuation
-                    st.experimental_rerun()
+            st.warning("The recommendation may still be incomplete after auto-continuation.")
 
         st.divider()
 
@@ -438,7 +456,7 @@ with tab4:
         st.subheader(f"Campaign Pitch: {selected_product} for {selected_client}")
         if "pitch_content" not in st.session_state:
             if st.button("📝 Generate Full Pitch", type="primary"):
-                with st.spinner("Generating pitch document with brand guidelines..."):
+                with st.spinner("Generating pitch document (auto-continues if needed)..."):
                     prompt = (
                         f"Generate a complete client-ready campaign pitch document for {selected_client}, "
                         f"product: {selected_product}, objective: {objective}, budget: ${budget:,}. "
@@ -452,23 +470,23 @@ with tab4:
                         f"7. Expected Impact and projected metrics. "
                         f"Make it professional, data-backed, and aligned with the brand voice."
                     )
-                    pitch = call_agent(prompt)
+                    pitch = call_agent_with_auto_continue(
+                        'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
+                        prompt,
+                        lambda n: (
+                            f"Continue the campaign pitch document you were writing for {selected_client}, "
+                            f"product: {selected_product}. Pick up exactly where you left off. "
+                            f"Do not repeat sections already written. Complete the remaining sections. "
+                            f"This is continuation #{n}."
+                        )
+                    )
                     st.session_state["pitch_content"] = pitch
                     st.experimental_rerun()
         else:
             pitch = st.session_state["pitch_content"]
 
             if response_is_incomplete(pitch):
-                st.warning("The pitch was cut short by the agent time limit. Click below to continue.")
-                if st.button("🔄 Continue generating pitch", key="continue_pitch"):
-                    with st.spinner("Continuing pitch generation..."):
-                        continuation = call_agent(
-                            f"Continue the campaign pitch document you were writing for {selected_client}, "
-                            f"product: {selected_product}. Pick up exactly where you left off. "
-                            f"Do not repeat sections already written. Complete the remaining sections."
-                        )
-                        st.session_state["pitch_content"] = pitch.rstrip() + "\n\n" + continuation
-                        st.experimental_rerun()
+                st.warning("The pitch may still be incomplete after auto-continuation.")
 
             sections = pitch.split("\n## ")
             if len(sections) > 1:
@@ -497,3 +515,285 @@ with tab4:
                     st.experimental_rerun()
     else:
         st.info("Approve a campaign recommendation in the **Campaign Recommendation** tab first to generate a pitch document.")
+
+
+# ============================
+# TAB 5: Event Intelligence
+# ============================
+with tab5:
+    st.subheader("Live Event Intelligence & Strategy")
+    st.caption("Pull real-time market intelligence for major events and generate data-driven campaign strategies.")
+
+    # -- Stage 1: Input Panel --
+    ei_col1, ei_col2 = st.columns([2, 1])
+
+    with ei_col1:
+        event_options = [
+            "Super Bowl 2025", "Black Friday 2025", "Holiday Season 2025",
+            "Back to School 2025", "Valentine's Day 2026", "Summer Olympics 2028",
+            "New Year Campaign 2026", "Spring Launch 2025"
+        ]
+        selected_event = st.selectbox("Select Market Event", event_options, key="ei_event")
+
+        ei_keywords = st.text_input(
+            "Event Keywords (comma-separated)",
+            value=f"{selected_event}, marketing, advertising, campaign",
+            key="ei_keywords"
+        )
+
+        competitors_input = st.text_input(
+            "Competitors (comma-separated)",
+            value="Nike, Adidas, Apple, Samsung",
+            key="ei_competitors"
+        )
+
+        markets_input = st.text_input(
+            "Target Markets (comma-separated)",
+            value="US, UK, India",
+            key="ei_markets"
+        )
+
+        ei_budget = st.number_input(
+            "Event Budget (USD)", min_value=50000, max_value=50000000,
+            value=500000, step=50000, format="%d", key="ei_budget"
+        )
+
+        ei_objective = st.selectbox("Event Objective", [
+            "Maximize Brand Visibility", "Drive Event-Day Sales",
+            "Capture Market Share", "Build Community Engagement"
+        ], key="ei_objective")
+
+    with ei_col2:
+        st.info(
+            "**How It Works**\n\n"
+            "1. **Research Phase** — The Internet Intelligence Agent pulls Google Trends, "
+            "news articles, and web intelligence for your event and competitors.\n\n"
+            "2. **Analysis Phase** — Data is loaded into Snowflake dynamic tables for "
+            "real-time analytics: trend patterns, news sentiment, competitor presence.\n\n"
+            "3. **Strategy Phase** — The Strategy Synthesis Agent combines internal campaign "
+            "data with live market intelligence to produce a complete event strategy."
+        )
+
+    run_intel = st.button("🚀 Run Event Intelligence", type="primary", use_container_width=True, key="ei_run_btn")
+
+    # -- Stage 2: Research & Intelligence Display --
+    if run_intel:
+        competitors_list = [c.strip() for c in competitors_input.split(",") if c.strip()]
+        markets_list = [m.strip() for m in markets_input.split(",") if m.strip()]
+        keywords_list = [k.strip() for k in ei_keywords.split(",") if k.strip()]
+
+        st.divider()
+        st.markdown("### 🔍 Research Phase")
+
+        progress = st.progress(0, text="Starting intelligence research...")
+
+        # Step 1: Call Internet Intelligence Agent
+        progress.progress(10, text="Calling Internet Intelligence Agent...")
+        intel_prompt = (
+            f"Research the market event '{selected_event}' for client {selected_client}. "
+            f"Keywords: {', '.join(keywords_list)}. "
+            f"Competitors: {', '.join(competitors_list)}. "
+            f"Target markets: {', '.join(markets_list)}. "
+            f"Gather Google Trends data, recent news articles, and web intelligence about "
+            f"competitive positioning and market opportunities for this event."
+        )
+
+        intel_response = call_named_agent(
+            'MARKETING_COPILOT.SEMANTIC.INTERNET_INTELLIGENCE_AGENT',
+            intel_prompt
+        )
+        st.session_state["ei_intel_response"] = intel_response
+        progress.progress(40, text="Intelligence research complete. Loading analytics...")
+
+        # Step 2: Query existing event intelligence data from Snowflake
+        progress.progress(50, text="Fetching trend data...")
+
+        try:
+            trends_df = run_query(f"""
+                SELECT keyword, trend_date, interest_score, is_peak_date, data_source
+                FROM MARKETING_COPILOT.ANALYTICS.DIM_EVENT_TRENDS
+                WHERE UPPER(event_name) LIKE '%{selected_event.upper().replace("'", "''")}%'
+                ORDER BY trend_date DESC
+                LIMIT 200
+            """)
+        except Exception:
+            trends_df = pd.DataFrame()
+
+        progress.progress(60, text="Fetching news sentiment...")
+
+        try:
+            news_df = run_query(f"""
+                SELECT title, source, sentiment_label, sentiment_score,
+                       published_date, relevance_score
+                FROM MARKETING_COPILOT.ANALYTICS.DIM_NEWS_SENTIMENT
+                WHERE UPPER(event_name) LIKE '%{selected_event.upper().replace("'", "''")}%'
+                ORDER BY published_date DESC
+                LIMIT 50
+            """)
+        except Exception:
+            news_df = pd.DataFrame()
+
+        progress.progress(70, text="Fetching competitor presence...")
+
+        try:
+            competitor_df = run_query(f"""
+                SELECT competitor_name, mention_count, sentiment_avg,
+                       market_share_indicator, threat_level
+                FROM MARKETING_COPILOT.ANALYTICS.DIM_COMPETITOR_PRESENCE
+                WHERE UPPER(event_name) LIKE '%{selected_event.upper().replace("'", "''")}%'
+                ORDER BY mention_count DESC
+                LIMIT 20
+            """)
+        except Exception:
+            competitor_df = pd.DataFrame()
+
+        progress.progress(80, text="Building intelligence dashboard...")
+
+        # Display Intelligence Results
+        st.session_state["ei_trends_data"] = trends_df
+        st.session_state["ei_news_data"] = news_df
+        st.session_state["ei_competitors_data"] = competitor_df
+
+        progress.progress(100, text="Research complete!")
+
+    # -- Display cached intelligence results --
+    if "ei_intel_response" in st.session_state:
+        st.divider()
+
+        # Agent response
+        with st.expander("🤖 Intelligence Agent Findings", expanded=True):
+            st.markdown(st.session_state["ei_intel_response"])
+
+        # Trends visualization
+        trends_df = st.session_state.get("ei_trends_data", pd.DataFrame())
+        if not trends_df.empty:
+            with st.expander("📈 Google Trends Analysis", expanded=True):
+                fig_trends = px.line(
+                    trends_df, x="TREND_DATE", y="INTEREST_SCORE",
+                    color="KEYWORD" if "KEYWORD" in trends_df.columns else None,
+                    color_discrete_sequence=COLORS,
+                    template=PLOTLY_TEMPLATE
+                )
+                fig_trends.update_layout(
+                    xaxis_title="Date", yaxis_title="Interest Score",
+                    height=350, margin=dict(t=20, b=40)
+                )
+                st.plotly_chart(fig_trends, use_container_width=True)
+
+                peak_rows = trends_df[trends_df.get("IS_PEAK_DATE", pd.Series(dtype=bool)) == True]
+                if not peak_rows.empty:
+                    st.success(f"Peak interest detected on: {', '.join(peak_rows['TREND_DATE'].astype(str).unique()[:3])}")
+
+        # News sentiment
+        news_df = st.session_state.get("ei_news_data", pd.DataFrame())
+        if not news_df.empty:
+            with st.expander("📰 News Sentiment Overview", expanded=True):
+                sent_cols = st.columns(3)
+                pos_count = len(news_df[news_df.get("SENTIMENT_LABEL", pd.Series()) == "positive"])
+                neg_count = len(news_df[news_df.get("SENTIMENT_LABEL", pd.Series()) == "negative"])
+                neu_count = len(news_df) - pos_count - neg_count
+                sent_cols[0].metric("Positive", pos_count)
+                sent_cols[1].metric("Neutral", neu_count)
+                sent_cols[2].metric("Negative", neg_count)
+
+                if "SENTIMENT_LABEL" in news_df.columns:
+                    sent_fig = px.pie(
+                        news_df["SENTIMENT_LABEL"].value_counts().reset_index(),
+                        values="count", names="SENTIMENT_LABEL",
+                        color_discrete_sequence=[SECONDARY, "#94A3B8", ACCENT],
+                        template=PLOTLY_TEMPLATE
+                    )
+                    sent_fig.update_layout(height=300, margin=dict(t=20, b=20))
+                    st.plotly_chart(sent_fig, use_container_width=True)
+
+                st.dataframe(
+                    news_df[["TITLE", "SOURCE", "SENTIMENT_LABEL", "PUBLISHED_DATE"]].head(15),
+                    use_container_width=True, hide_index=True
+                )
+
+        # Competitor presence
+        competitor_df = st.session_state.get("ei_competitors_data", pd.DataFrame())
+        if not competitor_df.empty:
+            with st.expander("🏢 Competitor Landscape", expanded=True):
+                fig_comp = px.bar(
+                    competitor_df, x="COMPETITOR_NAME", y="MENTION_COUNT",
+                    color="THREAT_LEVEL" if "THREAT_LEVEL" in competitor_df.columns else None,
+                    color_discrete_sequence=COLORS,
+                    template=PLOTLY_TEMPLATE
+                )
+                fig_comp.update_layout(
+                    xaxis_title="Competitor", yaxis_title="Mentions",
+                    height=350, margin=dict(t=20, b=40)
+                )
+                st.plotly_chart(fig_comp, use_container_width=True)
+
+        # -- Stage 3: Strategy Output --
+        st.divider()
+        st.markdown("### 🧠 Strategy Synthesis")
+
+        if "ei_strategy" not in st.session_state:
+            if st.button("🧠 Generate Event Strategy", type="primary", key="ei_strategy_btn"):
+                with st.spinner("Strategy Synthesis Agent is building your event strategy..."):
+                    strategy_prompt = (
+                        f"Create a comprehensive event marketing strategy for {selected_client} "
+                        f"targeting the '{selected_event}' event. "
+                        f"Budget: ${ei_budget:,}. Objective: {ei_objective}. "
+                        f"Competitors: {competitors_input}. Markets: {markets_input}. "
+                        f"Include: 1) Channel allocation with percentages, "
+                        f"2) Creative direction and messaging themes, "
+                        f"3) Timeline with key milestones, "
+                        f"4) Expected impact metrics (reach, engagement, conversions), "
+                        f"5) Competitive positioning strategy. "
+                        f"Base recommendations on both historical campaign performance data "
+                        f"and current market intelligence."
+                    )
+                    strategy = call_named_agent(
+                        'MARKETING_COPILOT.SEMANTIC.STRATEGY_SYNTHESIS_AGENT',
+                        strategy_prompt
+                    )
+                    st.session_state["ei_strategy"] = strategy
+                    st.experimental_rerun()
+        else:
+            strategy = st.session_state["ei_strategy"]
+
+            if response_is_incomplete(strategy):
+                st.warning("The strategy was cut short. Click below to continue.")
+                if st.button("🔄 Continue strategy", key="continue_ei_strategy"):
+                    with st.spinner("Continuing strategy..."):
+                        continuation = call_named_agent(
+                            'MARKETING_COPILOT.SEMANTIC.STRATEGY_SYNTHESIS_AGENT',
+                            f"Continue the event marketing strategy you were writing for "
+                            f"{selected_client} and '{selected_event}'. Pick up where you left off."
+                        )
+                        st.session_state["ei_strategy"] = strategy.rstrip() + "\n\n" + continuation
+                        st.experimental_rerun()
+
+            # Display strategy in expandable sections
+            sections = strategy.split("\n## ")
+            if len(sections) > 1:
+                st.markdown(sections[0])
+                for sec in sections[1:]:
+                    title = sec.split("\n")[0].strip().lstrip("#").strip()
+                    body = "\n".join(sec.split("\n")[1:])
+                    with st.expander(f"📌 {title}", expanded=True):
+                        st.markdown(body)
+            else:
+                st.markdown(strategy)
+
+            st.divider()
+
+            dl_col, reset_col = st.columns([1, 4])
+            with dl_col:
+                st.download_button(
+                    "⬇️ Download Strategy (.md)",
+                    strategy,
+                    file_name=f"event_strategy_{selected_client}_{selected_event.replace(' ', '_')}.md",
+                    mime="text/markdown",
+                    key="ei_download"
+                )
+            with reset_col:
+                if st.button("🔄 New Research", key="ei_reset"):
+                    for key in ["ei_intel_response", "ei_trends_data", "ei_news_data",
+                                "ei_competitors_data", "ei_strategy"]:
+                        st.session_state.pop(key, None)
+                    st.experimental_rerun()
