@@ -1,0 +1,539 @@
+name: CAMPAIGN_ANALYTICS
+description: >-
+  Marketing campaign analytics model for NovaSpark Agency. Covers campaign
+  performance metrics (spend, revenue, ROAS, CTR, conversions), audience
+  segments, channels, products, and client data across 12 client brands.
+  Use this to analyze campaign ROI, compare channel effectiveness, evaluate
+  audience targeting, and build data-driven marketing recommendations.
+
+tables:
+  - name: FACT_CAMPAIGN_METRICS
+    description: >-
+      Daily campaign performance metrics at the campaign-channel-day grain.
+      Contains impressions, clicks, conversions, spend, revenue, and derived
+      ratios (CTR, ROAS, CPC, conversion rate). Primary fact table for all
+      campaign analytics.
+    base_table:
+      database: MARKETING_COPILOT
+      schema: ANALYTICS
+      table: FACT_CAMPAIGN_METRICS
+    primary_key:
+      columns:
+        - METRIC_ID
+    dimensions:
+      - name: METRIC_ID
+        description: Unique identifier for each daily metric record
+        expr: METRIC_ID
+        data_type: VARCHAR
+        unique: true
+      - name: CAMPAIGN_ID
+        description: Foreign key to the campaign this metric belongs to
+        expr: CAMPAIGN_ID
+        data_type: VARCHAR
+      - name: CLIENT_ID
+        description: Foreign key to the client that owns this campaign
+        expr: CLIENT_ID
+        data_type: VARCHAR
+      - name: CLIENT_NAME
+        description: Name of the client brand (e.g., LuminaRetail, TechVista)
+        expr: CLIENT_NAME
+        data_type: VARCHAR
+      - name: CAMPAIGN_NAME
+        description: Full name of the campaign including client, season, type, and year
+        expr: CAMPAIGN_NAME
+        data_type: VARCHAR
+      - name: CAMPAIGN_TYPE
+        description: Type of campaign objective - awareness, consideration, conversion, or retention
+        expr: CAMPAIGN_TYPE
+        data_type: VARCHAR
+      - name: CHANNEL_ID
+        description: Foreign key to the marketing channel used
+        expr: CHANNEL_ID
+        data_type: VARCHAR
+      - name: CHANNEL_NAME
+        description: Name of the marketing channel (e.g., Instagram, Google Search, TV)
+        expr: CHANNEL_NAME
+        data_type: VARCHAR
+      - name: CHANNEL_TYPE
+        description: Category of channel - Social, Video, Search, Direct, Display, or Traditional
+        expr: CHANNEL_TYPE
+        data_type: VARCHAR
+    time_dimensions:
+      - name: METRIC_DATE
+        description: Date of the daily metric measurement
+        expr: DATE
+        data_type: DATE
+    facts:
+      - name: IMPRESSIONS
+        description: Number of ad impressions served on this day
+        expr: IMPRESSIONS
+        data_type: NUMBER
+      - name: CLICKS
+        description: Number of clicks on ads on this day
+        expr: CLICKS
+        data_type: NUMBER
+      - name: CONVERSIONS
+        description: Number of conversion events on this day
+        expr: CONVERSIONS
+        data_type: NUMBER
+      - name: SPEND_USD
+        description: Advertising spend in USD on this day
+        expr: SPEND_USD
+        data_type: NUMBER
+      - name: REVENUE_USD
+        description: Revenue attributed to campaign on this day in USD
+        expr: REVENUE_USD
+        data_type: NUMBER
+      - name: CTR_VALUE
+        description: Click-through rate for this day (clicks / impressions)
+        expr: CTR
+        data_type: FLOAT
+      - name: ROAS_VALUE
+        description: Return on ad spend for this day (revenue / spend)
+        expr: ROAS
+        data_type: NUMBER
+      - name: CPC_VALUE
+        description: Cost per click in USD for this day
+        expr: CPC
+        data_type: NUMBER
+      - name: CONVERSION_RATE_VALUE
+        description: Conversion rate for this day (conversions / clicks)
+        expr: CONVERSION_RATE
+        data_type: FLOAT
+    metrics:
+      - name: TOTAL_IMPRESSIONS
+        description: Total number of ad impressions served
+        expr: SUM(IMPRESSIONS)
+      - name: TOTAL_CLICKS
+        description: Total number of clicks on ads
+        expr: SUM(CLICKS)
+      - name: TOTAL_CONVERSIONS
+        description: Total number of conversion events
+        expr: SUM(CONVERSIONS)
+      - name: TOTAL_SPEND
+        description: Total advertising spend in USD
+        expr: SUM(SPEND_USD)
+      - name: TOTAL_REVENUE
+        description: Total revenue attributed to campaigns in USD
+        expr: SUM(REVENUE_USD)
+      - name: AVG_CTR
+        description: Average click-through rate
+        expr: AVG(CTR)
+      - name: AVG_ROAS
+        description: Average return on ad spend
+        expr: AVG(ROAS)
+      - name: AVG_CPC
+        description: Average cost per click in USD
+        expr: AVG(CPC)
+      - name: AVG_CONVERSION_RATE
+        description: Average conversion rate
+        expr: AVG(CONVERSION_RATE)
+
+  - name: FACT_CAMPAIGN
+    description: >-
+      Campaign master data including client, product, type, objective, dates,
+      budget, and status. One row per campaign.
+    base_table:
+      database: MARKETING_COPILOT
+      schema: ANALYTICS
+      table: FACT_CAMPAIGN
+    primary_key:
+      columns:
+        - CAMPAIGN_ID
+    dimensions:
+      - name: CAMPAIGN_ID
+        description: Unique identifier for each campaign
+        expr: CAMPAIGN_ID
+        data_type: VARCHAR
+        unique: true
+      - name: CLIENT_ID
+        description: Foreign key to the client
+        expr: CLIENT_ID
+        data_type: VARCHAR
+      - name: CLIENT_NAME
+        description: Name of the client brand
+        expr: CLIENT_NAME
+        data_type: VARCHAR
+      - name: INDUSTRY
+        description: Industry vertical of the client
+        expr: INDUSTRY
+        data_type: VARCHAR
+      - name: PRODUCT_ID
+        description: Foreign key to the product being promoted
+        expr: PRODUCT_ID
+        data_type: VARCHAR
+      - name: PRODUCT_NAME
+        description: Name of the product being promoted
+        expr: PRODUCT_NAME
+        data_type: VARCHAR
+      - name: PRODUCT_CATEGORY
+        description: Category of the promoted product
+        expr: PRODUCT_CATEGORY
+        data_type: VARCHAR
+      - name: CAMPAIGN_NAME
+        description: Full descriptive name of the campaign
+        expr: CAMPAIGN_NAME
+        data_type: VARCHAR
+      - name: CAMPAIGN_TYPE
+        description: Type of campaign - awareness, consideration, conversion, or retention
+        expr: CAMPAIGN_TYPE
+        data_type: VARCHAR
+      - name: OBJECTIVE
+        description: Specific business objective for the campaign
+        expr: OBJECTIVE
+        data_type: VARCHAR
+      - name: STATUS
+        description: Current campaign status - ACTIVE, COMPLETED, or PLANNED
+        expr: STATUS
+        data_type: VARCHAR
+      - name: CAMPAIGN_DURATION_DAYS
+        description: Number of days the campaign runs
+        expr: CAMPAIGN_DURATION_DAYS
+        data_type: NUMBER
+    time_dimensions:
+      - name: CAMPAIGN_START_DATE
+        description: Date when the campaign starts
+        expr: START_DATE
+        data_type: DATE
+      - name: CAMPAIGN_END_DATE
+        description: Date when the campaign ends
+        expr: END_DATE
+        data_type: DATE
+    facts:
+      - name: TOTAL_BUDGET_USD
+        description: Total campaign budget in USD
+        expr: TOTAL_BUDGET_USD
+        data_type: NUMBER
+    metrics:
+      - name: TOTAL_BUDGET
+        description: Total campaign budget in USD across campaigns
+        expr: SUM(TOTAL_BUDGET_USD)
+      - name: CAMPAIGN_COUNT
+        description: Number of campaigns
+        expr: COUNT(CAMPAIGN_ID)
+
+  - name: DIM_CLIENT
+    description: Client dimension with 12 agency client brands across industries.
+    base_table:
+      database: MARKETING_COPILOT
+      schema: ANALYTICS
+      table: DIM_CLIENT
+    primary_key:
+      columns:
+        - CLIENT_ID
+    dimensions:
+      - name: CLIENT_ID
+        description: Unique client identifier
+        expr: CLIENT_ID
+        data_type: VARCHAR
+        unique: true
+      - name: CLIENT_NAME
+        description: Brand name of the client
+        expr: CLIENT_NAME
+        data_type: VARCHAR
+      - name: INDUSTRY
+        description: Industry vertical
+        expr: INDUSTRY
+        data_type: VARCHAR
+      - name: REGION
+        description: Primary geographic region
+        expr: REGION
+        data_type: VARCHAR
+      - name: STATUS
+        description: Client account status
+        expr: STATUS
+        data_type: VARCHAR
+    time_dimensions:
+      - name: CONTRACT_START_DATE
+        description: Date the agency contract started
+        expr: CONTRACT_START_DATE
+        data_type: DATE
+    facts:
+      - name: ANNUAL_REVENUE_USD
+        description: Client annual revenue in USD
+        expr: ANNUAL_REVENUE_USD
+        data_type: NUMBER
+
+  - name: DIM_PRODUCT
+    description: Product dimension with 3-5 products per client.
+    base_table:
+      database: MARKETING_COPILOT
+      schema: ANALYTICS
+      table: DIM_PRODUCT
+    primary_key:
+      columns:
+        - PRODUCT_ID
+    dimensions:
+      - name: PRODUCT_ID
+        description: Unique product identifier
+        expr: PRODUCT_ID
+        data_type: VARCHAR
+        unique: true
+      - name: CLIENT_ID
+        description: Foreign key to the client
+        expr: CLIENT_ID
+        data_type: VARCHAR
+      - name: PRODUCT_NAME
+        description: Name of the product
+        expr: PRODUCT_NAME
+        data_type: VARCHAR
+      - name: CATEGORY
+        description: Product category
+        expr: CATEGORY
+        data_type: VARCHAR
+      - name: PRICE_TIER
+        description: Pricing tier - budget, mid, or premium
+        expr: PRICE_TIER
+        data_type: VARCHAR
+    time_dimensions:
+      - name: LAUNCH_DATE
+        description: Date the product was launched
+        expr: LAUNCH_DATE
+        data_type: DATE
+
+  - name: DIM_CHANNEL
+    description: Marketing channel dimension with 10 channels.
+    base_table:
+      database: MARKETING_COPILOT
+      schema: ANALYTICS
+      table: DIM_CHANNEL
+    primary_key:
+      columns:
+        - CHANNEL_ID
+    dimensions:
+      - name: CHANNEL_ID
+        description: Unique channel identifier
+        expr: CHANNEL_ID
+        data_type: VARCHAR
+        unique: true
+      - name: CHANNEL_NAME
+        description: Name of marketing channel
+        expr: CHANNEL_NAME
+        data_type: VARCHAR
+      - name: CHANNEL_TYPE
+        description: Channel category
+        expr: CHANNEL_TYPE
+        data_type: VARCHAR
+
+  - name: DIM_AUDIENCE_SEGMENT
+    description: Audience segment dimension with demographic targeting attributes.
+    base_table:
+      database: MARKETING_COPILOT
+      schema: ANALYTICS
+      table: DIM_AUDIENCE_SEGMENT
+    primary_key:
+      columns:
+        - SEGMENT_ID
+    dimensions:
+      - name: SEGMENT_ID
+        description: Unique segment identifier
+        expr: SEGMENT_ID
+        data_type: VARCHAR
+        unique: true
+      - name: CLIENT_ID
+        description: Foreign key to the client
+        expr: CLIENT_ID
+        data_type: VARCHAR
+      - name: SEGMENT_NAME
+        description: Descriptive name of the audience segment
+        expr: SEGMENT_NAME
+        data_type: VARCHAR
+      - name: AGE_BAND
+        description: Target age range for this segment
+        expr: AGE_BAND
+        data_type: VARCHAR
+      - name: GENDER_SKEW
+        description: Gender distribution tendency
+        expr: GENDER_SKEW
+        data_type: VARCHAR
+      - name: INCOME_LEVEL
+        description: Target income level
+        expr: INCOME_LEVEL
+        data_type: VARCHAR
+    facts:
+      - name: ESTIMATED_SIZE
+        description: Estimated number of people in this audience segment
+        expr: ESTIMATED_SIZE
+        data_type: NUMBER
+
+  - name: BRIDGE_CAMPAIGN_SEGMENT
+    description: Bridge table linking campaigns to audience segments with allocation percentages.
+    base_table:
+      database: MARKETING_COPILOT
+      schema: RAW
+      table: RAW_BRIDGE_CAMPAIGN_SEGMENT
+    primary_key:
+      columns:
+        - CAMPAIGN_ID
+        - SEGMENT_ID
+    dimensions:
+      - name: CAMPAIGN_ID
+        description: Foreign key to the campaign
+        expr: CAMPAIGN_ID
+        data_type: VARCHAR
+      - name: SEGMENT_ID
+        description: Foreign key to the audience segment
+        expr: SEGMENT_ID
+        data_type: VARCHAR
+    facts:
+      - name: ALLOCATION_PCT
+        description: Percentage of campaign budget allocated to this segment
+        expr: ALLOCATION_PCT
+        data_type: NUMBER
+
+relationships:
+  - name: metrics_to_campaign
+    left_table: FACT_CAMPAIGN_METRICS
+    right_table: FACT_CAMPAIGN
+    relationship_columns:
+      - left_column: CAMPAIGN_ID
+        right_column: CAMPAIGN_ID
+    relationship_type: many_to_one
+
+  - name: campaign_to_client
+    left_table: FACT_CAMPAIGN
+    right_table: DIM_CLIENT
+    relationship_columns:
+      - left_column: CLIENT_ID
+        right_column: CLIENT_ID
+    relationship_type: many_to_one
+
+  - name: campaign_to_product
+    left_table: FACT_CAMPAIGN
+    right_table: DIM_PRODUCT
+    relationship_columns:
+      - left_column: PRODUCT_ID
+        right_column: PRODUCT_ID
+    relationship_type: many_to_one
+
+  - name: metrics_to_channel
+    left_table: FACT_CAMPAIGN_METRICS
+    right_table: DIM_CHANNEL
+    relationship_columns:
+      - left_column: CHANNEL_ID
+        right_column: CHANNEL_ID
+    relationship_type: many_to_one
+
+  - name: bridge_to_campaign
+    left_table: BRIDGE_CAMPAIGN_SEGMENT
+    right_table: FACT_CAMPAIGN
+    relationship_columns:
+      - left_column: CAMPAIGN_ID
+        right_column: CAMPAIGN_ID
+    relationship_type: many_to_one
+
+  - name: bridge_to_segment
+    left_table: BRIDGE_CAMPAIGN_SEGMENT
+    right_table: DIM_AUDIENCE_SEGMENT
+    relationship_columns:
+      - left_column: SEGMENT_ID
+        right_column: SEGMENT_ID
+    relationship_type: many_to_one
+
+verified_queries:
+  - name: highest_roas_luminaRetail
+    question: Which campaigns had the highest ROAS for LuminaRetail?
+    sql: >-
+      SELECT fc.CAMPAIGN_NAME, AVG(m.ROAS) AS avg_roas,
+        SUM(m.REVENUE_USD) AS total_revenue, SUM(m.SPEND_USD) AS total_spend
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID
+      WHERE fc.CLIENT_NAME = 'LuminaRetail'
+      GROUP BY fc.CAMPAIGN_NAME ORDER BY avg_roas DESC LIMIT 10
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: total_spend_by_channel_2024
+    question: What is the total spend by channel in 2024?
+    sql: >-
+      SELECT m.CHANNEL_NAME, SUM(m.SPEND_USD) AS total_spend
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      WHERE YEAR(m.DATE) = 2024 GROUP BY m.CHANNEL_NAME ORDER BY total_spend DESC
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: segment_conversion_rate
+    question: Which audience segment has the highest conversion rate?
+    sql: >-
+      SELECT seg.SEGMENT_NAME, AVG(m.CONVERSION_RATE) AS avg_conversion_rate
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      JOIN MARKETING_COPILOT.RAW.RAW_BRIDGE_CAMPAIGN_SEGMENT b ON m.CAMPAIGN_ID = b.CAMPAIGN_ID
+      JOIN MARKETING_COPILOT.ANALYTICS.DIM_AUDIENCE_SEGMENT seg ON b.SEGMENT_ID = seg.SEGMENT_ID
+      GROUP BY seg.SEGMENT_NAME ORDER BY avg_conversion_rate DESC
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: performance_by_industry
+    question: Compare campaign performance across all clients by industry
+    sql: >-
+      SELECT fc.INDUSTRY, fc.CLIENT_NAME, SUM(m.SPEND_USD) AS total_spend,
+        SUM(m.REVENUE_USD) AS total_revenue, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID
+      GROUP BY fc.INDUSTRY, fc.CLIENT_NAME ORDER BY fc.INDUSTRY, total_revenue DESC
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: techvista_monthly_revenue
+    question: What is the monthly revenue trend for TechVista?
+    sql: >-
+      SELECT DATE_TRUNC('MONTH', m.DATE) AS month, SUM(m.REVENUE_USD) AS monthly_revenue
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      WHERE m.CLIENT_NAME = 'TechVista' GROUP BY month ORDER BY month
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: best_channel_fashion
+    question: Which channel performs best for fashion clients?
+    sql: >-
+      SELECT m.CHANNEL_NAME, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr,
+        SUM(m.CONVERSIONS) AS total_conversions
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID
+      WHERE fc.INDUSTRY = 'Fashion' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: avg_ctr_by_campaign_type
+    question: What is the average CTR by campaign type?
+    sql: >-
+      SELECT m.CAMPAIGN_TYPE, AVG(m.CTR) AS avg_ctr
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      GROUP BY m.CAMPAIGN_TYPE ORDER BY avg_ctr DESC
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: top5_campaigns_roi
+    question: Show top 5 campaigns by ROI percentage
+    sql: >-
+      SELECT fc.CAMPAIGN_NAME, fc.CLIENT_NAME, SUM(m.REVENUE_USD) AS total_revenue,
+        SUM(m.SPEND_USD) AS total_spend,
+        ROUND((SUM(m.REVENUE_USD) - SUM(m.SPEND_USD)) / NULLIF(SUM(m.SPEND_USD), 0) * 100, 2) AS roi_pct
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID
+      GROUP BY fc.CAMPAIGN_NAME, fc.CLIENT_NAME ORDER BY roi_pct DESC LIMIT 5
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: lowest_cpc_segment
+    question: Which market segment has the lowest CPC?
+    sql: >-
+      SELECT seg.SEGMENT_NAME, AVG(m.CPC) AS avg_cpc
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
+      JOIN MARKETING_COPILOT.RAW.RAW_BRIDGE_CAMPAIGN_SEGMENT b ON m.CAMPAIGN_ID = b.CAMPAIGN_ID
+      JOIN MARKETING_COPILOT.ANALYTICS.DIM_AUDIENCE_SEGMENT seg ON b.SEGMENT_ID = seg.SEGMENT_ID
+      GROUP BY seg.SEGMENT_NAME ORDER BY avg_cpc ASC
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
+
+  - name: budget_vs_spend_by_client
+    question: What is the total budget allocated vs actual spend by client?
+    sql: >-
+      SELECT fc.CLIENT_NAME, SUM(fc.TOTAL_BUDGET_USD) AS total_budget,
+        SUM(m.SPEND_USD) AS actual_spend,
+        ROUND(SUM(m.SPEND_USD) / NULLIF(SUM(fc.TOTAL_BUDGET_USD), 0) * 100, 2) AS budget_utilization_pct
+      FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc
+      JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m ON fc.CAMPAIGN_ID = m.CAMPAIGN_ID
+      GROUP BY fc.CLIENT_NAME ORDER BY budget_utilization_pct DESC
+    verified_by: NovaSpark Agency
+    verified_at: 1724889600
