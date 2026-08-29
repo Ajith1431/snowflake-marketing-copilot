@@ -300,7 +300,7 @@ with tab2:
         with col_b:
             if st.button("🔄 Regenerate"):
                 st.session_state.pop("recommendation", None)
-                st.rerun()
+                st.experimental_rerun()
     else:
         st.info("Select a client, product, and objective in the sidebar, then click **Analyze & Recommend** to generate a campaign recommendation.")
 
@@ -430,7 +430,7 @@ with tab4:
                     )
                     pitch = call_agent(prompt)
                     st.session_state["pitch_content"] = pitch
-                    st.rerun()
+                    st.experimental_rerun()
         else:
             pitch = st.session_state["pitch_content"]
             sections = pitch.split("\n## ")
@@ -457,6 +457,6 @@ with tab4:
                 if st.button("🔄 Start Over"):
                     for key in ["recommendation", "recommendation_approved", "pitch_content"]:
                         st.session_state.pop(key, None)
-                    st.rerun()
+                    st.experimental_rerun()
     else:
         st.info("Approve a campaign recommendation in the **Campaign Recommendation** tab first to generate a pitch document.")
