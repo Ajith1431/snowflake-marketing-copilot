@@ -13,34 +13,26 @@ AI-powered marketing intelligence platform that helps agency teams analyze campa
 ```
                         +---------------------------+
                         |   Streamlit Dashboard     |
-                        |   (4-Tab Marketing UI)    |
+                        |   (5-Tab Marketing UI)    |
                         +------------+--------------+
                                      |
-                        +------------v--------------+
-                        |     Cortex Agent          |
-                        |  (Marketing Co-Pilot)     |
-                        +--+--------+--------+------+
-                           |        |        |
-              +------------+  +-----+-----+  +-------------+
-              |               |           |                 |
-    +---------v--------+ +---v--------+ +-v-----------+ +--v-----------+
-    | Cortex Analyst   | | Cortex     | | Cortex      | | data_to_chart|
-    | (Semantic View)  | | Search     | | Search      | | (Viz Tool)   |
-    | Campaign         | | Brand      | | Market      | |              |
-    | Analytics        | | Guidelines | | Events      | |              |
-    +--------+---------+ +-----+------+ +------+------+ +--------------+
-             |                 |               |
-    +--------v---------+ +----v------+  +------v------+
-    | Dynamic Tables   | | FACT_BRAND| | DIM_MARKET  |
-    | (Analytics Layer)| | GUIDELINES| | _EVENT      |
-    +--------+---------+ +-----------+  +-------------+
-             |
-    +--------v-----------------+
-    | RAW Layer (11 Tables)    |
-    | Clients, Products,       |
-    | Campaigns, Metrics,      |
-    | Segments, Feedback, etc. |
-    +---------------------------+
+          +------------+-------------+-------------+
+          |            |                           |
++---------v------+ +---v-----------+  +------------v-------------+
+| Marketing      | | Internet      |  | Strategy Synthesis       |
+| Co-Pilot Agent | | Intel Agent   |  | Agent                    |
++--+------+---+--+ +------+--------+  +------------+-------------+
+   |      |   |           |                        |
+   v      v   v           v                        v
+Cortex  Cortex Cortex  Event News   Google    Campaign Data
+Analyst Search Search  Search       Trends    + Market Intel
+   |      |   |           |                        |
+   v      v   v           v                        v
+Dynamic Tables      Event Intelligence      Strategy Output
+(Analytics Layer)   (5 Tables + 4 DTs)      (Channel Alloc,
+   |                                         Creative, KPIs)
+   v
+RAW Layer (11 Base Tables + 5 Event Tables)
 ```
 
 ## Tech Stack
@@ -50,10 +42,11 @@ AI-powered marketing intelligence platform that helps agency teams analyze campa
 | Data Platform | Snowflake |
 | AI Orchestration | Cortex Agent |
 | Structured Analytics | Cortex Analyst (Semantic View) |
-| Unstructured Search | Cortex Search Service (x2) |
+| Unstructured Search | Cortex Search Service (x3) |
 | Dashboard | Streamlit in Snowflake |
 | Data Generation | Python (Faker, NumPy, Pandas) |
-| Skills | CoCo CLI Skills (x4) |
+| Event Intelligence | Python Pullers (Trends, News, Web) |
+| Skills | CoCo CLI Skills (x7) |
 | Visualization | Plotly |
 
 ## Database Objects
@@ -62,11 +55,11 @@ AI-powered marketing intelligence platform that helps agency teams analyze campa
 |-------|---------|
 | Database | `MARKETING_COPILOT` |
 | Schemas | `RAW`, `STAGING`, `ANALYTICS`, `SEMANTIC` |
-| RAW Tables | 11 tables (114K+ rows) |
-| Dynamic Tables | 10 analytics-layer tables |
+| RAW Tables | 16 tables (114K+ base rows + event data) |
+| Dynamic Tables | 14 analytics-layer tables (10 base + 4 event) |
 | Semantic View | `CAMPAIGN_ANALYTICS` (7 tables, 9 metrics, 10 VQRs) |
-| Cortex Search | `BRAND_SEARCH`, `MARKET_SEARCH` |
-| Cortex Agent | `MARKETING_COPILOT` |
+| Cortex Search | `BRAND_SEARCH`, `MARKET_SEARCH`, `EVENT_NEWS_SEARCH` |
+| Cortex Agents | `MARKETING_COPILOT`, `INTERNET_INTELLIGENCE_AGENT`, `STRATEGY_SYNTHESIS_AGENT` |
 | Streamlit App | `MARKETING_COPILOT_APP` |
 | Warehouse | `MARKETING_WH` (XS, auto-suspend 60s) |
 
@@ -134,6 +127,9 @@ The dashboard instantly recalculates projected revenue, impressions, and convers
 | `campaign-analysis` | Deep campaign analysis: channel ranking, top/bottom campaigns, segment insights |
 | `pitch-generator` | 7-section pitch document with data-backed projections |
 | `what-if-analysis` | Scenario comparison with projected metrics |
+| `event-intelligence` | Orchestrate live internet data pull for events |
+| `competitor-analysis` | Compare brand vs competitors across news, web, campaigns |
+| `event-strategy` | Synthesize internal + live data into event marketing strategy |
 
 ## Data Model
 
@@ -171,15 +167,30 @@ SnowflakeHackathon/
   semantic_models/
     campaign_analytics.yaml          # Cortex Analyst semantic view
   agents/
-    marketing_copilot_agent.yaml     # Cortex Agent definition
+    marketing_copilot_agent.yaml     # Marketing Co-Pilot agent
+    internet_intelligence_agent.yaml # Internet research agent
+    strategy_synthesis_agent.yaml    # Strategy synthesis agent
+  src/intelligence/
+    intelligence_orchestrator.py     # Orchestrates all pullers
+    snowflake_loader.py             # Loads results to Snowflake
+    google_trends_puller.py         # Google Trends data
+    news_puller.py                  # Event Registry + RSS news
+    web_intelligence_puller.py      # Cortex Complete web research
+    config.py                       # API keys
   streamlit/
-    streamlit_app.py                 # 4-tab Streamlit dashboard
+    streamlit_app.py                 # 5-tab Streamlit dashboard
     environment.yml                  # SiS dependencies
   .snowflake/cortex/skills/
     client-intelligence/SKILL.md
     campaign-analysis/SKILL.md
     pitch-generator/SKILL.md
     what-if-analysis/SKILL.md
+    event-intelligence/SKILL.md
+    competitor-analysis/SKILL.md
+    event-strategy/SKILL.md
+  sql/
+    ddl/03_event_intelligence_tables.sql  # 5 event tables
+    dynamic_tables/02_event_analytics.sql # 4 event dynamic tables
   tests/
     test_validation.sql              # 8 data quality assertions
   docs/
@@ -197,6 +208,7 @@ SnowflakeHackathon/
 | Campaign Recommendation | Agent-generated recommendation with channel allocation |
 | What-If Analysis | Scenario comparison with projected metrics |
 | Generate Pitch | Full pitch document with expandable sections |
+| Event Intelligence | Live market research, trends, news, competitor analysis, strategy generation |
 
 ---
 
