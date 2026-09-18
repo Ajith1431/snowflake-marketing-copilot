@@ -209,6 +209,33 @@ SnowflakeHackathon/
 | What-If Analysis | Scenario comparison with projected metrics |
 | Generate Pitch | Full pitch document with expandable sections |
 | Event Intelligence | Live market research, trends, news, competitor analysis, strategy generation |
+| Creative Studio | Design system, video storyboard, poster generation, audio script |
+
+## MCP Server
+
+The project exposes all capabilities via a Snowflake-managed MCP server with **11 tools**, accessible from Claude, ChatGPT, Cursor, and Snowflake CoWork.
+
+**MCP Server:** `MARKETING_COPILOT.SEMANTIC.NOVASPARK_MCP`
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `marketing_copilot` | CORTEX_AGENT_RUN | Campaign recommendations and pitches |
+| `internet_intelligence` | CORTEX_AGENT_RUN | Live web research and event intelligence |
+| `strategy_synthesis` | CORTEX_AGENT_RUN | Event strategy with competitive positioning |
+| `campaign_analytics` | CORTEX_ANALYST_MESSAGE | Natural language SQL on campaign metrics |
+| `brand_search` | CORTEX_SEARCH | Brand guidelines search |
+| `market_search` | CORTEX_SEARCH | Market events search |
+| `event_news_search` | CORTEX_SEARCH | Event news articles search |
+| `generate_storyboard` | GENERIC (procedure) | 4-scene video storyboard generator |
+| `build_design_system` | GENERIC (procedure) | Brand design system with palette |
+| `build_poster_prompt` | GENERIC (procedure) | Optimized Gemini Imagen 3 prompt |
+| `build_audio_script` | GENERIC (procedure) | 30-second voiceover script |
+
+**Connect from Claude/ChatGPT/Cursor:**
+```
+URL: https://wfvamnp-ap54607.snowflakecomputing.com/api/v2/databases/MARKETING_COPILOT/schemas/SEMANTIC/mcp-servers/NOVASPARK_MCP
+OAuth: NOVASPARK_MCP_OAUTH security integration
+```
 
 ---
 

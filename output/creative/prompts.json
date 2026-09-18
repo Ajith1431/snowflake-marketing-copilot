@@ -1,0 +1,9 @@
+{
+  "poster_prompt": "Professional marketing poster for CareWell promoting CW-FitTrack. Objective: Brand Awareness. Audience: Adults 25-45, health-conscious. Brand colours: #0068FF, #00D4AA, #FF6B35. Tone: bold, modern, confident, approachable. Direction: Clean modern lifestyle visuals showing fitness tracking in everyday life. Event: Super Bowl 2025. Style: Clean modern commercial advertising. Portrait orientation. No watermarks. No logos.",
+  "video_prompt": "5-second cinematic brand video for CW-FitTrack by CareWell. Set during Super Bowl 2025. Goal: Brand Awareness. Visual: Clean modern lifestyle visuals showing fitness tracking in everyday life. Style: Premium brand film, smooth camera, vibrant colours. No text. No logos.",
+  "audio_script": {
+    "prompt": "30-second script for CW-FitTrack by CareWell. Tone: bold, modern, confident, approachable. Goal: Brand Awareness. Include: hook (5s), benefit (15s), emotional close (7s), CTA (3s).",
+    "duration": "30 seconds",
+    "format": "Radio / Digital Audio"
+  }
+}
