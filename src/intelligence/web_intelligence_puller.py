@@ -31,7 +31,8 @@ def _call_cortex_complete(session_or_conn, query: str) -> dict:
         ARRAY_CONSTRUCT(
             OBJECT_CONSTRUCT('role', 'system', 'content', $${system_prompt}$$),
             OBJECT_CONSTRUCT('role', 'user', 'content', $${user_prompt}$$)
-        )
+        ),
+        OBJECT_CONSTRUCT('max_tokens', 2048)
     ) AS response
     """
 
@@ -49,7 +50,8 @@ def _call_cortex_complete(session_or_conn, query: str) -> dict:
         try:
             wrapper = json.loads(raw)
             if "choices" in wrapper:
-                text = wrapper["choices"][0].get("message", {}).get("content", "")
+                choice = wrapper["choices"][0]
+                text = choice.get("messages") or choice.get("message", {}).get("content", "")
             elif "messages" in wrapper:
                 text = wrapper["messages"][0].get("content", raw)
             else:
@@ -100,7 +102,8 @@ def get_web_intelligence(
     owns_conn = False
     if conn is None:
         try:
-            conn = snowflake.connector.connect(connection_name="wfvamnp-ap54607")
+            from config import SNOWFLAKE_CONNECTION
+            conn = snowflake.connector.connect(connection_name=SNOWFLAKE_CONNECTION)
             cur = conn.cursor()
             cur.execute("USE ROLE ACCOUNTADMIN")
             cur.execute("USE WAREHOUSE MARKETING_WH")
