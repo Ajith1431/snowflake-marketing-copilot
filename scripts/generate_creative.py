@@ -1,6 +1,7 @@
 import sys, os, json, base64
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.creative.creative_studio import generate_creative_assets, build_assets_zip
+from src.env_keys import get_secret
 
 print("Generating creative assets for CareWell CW-FitTrack...")
 assets = generate_creative_assets(
@@ -11,7 +12,7 @@ assets = generate_creative_assets(
     brand_colours="#0068FF, #00D4AA, #FF6B35",
     tone_keywords="bold, modern, confident, approachable",
     creative_direction="Clean modern lifestyle visuals showing fitness tracking in everyday life",
-    gemini_api_key="AQ.Ab8RN6K14KnzXpr6fA62CL2SsolDX05bG6e218sAS5Z4L4ShEg",
+    gemini_api_key=get_secret("GEMINI_API_KEY"),
     event_name="Super Bowl 2025"
 )
 
