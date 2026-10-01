@@ -1,0 +1,38 @@
+{
+  "client": "CareWell",
+  "palette": [
+    {
+      "name": "Primary",
+      "hex": "#0068FF",
+      "usage": "Primary elements"
+    },
+    {
+      "name": "Secondary",
+      "hex": "#00D4AA",
+      "usage": "Secondary elements"
+    },
+    {
+      "name": "Accent",
+      "hex": "#FF6B35",
+      "usage": "Accent elements"
+    }
+  ],
+  "tone": [
+    "bold",
+    "modern",
+    "confident",
+    "approachable"
+  ],
+  "do": [
+    "Use brand colours consistently",
+    "Lead with benefits not features",
+    "Show real people in real situations",
+    "Use active voice"
+  ],
+  "dont": [
+    "Use competitor names",
+    "Make unsubstantiated claims",
+    "Crowd the composition",
+    "Use generic stock imagery"
+  ]
+}

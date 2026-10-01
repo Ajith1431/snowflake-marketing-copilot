@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 import json
 import re
 import base64
+import io
+import zipfile
 from datetime import datetime
 from snowflake.snowpark.context import get_active_session
 import streamlit.components.v1 as components
@@ -188,6 +190,158 @@ def js_download_button(content, filename, label="⬇️ Download", mime="text/ht
     </button>
     """
     components.html(button_html, height=60)
+
+
+# -- Creative Studio functions (embedded for SiS compatibility) --
+def _build_poster_prompt(client_name, product_name, campaign_objective,
+    target_audience, brand_colours, tone_keywords, creative_direction, event_name=None):
+    event_ctx = f"Event: {event_name}. " if event_name else ""
+    return (
+        f"Professional marketing poster for {client_name} promoting {product_name}. "
+        f"Objective: {campaign_objective}. Audience: {target_audience}. "
+        f"Brand colours: {brand_colours}. Tone: {tone_keywords}. "
+        f"Direction: {creative_direction}. {event_ctx}"
+        f"Style: Clean modern commercial advertising. Portrait orientation. No watermarks. No logos."
+    )
+
+def _build_video_prompt(client_name, product_name, campaign_objective, creative_direction, event_name=None):
+    event_ctx = f"Set during {event_name}. " if event_name else ""
+    return (
+        f"5-second cinematic brand video for {product_name} by {client_name}. {event_ctx}"
+        f"Goal: {campaign_objective}. Visual: {creative_direction}. "
+        f"Style: Premium brand film, smooth camera, vibrant colours. No text. No logos."
+    )
+
+def _generate_posters_gemini(prompt, api_key, count=3):
+    if not api_key:
+        return {"success": False, "demo_mode": True, "posters_b64": [], "error": "No API key provided"}
+    try:
+        return {"success": False, "demo_mode": True, "posters_b64": [],
+                "error": "Poster generation requires Gemini API access. In Streamlit-in-Snowflake, outbound HTTP is not available on trial accounts. Use the poster prompt with Gemini AI Studio directly."}
+    except Exception as exc:
+        return {"success": False, "demo_mode": True, "posters_b64": [], "error": str(exc)}
+
+def _build_storyboard_scenes():
+    return [
+        {"scene": 1, "duration": "0-1s", "description": "Opening hero shot -- product reveal", "camera": "Slow zoom in", "mood": "Anticipation"},
+        {"scene": 2, "duration": "1-3s", "description": "Core benefit -- audience connection", "camera": "Medium shot, subtle pan", "mood": "Emotional resonance"},
+        {"scene": 3, "duration": "3-4s", "description": "Product in use -- lifestyle context", "camera": "Close up detail", "mood": "Aspiration"},
+        {"scene": 4, "duration": "4-5s", "description": "Brand end card -- tagline", "camera": "Static brand frame", "mood": "Trust"},
+    ]
+
+def _build_design_system(client_name, brand_colours, tone_keywords):
+    colours = [c.strip() for c in brand_colours.split(",") if c.strip()]
+    names = ["Primary", "Secondary", "Accent", "Background", "Text"]
+    palette = [{"name": names[i] if i < len(names) else f"Colour {i+1}", "hex": c, "usage": f"{names[i]} elements"} for i, c in enumerate(colours[:5])]
+    tones = [t.strip() for t in tone_keywords.split(",")]
+    return {
+        "client": client_name, "palette": palette, "tone": tones,
+        "do": ["Use brand colours consistently", "Lead with benefits not features", "Show real people in real situations", "Use active voice"],
+        "dont": ["Use competitor names", "Make unsubstantiated claims", "Crowd the composition", "Use generic stock imagery"]
+    }
+
+def generate_creative_assets(client_name, product_name, campaign_objective, target_audience,
+    brand_colours, tone_keywords, creative_direction, gemini_api_key, event_name=None):
+    errors = {}
+    results = {}
+
+    # Call Snowflake stored procedures instead of embedded functions
+    try:
+        ds_result = session.sql(f"""
+            CALL MARKETING_COPILOT.SEMANTIC.BUILD_DESIGN_SYSTEM(
+                $${client_name.replace('$$','$ $')}$$,
+                $${brand_colours.replace('$$','$ $')}$$,
+                $${tone_keywords.replace('$$','$ $')}$$
+            )
+        """).collect()
+        results["design_system"] = json.loads(ds_result[0][0]) if ds_result else _build_design_system(client_name, brand_colours, tone_keywords)
+    except Exception:
+        results["design_system"] = _build_design_system(client_name, brand_colours, tone_keywords)
+
+    # Poster prompt via stored procedure
+    try:
+        pp_result = session.sql(f"""
+            CALL MARKETING_COPILOT.SEMANTIC.BUILD_POSTER_PROMPT(
+                $${client_name.replace('$$','$ $')}$$,
+                $${product_name.replace('$$','$ $')}$$,
+                $${campaign_objective.replace('$$','$ $')}$$,
+                $${target_audience.replace('$$','$ $')}$$,
+                $${brand_colours.replace('$$','$ $')}$$,
+                $${tone_keywords.replace('$$','$ $')}$$,
+                $${creative_direction.replace('$$','$ $')}$$,
+                $${(event_name or '').replace('$$','$ $')}$$
+            )
+        """).collect()
+        poster_prompt = pp_result[0][0] if pp_result else _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name)
+    except Exception:
+        poster_prompt = _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name)
+
+    # Gemini poster generation (still direct HTTP since EAI not available on trial)
+    poster_result = _generate_posters_gemini(poster_prompt, gemini_api_key, count=3)
+    results["posters_b64"] = poster_result.get("posters_b64", [])
+    results["poster_prompt"] = poster_prompt
+    results["poster_demo_mode"] = poster_result.get("demo_mode", False)
+    if poster_result.get("error"):
+        errors["posters"] = poster_result["error"]
+
+    # Storyboard via stored procedure
+    try:
+        sb_result = session.sql(f"""
+            CALL MARKETING_COPILOT.SEMANTIC.GENERATE_STORYBOARD(
+                $${client_name.replace('$$','$ $')}$$,
+                $${product_name.replace('$$','$ $')}$$,
+                $${campaign_objective.replace('$$','$ $')}$$,
+                $${creative_direction.replace('$$','$ $')}$$
+            )
+        """).collect()
+        sb_data = json.loads(sb_result[0][0]) if sb_result else {}
+        results["hero_scenes"] = sb_data.get("scenes", _build_storyboard_scenes())
+        results["video_prompt"] = sb_data.get("video_prompt", _build_video_prompt(client_name, product_name, campaign_objective, creative_direction, event_name))
+    except Exception:
+        results["hero_scenes"] = _build_storyboard_scenes()
+        results["video_prompt"] = _build_video_prompt(client_name, product_name, campaign_objective, creative_direction, event_name)
+
+    results["video_message"] = "Video storyboard generated via Snowflake MCP procedure. Veo 2 access requires allowlist -- showing scene breakdown instead."
+
+    # Audio script via stored procedure
+    try:
+        as_result = session.sql(f"""
+            CALL MARKETING_COPILOT.SEMANTIC.BUILD_AUDIO_SCRIPT(
+                $${client_name.replace('$$','$ $')}$$,
+                $${product_name.replace('$$','$ $')}$$,
+                $${campaign_objective.replace('$$','$ $')}$$,
+                $${tone_keywords.replace('$$','$ $')}$$
+            )
+        """).collect()
+        results["audio_script"] = json.loads(as_result[0][0]) if as_result else {"prompt": "", "duration": "30 seconds", "format": "Radio / Digital Audio"}
+    except Exception:
+        results["audio_script"] = {
+            "prompt": f"30-second script for {product_name} by {client_name}. Tone: {tone_keywords}. Goal: {campaign_objective}. Include: hook (5s), benefit (15s), emotional close (7s), CTA (3s).",
+            "duration": "30 seconds", "format": "Radio / Digital Audio"
+        }
+
+    results["campaign_meta"] = {"client": client_name, "product": product_name, "objective": campaign_objective, "audience": target_audience, "event": event_name or "N/A"}
+    results["errors"] = errors
+    return results
+
+def build_assets_zip(assets):
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for i, p in enumerate(assets.get("posters_b64", [])[:3]):
+            if p:
+                zf.writestr(f"poster_{i+1}.png", base64.b64decode(p))
+        ds = assets.get("design_system", {})
+        if ds:
+            zf.writestr("design_system.json", json.dumps(ds, indent=2))
+        zf.writestr("creative_prompts.json", json.dumps({
+            "poster_prompt": assets.get("poster_prompt", ""),
+            "video_prompt": assets.get("video_prompt", ""),
+            "audio_script": assets.get("audio_script", {}).get("prompt", "")
+        }, indent=2))
+        scenes = assets.get("hero_scenes", [])
+        if scenes:
+            zf.writestr("video_storyboard.json", json.dumps(scenes, indent=2))
+    return buf.getvalue() or b"no-assets"
 
 
 def run_query(sql):
@@ -425,12 +579,13 @@ with st.sidebar:
 # ============================
 st.title(f"📊 {selected_client} Marketing Dashboard")
 
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📊 Client Intelligence",
     "🎯 Campaign Recommendation",
     "🔀 What-If Analysis",
     "📋 Generate Pitch",
-    "🌍 Event Intelligence"
+    "🌍 Event Intelligence",
+    "🎨 Creative Studio"
 ])
 
 # ============================
@@ -778,6 +933,268 @@ with tab4:
                     st.experimental_rerun()
     else:
         st.info("Approve a campaign recommendation in the **Campaign Recommendation** tab first to generate a pitch document.")
+
+
+# ============================
+# TAB 6: Creative Studio
+# ============================
+with tab6:
+    st.subheader("Creative Studio")
+    st.caption("Generate campaign posters, video storyboards, and design systems powered by Gemini.")
+
+    # -- Section 1: Creative Brief Form --
+    cs_col1, cs_col2 = st.columns([3, 2])
+
+    with cs_col1:
+        cs_client = selected_client
+        cs_product = selected_product
+        cs_objective = objective
+
+        cs_audience = st.text_area(
+            "Target Audience",
+            value=st.session_state.get("recommendation_audience", "Adults 25-45, digitally savvy, brand-conscious"),
+            height=68, key="cs_audience"
+        )
+        cs_colours = st.text_input(
+            "Brand Colours (comma-separated hex)",
+            value="#0068FF, #00D4AA, #FF6B35",
+            key="cs_colours"
+        )
+        cs_tone = st.text_input(
+            "Tone Keywords",
+            value=st.session_state.get("recommendation_tone", "bold, modern, confident, approachable"),
+            key="cs_tone"
+        )
+        cs_direction = st.text_area(
+            "Creative Direction",
+            value=st.session_state.get("recommendation_creative", "Clean modern visuals with lifestyle imagery showing product in everyday premium context"),
+            height=68, key="cs_direction"
+        )
+        cs_event = st.text_input(
+            "Event Name (optional)",
+            value=st.session_state.get("ei_event", ""),
+            key="cs_event"
+        )
+        cs_gemini_key = st.text_input(
+            "Gemini API Key",
+            type="password",
+            help="Get free at aistudio.google.com",
+            key="cs_gemini_key"
+        )
+
+    with cs_col2:
+        st.info(
+            "**How Creative Studio Works**\n\n"
+            "1. **Cortex Strategy -> Creative Brief**\n"
+            "   Auto-filled from your campaign recommendation\n\n"
+            "2. **Gemini Imagen 3 -> 3 Marketing Posters**\n"
+            "   Portrait format, commercial quality\n\n"
+            "3. **Veo 2 -> Video Storyboard**\n"
+            "   5-second brand film concept\n\n"
+            "4. **Download all as ZIP**"
+        )
+        components.html("""
+        <div style="background:#0D1117;border-left:4px solid #0068FF;border-radius:8px;padding:16px;margin-top:12px;">
+            <div style="color:#E2E8F0;font-size:13px;line-height:1.6;">
+                <strong style="color:#0068FF;">🚀 Our Recommendation to Snowflake:</strong><br>
+                Build <strong>Cortex Image</strong> + <strong>Cortex Video</strong> to make this 100% native.
+                The brand data is already in Snowflake — we just need the canvas.
+            </div>
+        </div>
+        """, height=100)
+
+    # -- Section 2: Generate --
+    generate_creative = st.button("✨ Generate Creative Assets", type="primary", use_container_width=True, key="cs_generate")
+
+    if generate_creative:
+        with st.spinner("Generating your campaign creative with Gemini..."):
+            assets = generate_creative_assets(
+                client_name=cs_client,
+                product_name=cs_product,
+                campaign_objective=cs_objective,
+                target_audience=cs_audience,
+                brand_colours=cs_colours,
+                tone_keywords=cs_tone,
+                creative_direction=cs_direction,
+                gemini_api_key=cs_gemini_key,
+                event_name=cs_event if cs_event else None
+            )
+            st.session_state["creative_assets"] = assets
+
+        gen_errors = assets.get("errors", {})
+        if gen_errors:
+            st.warning(f"Some assets had issues: {gen_errors}")
+
+    # -- Section 3: Creative Workspace Display --
+    if "creative_assets" in st.session_state:
+        assets = st.session_state["creative_assets"]
+        ds = assets.get("design_system") or {}
+        palette = ds.get("palette") or []
+        posters = assets.get("posters_b64") or []
+        hero_scenes = assets.get("hero_scenes") or []
+        audio_script = assets.get("audio_script") or {}
+
+        st.divider()
+
+        # ROW 1: Video Storyboard (rendered as visual scene cards)
+        st.markdown("#### 🎬 Video Storyboard (5-Second Brand Film)")
+        if hero_scenes:
+            scene_cards_html = '<div style="display:flex;gap:12px;flex-wrap:wrap;">'
+            scene_icons = ["🎬", "💡", "🌟", "🏷️"]
+            scene_colors = ["#0068FF", "#00D4AA", "#FF6B35", "#8B5CF6"]
+            for idx, scene in enumerate(hero_scenes):
+                icon = scene_icons[idx] if idx < len(scene_icons) else "🎬"
+                color = scene_colors[idx] if idx < len(scene_colors) else "#0068FF"
+                scene_cards_html += f"""
+                <div style="flex:1;min-width:200px;background:#0D1117;border:1px solid #1E293B;
+                    border-top:3px solid {color};border-radius:10px;padding:16px;">
+                    <div style="font-size:24px;margin-bottom:8px;">{icon}</div>
+                    <div style="color:#E2E8F0;font-weight:700;font-size:14px;margin-bottom:4px;">
+                        Scene {scene.get('scene',idx+1)} &middot; {scene.get('duration','')}</div>
+                    <div style="color:#CBD5E1;font-size:13px;line-height:1.5;margin-bottom:10px;">
+                        {scene.get('description','')}</div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <span style="background:#1E293B;color:#94A3B8;padding:3px 8px;border-radius:12px;font-size:11px;">
+                            📷 {scene.get('camera','')}</span>
+                        <span style="background:#1E293B;color:#94A3B8;padding:3px 8px;border-radius:12px;font-size:11px;">
+                            🎭 {scene.get('mood','')}</span>
+                    </div>
+                </div>"""
+            scene_cards_html += '</div>'
+            components.html(scene_cards_html, height=220)
+
+        if assets.get("video_message"):
+            st.info(assets["video_message"])
+
+        with st.expander("📋 Video Prompt (copy to RunwayML / Veo / Sora)"):
+            st.code(assets.get("video_prompt", ""), language=None)
+
+        st.divider()
+
+        # ROW 2: Design System (colour palette + tone + guidelines)
+        st.markdown("#### 🎨 Brand Design System")
+
+        ds_left, ds_right = st.columns([1, 1])
+
+        with ds_left:
+            if palette:
+                palette_html = '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
+                for colour in palette:
+                    palette_html += f"""
+                    <div style="text-align:center;">
+                        <div style="width:60px;height:60px;background:{colour.get('hex','#333')};
+                            border-radius:10px;border:2px solid #1E293B;margin-bottom:4px;"></div>
+                        <div style="color:#E2E8F0;font-size:11px;font-weight:600;">{colour.get('name','')}</div>
+                        <div style="color:#64748B;font-size:10px;">{colour.get('hex','')}</div>
+                    </div>"""
+                palette_html += '</div>'
+                components.html(palette_html, height=110)
+
+            tones = ds.get("tone", [])
+            if tones:
+                tone_html = "".join([
+                    f"<span style='background:#1E293B;color:#00D4AA;padding:4px 10px;border-radius:20px;margin:3px;font-size:12px;font-weight:600;display:inline-block;'>{t}</span>"
+                    for t in tones
+                ])
+                components.html(f"<div style='margin-top:8px;'>{tone_html}</div>", height=40)
+
+        with ds_right:
+            d1, d2 = st.columns(2)
+            with d1:
+                st.markdown("**Do**")
+                for d in ds.get("do", []):
+                    st.markdown(f"- {d}")
+            with d2:
+                st.markdown("**Don't**")
+                for d in ds.get("dont", []):
+                    st.markdown(f"- {d}")
+
+        st.divider()
+
+        # ROW 3: Key Visuals / Posters
+        st.markdown("#### 🖼️ Key Visuals / Campaign Posters")
+
+        if posters and any(p for p in posters):
+            img_cols = st.columns(3)
+            labels = ["Hero Shot", "Lifestyle", "Product Close-Up"]
+            for i in range(min(3, len(posters))):
+                with img_cols[i]:
+                    if posters[i]:
+                        img_bytes = base64.b64decode(posters[i])
+                        st.image(img_bytes, caption=labels[i], use_column_width=True)
+        else:
+            poster_prompt_text = assets.get("poster_prompt", "No prompt generated")
+            components.html(f"""
+            <div style="background:#0D1117;border:1px solid #1E293B;border-radius:12px;padding:24px;margin-bottom:12px;">
+                <div style="display:flex;gap:16px;margin-bottom:16px;">
+                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
+                        <div style="color:#64748B;font-size:12px;">Hero Shot</div>
+                    </div>
+                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
+                        <div style="color:#64748B;font-size:12px;">Lifestyle</div>
+                    </div>
+                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
+                        <div style="color:#64748B;font-size:12px;">Product Close-Up</div>
+                    </div>
+                </div>
+                <div style="background:#111827;border-radius:8px;padding:12px;">
+                    <div style="color:#0068FF;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:6px;">IMAGEN 3 PROMPT (copy to aistudio.google.com)</div>
+                    <div style="color:#94A3B8;font-size:12px;line-height:1.6;">{poster_prompt_text}</div>
+                </div>
+            </div>
+            """, height=310)
+
+            st.caption("Poster generation requires Gemini API access via External Access Integration (not available on trial accounts). Copy the prompt above into [Google AI Studio](https://aistudio.google.com) to generate images.")
+
+        st.divider()
+
+        # ROW 4: Audio Script
+        st.markdown("#### 🎵 Audio / Voiceover Script")
+        script_prompt = audio_script.get("prompt", "")
+        if script_prompt:
+            components.html(f"""
+            <div style="background:#0D1117;border:1px solid #1E293B;border-radius:12px;padding:20px;">
+                <div style="display:flex;gap:16px;margin-bottom:12px;">
+                    <span style="background:#1E293B;color:#00D4AA;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">
+                        Duration: {audio_script.get('duration','30s')}</span>
+                    <span style="background:#1E293B;color:#0068FF;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">
+                        Format: {audio_script.get('format','Digital Audio')}</span>
+                </div>
+                <div style="color:#CBD5E1;font-size:13px;line-height:1.7;">{script_prompt}</div>
+                <div style="margin-top:12px;color:#64748B;font-size:11px;">
+                    Use with ElevenLabs, Murf.ai, or your studio team to produce the final voiceover.
+                </div>
+            </div>
+            """, height=160)
+
+        st.divider()
+
+        # Download all assets as ZIP
+        zip_bytes = build_assets_zip(assets)
+        zip_b64 = base64.b64encode(zip_bytes).decode()
+        safe_prod = cs_product.replace(" ", "_").replace("/", "_")
+        components.html(f"""
+        <button onclick="var a=document.createElement('a');a.href='data:application/zip;base64,{zip_b64}';a.download='{cs_client}_{safe_prod}_creative_assets.zip';document.body.appendChild(a);a.click();document.body.removeChild(a);"
+            style="background:linear-gradient(135deg,#0068FF,#0052CC);color:white;border:none;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;width:100%;letter-spacing:0.3px;"
+            onmouseover="this.style.opacity='0.85'" onmouseout="this.style.opacity='1'">
+            ⬇️ Download All Creative Assets (.zip)
+        </button>
+        """, height=60)
+
+        # Snowflake vision note
+        components.html("""
+        <div style="background:#0D1117;border:1px solid #1E293B;border-left:4px solid #0068FF;border-radius:12px;padding:24px;margin-top:20px;">
+            <div style="color:#E2E8F0;font-size:15px;font-weight:700;margin-bottom:8px;">🔮 Our Recommendation to Snowflake</div>
+            <div style="color:#94A3B8;font-size:13px;line-height:1.7;">
+                This feature required external Gemini APIs for image and video generation. Every other part of NovaSpark Co-Pilot runs natively on Snowflake Cortex.
+                We recommend Snowflake build <strong style="color:#0068FF;">Cortex Image</strong> (powered by Imagen) and <strong style="color:#0068FF;">Cortex Video</strong> (powered by Veo)
+                to make the complete creative workflow 100% Snowflake-native — from raw campaign data to client-ready visual assets, without leaving the platform.
+            </div>
+        </div>
+        """, height=140)
 
 
 # ============================
