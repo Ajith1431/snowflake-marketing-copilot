@@ -1,5 +1,7 @@
-import requests, json, base64, time
-key = "AQ.Ab8RN6K14KnzXpr6fA62CL2SsolDX05bG6e218sAS5Z4L4ShEg"
+import requests, json, base64, time, os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
+from env_keys import get_secret
+key = get_secret("GEMINI_API_KEY")
 
 models_to_try = [
     "gemini-3.1-flash-image",

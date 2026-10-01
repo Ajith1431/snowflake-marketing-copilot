@@ -36,13 +36,14 @@ CREATE OR REPLACE NETWORK RULE google_trends_rule
 -- 2. Secrets (API keys stored securely)
 -- ============================================
 
+-- Replace the placeholders with your keys when running this file; never commit real keys.
 CREATE OR REPLACE SECRET gemini_api_key
   TYPE = GENERIC_STRING
-  SECRET_STRING = 'AQ.Ab8RN6lg3t1W6dv-ce1eItUjeKsRAWy5bqRjJG1MJCsoF_82gg';
+  SECRET_STRING = '<GEMINI_API_KEY>';
 
 CREATE OR REPLACE SECRET event_registry_api_key
   TYPE = GENERIC_STRING
-  SECRET_STRING = '009d88db-708b-40c9-b175-047c12cebb23';
+  SECRET_STRING = '<EVENT_REGISTRY_API_KEY>';
 
 -- ============================================
 -- 3. External Access Integrations

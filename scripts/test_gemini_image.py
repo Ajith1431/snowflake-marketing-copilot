@@ -1,5 +1,7 @@
-import requests, json
-key = "AQ.Ab8RN6K14KnzXpr6fA62CL2SsolDX05bG6e218sAS5Z4L4ShEg"
+import requests, json, os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src"))
+from env_keys import get_secret
+key = get_secret("GEMINI_API_KEY")
 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key={key}"
 payload = {
     "contents": [{"parts": [{"text": "Generate a professional marketing poster image for a fitness tracker product called FitTrack. Clean modern commercial advertising style. Portrait orientation."}]}],

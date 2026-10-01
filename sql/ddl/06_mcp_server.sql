@@ -1,6 +1,6 @@
 -- ============================================
 -- Snowflake-Managed MCP Server: NOVASPARK_MCP
--- 11 tools exposing all NovaSpark capabilities
+-- 12 tools exposing all NovaSpark capabilities
 -- ============================================
 
 USE ROLE ACCOUNTADMIN;
@@ -55,7 +55,21 @@ tools:
     title: "Event News Search"
     description: "Search news articles from intelligence runs."
 
-  # === 4 Custom Tools (stored procedures) ===
+  # === 5 Custom Tools (stored procedures) ===
+  - name: "get_creative_intelligence"
+    type: "GENERIC"
+    identifier: "MARKETING_COPILOT.SEMANTIC.GET_CREATIVE_INTELLIGENCE"
+    title: "Get Creative Intelligence"
+    description: "Return a client's top channels by ROAS, highest-converting segment, brand dos/donts, and market timing (event trend peak, launch date). Pass the JSON result to build_poster_prompt as intel_json."
+    config:
+      type: "procedure"
+      warehouse: "MARKETING_WH"
+      input_schema:
+        type: "object"
+        properties:
+          client_name: {type: "string", description: "Client brand name"}
+          event_name: {type: "string", description: "Optional event name with an intelligence run"}
+
   - name: "generate_storyboard"
     type: "GENERIC"
     identifier: "MARKETING_COPILOT.SEMANTIC.GENERATE_STORYBOARD"
@@ -91,7 +105,7 @@ tools:
     type: "GENERIC"
     identifier: "MARKETING_COPILOT.SEMANTIC.BUILD_POSTER_PROMPT"
     title: "Build Poster Prompt"
-    description: "Generate an optimized prompt for Gemini Imagen 3 poster generation."
+    description: "Generate a poster prompt, optionally enriched with get_creative_intelligence output."
     config:
       type: "procedure"
       warehouse: "MARKETING_WH"
@@ -106,6 +120,7 @@ tools:
           tone_keywords: {type: "string"}
           creative_direction: {type: "string"}
           event_name: {type: "string"}
+          intel_json: {type: "string", description: "Optional JSON from get_creative_intelligence"}
 
   - name: "build_audio_script"
     type: "GENERIC"
@@ -173,8 +188,16 @@ GRANT SELECT ON SEMANTIC VIEW MARKETING_COPILOT.SEMANTIC.CAMPAIGN_ANALYTICS TO R
 -- Procedure access
 GRANT USAGE ON PROCEDURE MARKETING_COPILOT.SEMANTIC.GENERATE_STORYBOARD(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO ROLE MCP_USER_ROLE;
 GRANT USAGE ON PROCEDURE MARKETING_COPILOT.SEMANTIC.BUILD_DESIGN_SYSTEM(VARCHAR, VARCHAR, VARCHAR) TO ROLE MCP_USER_ROLE;
-GRANT USAGE ON PROCEDURE MARKETING_COPILOT.SEMANTIC.BUILD_POSTER_PROMPT(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO ROLE MCP_USER_ROLE;
+GRANT USAGE ON PROCEDURE MARKETING_COPILOT.SEMANTIC.GET_CREATIVE_INTELLIGENCE(VARCHAR, VARCHAR) TO ROLE MCP_USER_ROLE;
+GRANT USAGE ON PROCEDURE MARKETING_COPILOT.SEMANTIC.BUILD_POSTER_PROMPT(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO ROLE MCP_USER_ROLE;
 GRANT USAGE ON PROCEDURE MARKETING_COPILOT.SEMANTIC.BUILD_AUDIO_SCRIPT(VARCHAR, VARCHAR, VARCHAR, VARCHAR) TO ROLE MCP_USER_ROLE;
 
--- Grant role to user
-GRANT ROLE MCP_USER_ROLE TO USER AJITHKUMAR;
+-- Grant role to the current user
+EXECUTE IMMEDIATE $$
+DECLARE
+  stmt VARCHAR DEFAULT 'GRANT ROLE MCP_USER_ROLE TO USER "' || CURRENT_USER() || '"';
+BEGIN
+  EXECUTE IMMEDIATE :stmt;
+  RETURN stmt;
+END;
+$$;
