@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import json
 import re
 import base64
+import html as html_lib
 import io
 import zipfile
 from datetime import datetime
@@ -193,14 +194,46 @@ def js_download_button(content, filename, label="⬇️ Download", mime="text/ht
 
 
 # -- Creative Studio functions (embedded for SiS compatibility) --
+def _intel_clauses(intel):
+    """Mirror of BUILD_POSTER_PROMPT's intelligence layer, used when the procedure is unavailable."""
+    parts = []
+    seg = intel.get("primary_segment") or {}
+    if seg:
+        interests = ", ".join(seg.get("interests") or [])
+        parts.append(
+            f"Cast and styling for the highest-converting segment '{seg.get('name')}' "
+            f"({seg.get('age_band')}, {seg.get('gender_skew')}, {seg.get('income_level')} income"
+            + (f"; interests: {interests}" if interests else "") + ").")
+    chans = intel.get("top_channels") or []
+    if chans:
+        parts.append(
+            f"Compose primarily for {chans[0]['channel']} (best channel, avg ROAS {chans[0]['avg_roas']}x): "
+            "bold focal point, legible at small sizes, clear space for a call to action.")
+    brand = intel.get("brand") or {}
+    if brand.get("dos"):
+        parts.append("Brand dos: " + "; ".join(brand["dos"]) + ".")
+    if brand.get("donts"):
+        parts.append("Avoid: " + "; ".join(brand["donts"]) + ".")
+    timing = intel.get("market_timing") or {}
+    if timing.get("trend_peak_date") and timing.get("peak_in_past"):
+        parts.append(f"Ride proven '{timing['trend_keyword']}' search demand (peaked {timing['trend_peak_date']}); "
+                     "convey energy and seasonal relevance.")
+    elif timing.get("trend_peak_date"):
+        parts.append(f"Timed for the '{timing['trend_keyword']}' search peak on {timing['trend_peak_date']}; "
+                     "convey urgency and seasonal relevance.")
+    elif (timing.get("market_event") or {}).get("upcoming"):
+        parts.append(f"Seasonal context: {timing['market_event']['name']}.")
+    return " ".join(parts)
+
 def _build_poster_prompt(client_name, product_name, campaign_objective,
-    target_audience, brand_colours, tone_keywords, creative_direction, event_name=None):
+    target_audience, brand_colours, tone_keywords, creative_direction, event_name=None, intel=None):
     event_ctx = f"Event: {event_name}. " if event_name else ""
+    intel_ctx = (_intel_clauses(intel) + " ") if intel else ""
     return (
         f"Professional marketing poster for {client_name} promoting {product_name}. "
         f"Objective: {campaign_objective}. Audience: {target_audience}. "
         f"Brand colours: {brand_colours}. Tone: {tone_keywords}. "
-        f"Direction: {creative_direction}. {event_ctx}"
+        f"Direction: {creative_direction}. {event_ctx}{intel_ctx}"
         f"Style: Clean modern commercial advertising. Portrait orientation. No watermarks. No logos."
     )
 
@@ -241,9 +274,10 @@ def _build_design_system(client_name, brand_colours, tone_keywords):
     }
 
 def generate_creative_assets(client_name, product_name, campaign_objective, target_audience,
-    brand_colours, tone_keywords, creative_direction, gemini_api_key, event_name=None):
+    brand_colours, tone_keywords, creative_direction, gemini_api_key, event_name=None, intel=None):
     errors = {}
-    results = {}
+    results = {"intelligence": intel or {}}
+    intel_json = json.dumps(intel) if intel else ""
 
     # Call Snowflake stored procedures instead of embedded functions
     try:
@@ -269,12 +303,13 @@ def generate_creative_assets(client_name, product_name, campaign_objective, targ
                 $${brand_colours.replace('$$','$ $')}$$,
                 $${tone_keywords.replace('$$','$ $')}$$,
                 $${creative_direction.replace('$$','$ $')}$$,
-                $${(event_name or '').replace('$$','$ $')}$$
+                $${(event_name or '').replace('$$','$ $')}$$,
+                $${intel_json.replace('$$','$ $')}$$
             )
         """).collect()
-        poster_prompt = pp_result[0][0] if pp_result else _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name)
+        poster_prompt = pp_result[0][0] if pp_result else _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name, intel)
     except Exception:
-        poster_prompt = _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name)
+        poster_prompt = _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name, intel)
 
     # Gemini poster generation (still direct HTTP since EAI not available on trial)
     poster_result = _generate_posters_gemini(poster_prompt, gemini_api_key, count=3)
@@ -443,6 +478,21 @@ def load_channel_history(client_id):
         WHERE client_id = '{client_id}'
         GROUP BY channel_name
     """)
+
+
+@st.cache_data(ttl=300)
+def load_creative_intelligence(client_name, event_name=""):
+    """Top channels, primary segment, brand guardrails and market timing from GET_CREATIVE_INTELLIGENCE."""
+    try:
+        res = session.sql(f"""
+            CALL MARKETING_COPILOT.SEMANTIC.GET_CREATIVE_INTELLIGENCE(
+                $${client_name.replace('$$','$ $')}$$,
+                $${(event_name or '').replace('$$','$ $')}$$
+            )
+        """).collect()
+        return json.loads(res[0][0]) if res else {}
+    except Exception:
+        return {}
 
 
 # -- Agent helpers --
@@ -942,11 +992,16 @@ with tab6:
     st.subheader("Creative Studio")
     st.caption("Generate campaign posters, video storyboards, and design systems powered by Gemini.")
 
+    # -- Cortex intelligence layer: grounds the creative brief in this client's data --
+    cs_client = selected_client
+    cs_event_default = st.session_state.get("cs_event", st.session_state.get("ei_event", "")) or ""
+    cs_intel = load_creative_intelligence(cs_client, cs_event_default)
+    cs_brand = cs_intel.get("brand") or {}
+
     # -- Section 1: Creative Brief Form --
     cs_col1, cs_col2 = st.columns([3, 2])
 
     with cs_col1:
-        cs_client = selected_client
         cs_product = selected_product
         cs_objective = objective
 
@@ -957,13 +1012,13 @@ with tab6:
         )
         cs_colours = st.text_input(
             "Brand Colours (comma-separated hex)",
-            value="#0068FF, #00D4AA, #FF6B35",
-            key="cs_colours"
+            value=cs_brand.get("palette") or "#0068FF, #00D4AA, #FF6B35",
+            key=f"cs_colours_{cs_client}"
         )
         cs_tone = st.text_input(
             "Tone Keywords",
-            value=st.session_state.get("recommendation_tone", "bold, modern, confident, approachable"),
-            key="cs_tone"
+            value=st.session_state.get("recommendation_tone") or ", ".join(cs_brand.get("tone") or []) or "bold, modern, confident, approachable",
+            key=f"cs_tone_{cs_client}"
         )
         cs_direction = st.text_area(
             "Creative Direction",
@@ -972,7 +1027,7 @@ with tab6:
         )
         cs_event = st.text_input(
             "Event Name (optional)",
-            value=st.session_state.get("ei_event", ""),
+            value=cs_event_default,
             key="cs_event"
         )
         cs_gemini_key = st.text_input(
@@ -987,7 +1042,7 @@ with tab6:
             "**How Creative Studio Works**\n\n"
             "1. **Cortex Strategy -> Creative Brief**\n"
             "   Auto-filled from your campaign recommendation\n\n"
-            "2. **Gemini Imagen 3 -> 3 Marketing Posters**\n"
+            "2. **Cortex Intelligence + Gemini 2.5 Flash Image -> 3 Marketing Posters**\n"
             "   Portrait format, commercial quality\n\n"
             "3. **Veo 2 -> Video Storyboard**\n"
             "   5-second brand film concept\n\n"
@@ -1003,6 +1058,56 @@ with tab6:
         </div>
         """, height=100)
 
+    # -- Section 1b: Cortex Intelligence Panel --
+    st.markdown("#### 🧠 Cortex Intelligence Feeding This Brief")
+    if not cs_intel:
+        st.warning("Could not load creative intelligence (procedure GET_CREATIVE_INTELLIGENCE). Posters will use the brief fields only.")
+    else:
+        esc = html_lib.escape
+        chans = cs_intel.get("top_channels") or []
+        seg = cs_intel.get("primary_segment") or {}
+        timing = cs_intel.get("market_timing") or {}
+
+        def _card(color, title, body):
+            return (f'<div style="flex:1;min-width:220px;background:#0D1117;border:1px solid #1E293B;'
+                    f'border-top:3px solid {color};border-radius:10px;padding:14px;">'
+                    f'<div style="color:{color};font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:8px;">{title}</div>'
+                    f'<div style="color:#CBD5E1;font-size:12.5px;line-height:1.55;">{body}</div></div>')
+
+        chan_body = "<br>".join(
+            f"<b style='color:#E2E8F0'>{esc(c['channel'])}</b> &middot; ROAS {c['avg_roas']:.2f}x &middot; CTR {c['avg_ctr']*100:.2f}%"
+            for c in chans) or "No channel history"
+        seg_body = (f"<b style='color:#E2E8F0'>{esc(seg.get('name', ''))}</b><br>"
+                    f"{esc(str(seg.get('age_band', '')))} &middot; {esc(str(seg.get('gender_skew', '')))} &middot; {esc(str(seg.get('income_level', '')))} income<br>"
+                    f"Conv. rate {seg.get('avg_conversion_rate', 0)*100:.2f}% &middot; ROAS {seg.get('avg_roas', 0):.2f}x<br>"
+                    f"Interests: {esc(', '.join(seg.get('interests') or []))}") if seg else "No segment data"
+        guard_body = ("<b style='color:#00D4AA'>Do</b><br>" + "<br>".join("&#10003; " + esc(d) for d in cs_brand.get("dos", [])[:4])
+                      + "<br><b style='color:#FF6B35'>Avoid</b><br>" + "<br>".join("&#10007; " + esc(d) for d in cs_brand.get("donts", [])[:4])) if cs_brand else "No brand guidelines"
+        if timing.get("trend_peak_date"):
+            time_body = (f"<b style='color:#E2E8F0'>{esc(timing['trend_keyword'])}</b> "
+                         f"{'peaked' if timing.get('peak_in_past') else 'peaks'} <b>{esc(timing['trend_peak_date'])}</b> "
+                         f"(score {timing.get('peak_score', 0):.0f})<br>")
+            if timing.get("recommended_launch"):
+                time_body += (f"Recommended launch: <b style='color:#E2E8F0'>{esc(timing['recommended_launch'])}</b> "
+                              "(6 weeks before peak)<br>")
+            else:
+                time_body += "Peak already passed in the 3-month trend window &mdash; re-run Event Intelligence closer to the event for launch timing.<br>"
+            time_body += f"<span style='color:#64748B'>{esc(timing.get('source', ''))}</span>"
+        else:
+            time_body = "No intelligence run for this event yet &mdash; run Event Intelligence (Tab 5) to add trend timing."
+        mev = timing.get("market_event") or {}
+        if mev:
+            label = "Next market event" if mev.get("upcoming") else "Latest relevant market event"
+            time_body += f"<br>{label}: {esc(mev.get('name', ''))} ({esc(mev.get('start', ''))}, {esc(str(mev.get('impact', '')))} impact)"
+
+        components.html(
+            '<div style="display:flex;gap:12px;flex-wrap:wrap;font-family:sans-serif;">'
+            + _card("#0068FF", "TOP CHANNELS BY ROAS", chan_body)
+            + _card("#00D4AA", "PRIMARY SEGMENT", seg_body)
+            + _card("#FF6B35", "BRAND GUARDRAILS", guard_body)
+            + _card("#8B5CF6", "MARKET TIMING", time_body)
+            + "</div>", height=250)
+
     # -- Section 2: Generate --
     generate_creative = st.button("✨ Generate Creative Assets", type="primary", use_container_width=True, key="cs_generate")
 
@@ -1017,7 +1122,8 @@ with tab6:
                 tone_keywords=cs_tone,
                 creative_direction=cs_direction,
                 gemini_api_key=cs_gemini_key,
-                event_name=cs_event if cs_event else None
+                event_name=cs_event if cs_event else None,
+                intel=load_creative_intelligence(cs_client, cs_event or "")
             )
             st.session_state["creative_assets"] = assets
 
@@ -1141,7 +1247,7 @@ with tab6:
                     </div>
                 </div>
                 <div style="background:#111827;border-radius:8px;padding:12px;">
-                    <div style="color:#0068FF;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:6px;">IMAGEN 3 PROMPT (copy to aistudio.google.com)</div>
+                    <div style="color:#0068FF;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:6px;">INTELLIGENCE-ENRICHED POSTER PROMPT (copy to aistudio.google.com)</div>
                     <div style="color:#94A3B8;font-size:12px;line-height:1.6;">{poster_prompt_text}</div>
                 </div>
             </div>
