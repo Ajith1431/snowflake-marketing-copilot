@@ -495,6 +495,73 @@ def load_creative_intelligence(client_name, event_name=""):
         return {}
 
 
+# -- Creative intelligence + predictor (MARKETING_COPILOT.CREATIVE, synthetic data) --
+CI_BANNER = "Illustrative synthetic data. Brand names are labels only. Outputs are scenario estimates, not real forecasts."
+CI_BRANDS = ["Nike", "Pepsi", "Samsung"]
+CI_MARKETS = ["UAE", "KSA", "UK", "US", "IN"]
+CI_OBJECTIVES = ["AWARENESS", "LINK_CLICKS", "LEADS"]
+CI_PLACEMENTS = ["feed", "reels", "stories"]
+CI_FAMILIES = {
+    "hook_type": ["product_led", "promo_led", "person_on_camera", "ugc_style"],
+    "headline_tone": ["informational", "conversational", "urgent", "playful"],
+    "cta_tone": ["transactional", "informational"],
+    "background": ["studio", "home", "outdoor", "retail"],
+    "color_temp": ["warm", "cool", "neutral"],
+    "has_person": ["Y", "N"],
+    "word_count_group": ["0-5", "6-10", "11+"],
+    "has_logo_first_3s": ["N", "Y"],
+}
+CI_CLASS_COLORS = {"NET_HELPED": "#22C55E", "NET_HURT": "#EF4444", "NEGLIGIBLE": "#94A3B8",
+                   "MIXED": "#F59E0B", "INCONCLUSIVE": "#475569"}
+
+
+@st.cache_data(ttl=300)
+def load_net_lean(stratum_type, market, objective, brand_label):
+    return run_query(f"""
+        SELECT * FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
+        WHERE stratum_type = '{stratum_type}' AND market = '{market}'
+          AND objective = '{objective}' AND brand = '{brand_label}'
+    """)
+
+
+@st.cache_data(ttl=300)
+def load_net_lean_takeaway(stratum_type, market, objective, brand_label):
+    return run_query(f"""
+        SELECT * FROM MARKETING_COPILOT.CREATIVE.NET_LEAN_TAKEAWAY
+        WHERE stratum_type = '{stratum_type}' AND market = '{market}'
+          AND objective = '{objective}' AND brand = '{brand_label}'
+    """)
+
+
+@st.cache_data(ttl=300)
+def load_best_attributes(brand_label, market):
+    df = run_query(f"""
+        SELECT attribute_family, attribute_value, adj_lift_pct FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
+        WHERE stratum_type = 'MARKET_X_BRAND' AND market = '{market}' AND brand = '{brand_label}'
+          AND net_lean_class = 'NET_HELPED'
+        ORDER BY adj_lift_pct DESC LIMIT 3
+    """)
+    return [f"{r.ATTRIBUTE_FAMILY.replace('_', ' ')} = {r.ATTRIBUTE_VALUE}" for r in df.itertuples()]
+
+
+@st.cache_data(ttl=300)
+def load_model_metrics():
+    return run_query("SELECT * FROM MARKETING_COPILOT.CREATIVE.MODEL_METRICS ORDER BY level DESC, model")
+
+
+@st.cache_data(ttl=300)
+def load_feature_effects():
+    return run_query("SELECT * FROM MARKETING_COPILOT.CREATIVE.FEATURE_EFFECTS ORDER BY model, rank")
+
+
+@st.cache_data(ttl=300)
+def score_ad(payload_json):
+    res = session.sql(
+        f"CALL MARKETING_COPILOT.CREATIVE.SCORE_AD(PARSE_JSON($${payload_json.replace('$$', '$ $')}$$))"
+    ).collect()
+    return json.loads(res[0][0])
+
+
 # -- Agent helpers --
 INCOMPLETE_MARKERS = [
     "time limit", "reached the time limit", "may be incomplete",
@@ -629,13 +696,14 @@ with st.sidebar:
 # ============================
 st.title(f"📊 {selected_client} Marketing Dashboard")
 
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📊 Client Intelligence",
     "🎯 Campaign Recommendation",
-    "🔀 What-If Analysis",
+    "🔮 Predictor",
     "📋 Generate Pitch",
     "🌍 Event Intelligence",
-    "🎨 Creative Studio"
+    "🎨 Creative Studio",
+    "🧠 Performance Drivers"
 ])
 
 # ============================
@@ -775,141 +843,114 @@ with tab2:
         st.info("Select a client, product, and objective in the sidebar, then click **Analyze & Recommend** to generate a campaign recommendation.")
 
 
+
 # ============================
-# TAB 3: What-If Analysis
+# TAB 3: Predictor (scenario estimates from CREATIVE.SCORE_AD)
 # ============================
 with tab3:
-    st.subheader("Budget Allocation Scenario Comparison")
-    st.caption("Adjust the proposed allocation sliders to see projected impact vs. current baseline.")
+    st.subheader("Creative Predictor: compare two scenarios")
+    st.warning(f"⚠️ {CI_BANNER}")
+    st.caption("Pick brand label, market, objective, placement, creative attributes and weekly budget for scenario A, "
+               "then change any of them for scenario B. Each scenario is scored by CREATIVE.SCORE_AD "
+               "(gradient boosting point estimate, conformal p10-p90 range).")
 
-    ch_history = load_channel_history(client_id)
-    if ch_history.empty:
-        st.warning("No channel history available for this client.")
-    else:
-        top_channels = ch_history.sort_values("AVG_ROAS", ascending=False).head(5)
-        channel_list = top_channels["CHANNEL_NAME"].tolist()
+    def _scenario_inputs(prefix, base=None):
+        base = base or {}
+        out = {}
 
-        n_channels = len(channel_list)
-        default_pct = 100 // n_channels
+        def pick(label, key, options):
+            default = base.get(key, options[0])
+            return st.selectbox(label, options, index=options.index(default) if default in options else 0,
+                                key=f"{prefix}_{key}_{base.get(key, '')}")
 
-        col_current, col_proposed = st.columns(2)
+        c1, c2 = st.columns(2)
+        with c1:
+            out["brand"] = pick("Brand (label)", "brand", CI_BRANDS)
+            out["objective"] = pick("Objective", "objective", CI_OBJECTIVES)
+        with c2:
+            out["market"] = pick("Market", "market", CI_MARKETS)
+            out["placement"] = pick("Placement", "placement", CI_PLACEMENTS)
+        attrs = {}
+        a1, a2 = st.columns(2)
+        for i, (fam, values) in enumerate(CI_FAMILIES.items()):
+            with (a1 if i % 2 == 0 else a2):
+                default = base.get("attributes", {}).get(fam, values[0])
+                attrs[fam] = st.selectbox(fam.replace("_", " "), values,
+                                          index=values.index(default) if default in values else 0,
+                                          key=f"{prefix}_{fam}_{default}")
+        out["attributes"] = attrs
+        out["budget"] = st.number_input("Weekly budget (USD)", min_value=100, max_value=50000,
+                                        value=int(base.get("budget", 2000)), step=100,
+                                        key=f"{prefix}_budget_{base.get('budget', '')}")
+        return out
 
-        current_alloc = {}
-        proposed_alloc = {}
+    col_a, col_b = st.columns(2)
+    with col_a:
+        st.markdown("### Scenario A")
+        scen_a = _scenario_inputs("pa")
+    with col_b:
+        st.markdown("### Scenario B")
+        st.caption("Starts as a copy of A; change any field.")
+        scen_b = _scenario_inputs("pb", scen_a)
 
-        with col_current:
-            st.markdown("### 📌 Current Allocation (equal split)")
-            for ch in channel_list:
-                current_alloc[ch] = budget * default_pct / 100
-                st.markdown(f"- **{ch}**: {format_usd(current_alloc[ch])} ({default_pct}%)")
+    if st.button("🔮 Score both scenarios", type="primary", key="pred_score_btn"):
+        try:
+            st.session_state["pred_results"] = (
+                scen_a, scen_b,
+                score_ad(json.dumps(scen_a, sort_keys=True)), score_ad(json.dumps(scen_b, sort_keys=True)))
+        except Exception as exc:
+            st.error(f"Scoring failed: {exc}")
 
-        with col_proposed:
-            st.markdown("### 🔄 Proposed Allocation")
-            remaining = 100
-            for i, ch in enumerate(channel_list):
-                default_val = min(default_pct, remaining)
-                pct = st.slider(f"{ch}", 0, 100, default_val, 5, key=f"slider_{ch}")
-                proposed_alloc[ch] = budget * pct / 100
-                remaining -= pct
-
-            if remaining != 0:
-                st.warning(f"Allocation {'over' if remaining < 0 else 'under'} by {abs(remaining)}%")
-
+    if "pred_results" in st.session_state:
+        sa, sb, ra, rb = st.session_state["pred_results"]
         st.divider()
+        lift = (rb["predicted_ctr"] / ra["predicted_ctr"] - 1) * 100 if ra["predicted_ctr"] else 0.0
+        overlap = not (rb["p10"] > ra["p90"] or rb["p90"] < ra["p10"])
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Scenario A: predicted CTR", f"{ra['predicted_ctr'] * 100:.2f}%",
+                  help=f"p10-p90: {ra['p10'] * 100:.2f}% to {ra['p90'] * 100:.2f}%")
+        m1.caption(f"p10-p90 range: {ra['p10'] * 100:.2f}% to {ra['p90'] * 100:.2f}%")
+        m2.metric("Scenario B: predicted CTR", f"{rb['predicted_ctr'] * 100:.2f}%", delta=f"{lift:+.1f}% vs A")
+        m2.caption(f"p10-p90 range: {rb['p10'] * 100:.2f}% to {rb['p90'] * 100:.2f}%")
+        m3.metric("Lift of B vs A (point estimate)", f"{lift:+.1f}%")
+        m3.caption("Ranges overlap, so the difference is uncertain." if overlap
+                   else "Ranges do not overlap, so the difference is likely real in this synthetic data.")
 
-        ch_map = dict(zip(ch_history["CHANNEL_NAME"], ch_history.itertuples(index=False)))
-        results = []
-        for ch in channel_list:
-            if ch in ch_map:
-                row = ch_map[ch]
-                cur_budget = current_alloc.get(ch, 0)
-                prop_budget = proposed_alloc.get(ch, 0)
-                roas = float(row.AVG_ROAS) if row.AVG_ROAS else 1.0
-                cpc = float(row.AVG_CPC) if row.AVG_CPC and row.AVG_CPC > 0 else 1.0
-                conv_rate = float(row.AVG_CONV_RATE) if row.AVG_CONV_RATE else 0.02
+        fig_pred = go.Figure()
+        for name, r, color in [("A", ra, PRIMARY), ("B", rb, ACCENT)]:
+            fig_pred.add_trace(go.Scatter(
+                x=[r["predicted_ctr"] * 100], y=[f"Scenario {name}"], mode="markers", marker=dict(size=14, color=color),
+                error_x=dict(type="data", symmetric=False, array=[(r["p90"] - r["predicted_ctr"]) * 100],
+                             arrayminus=[(r["predicted_ctr"] - r["p10"]) * 100], color=color),
+                name=f"Scenario {name}"))
+        fig_pred.update_layout(template=PLOTLY_TEMPLATE, height=220, margin=dict(t=20, b=40), showlegend=False,
+                               xaxis_title="Predicted CTR % (dot) with p10-p90 range")
+        st.plotly_chart(fig_pred, use_container_width=True)
 
-                cur_rev = cur_budget * roas
-                prop_rev = prop_budget * roas
-                cur_clicks = cur_budget / cpc
-                prop_clicks = prop_budget / cpc
-                cur_conv = cur_clicks * conv_rate
-                prop_conv = prop_clicks * conv_rate
+        d1, d2 = st.columns(2)
+        for col, name, r in [(d1, "A", ra), (d2, "B", rb)]:
+            with col:
+                st.markdown(f"**Top drivers: scenario {name}** (vs an average ad, from the Ridge model)")
+                st.dataframe(pd.DataFrame([{"Attribute": d["attribute"], "Value": d["value"],
+                                            "Approx. CTR effect": f"{d['approx_ctr_effect_pct']:+.1f}%"}
+                                           for d in r["top_drivers"]]), use_container_width=True, hide_index=True)
+                if r.get("warnings"):
+                    st.caption("Notes: " + "; ".join(r["warnings"]))
+        st.caption(f"Scenario estimate. {ra['disclaimer']}")
 
-                results.append({
-                    "Channel": ch,
-                    "Current Budget": cur_budget,
-                    "Proposed Budget": prop_budget,
-                    "Current Revenue": cur_rev,
-                    "Proposed Revenue": prop_rev,
-                    "Hist ROAS": roas,
-                    "Current Conv": cur_conv,
-                    "Proposed Conv": prop_conv,
-                    "Delta Revenue": prop_rev - cur_rev,
-                })
-
-        if results:
-            res_df = pd.DataFrame(results)
-            total_cur_rev = res_df["Current Revenue"].sum()
-            total_prop_rev = res_df["Proposed Revenue"].sum()
-            total_cur_conv = res_df["Current Conv"].sum()
-            total_prop_conv = res_df["Proposed Conv"].sum()
-            delta_rev = total_prop_rev - total_cur_rev
-            delta_conv = total_prop_conv - total_cur_conv
-
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Projected Revenue (Current)", format_usd(total_cur_rev))
-            m2.metric("Projected Revenue (Proposed)", format_usd(total_prop_rev),
-                       delta=format_usd(delta_rev))
-            m3.metric("Projected Conversions (Proposed)", format_number(total_prop_conv),
-                       delta=format_number(delta_conv))
-
-            # Recommendation box
-            if total_prop_rev > total_cur_rev:
-                st.success(f"✅ **Proposed scenario recommended.** Expected revenue increase: {format_usd(delta_rev)}")
-            elif total_prop_rev < total_cur_rev:
-                st.warning(f"⚠️ **Current scenario performs better.** Proposed change reduces revenue by {format_usd(abs(delta_rev))}")
-            else:
-                st.info("Both scenarios project equal revenue.")
-
-            st.divider()
-
-            comp_df = pd.melt(
-                res_df[["Channel", "Current Revenue", "Proposed Revenue"]],
-                id_vars="Channel", var_name="Scenario", value_name="Revenue"
-            )
-            fig5 = px.bar(comp_df, x="Channel", y="Revenue", color="Scenario", barmode="group",
-                          color_discrete_sequence=[PRIMARY, ACCENT],
-                          template=PLOTLY_TEMPLATE)
-            fig5.update_layout(height=400, margin=dict(t=20, b=40))
-            st.plotly_chart(fig5, use_container_width=True)
-
-            # Download What-If report
-            st.divider()
-            cur_alloc_lines = "\n".join([f"- {ch}: {format_usd(current_alloc[ch])} ({default_pct}%)" for ch in channel_list])
-            prop_alloc_lines = "\n".join([f"- {ch}: {format_usd(proposed_alloc.get(ch, 0))}" for ch in channel_list])
-            whatif_content = (
-                f"## Current Scenario (Equal Split)\n{cur_alloc_lines}\n"
-                f"- **Projected Revenue:** {format_usd(total_cur_rev)}\n"
-                f"- **Projected Conversions:** {format_number(total_cur_conv)}\n\n"
-                f"## Proposed Scenario\n{prop_alloc_lines}\n"
-                f"- **Projected Revenue:** {format_usd(total_prop_rev)}\n"
-                f"- **Projected Conversions:** {format_number(total_prop_conv)}\n\n"
-                f"## Impact Analysis\n"
-                f"- Revenue Change: {format_usd(delta_rev)}\n"
-                f"- Conversion Change: {format_number(delta_conv)}\n"
-                f"- Recommendation: {'Proposed' if total_prop_rev > total_cur_rev else 'Current'} scenario recommended"
-            )
-            whatif_html = build_html_document(
-                title="What-If Scenario Analysis",
-                subtitle=f"{selected_client} — Budget Reallocation",
-                metadata={"Client": selected_client, "Budget": f"${budget:,}", "Date": TODAY},
-                content=whatif_content
-            )
-            js_download_button(
-                content=whatif_html,
-                filename=f"{selected_client}_whatif_analysis.html",
-                label="⬇️ Download Analysis"
-            )
+        pred_report = (
+            f"## Scenario A\n- Inputs: {json.dumps(sa)}\n- Predicted CTR: {ra['predicted_ctr'] * 100:.2f}% "
+            f"(p10 {ra['p10'] * 100:.2f}%, p90 {ra['p90'] * 100:.2f}%)\n\n"
+            f"## Scenario B\n- Inputs: {json.dumps(sb)}\n- Predicted CTR: {rb['predicted_ctr'] * 100:.2f}% "
+            f"(p10 {rb['p10'] * 100:.2f}%, p90 {rb['p90'] * 100:.2f}%)\n\n"
+            f"## Comparison\n- Lift of B vs A: {lift:+.1f}% (point estimate)\n"
+            f"- {'Ranges overlap: difference is uncertain.' if overlap else 'Ranges do not overlap.'}\n\n"
+            f"## Caveat\n{CI_BANNER}"
+        )
+        js_download_button(
+            content=build_html_document(title="Creative Predictor: Scenario Estimate", subtitle="Scenario A vs B",
+                                        metadata={"Data": "Synthetic", "Date": TODAY}, content=pred_report),
+            filename="creative_predictor_scenarios.html", label="⬇️ Download Scenario Estimate")
 
 
 # ============================
@@ -1020,10 +1061,17 @@ with tab6:
             value=st.session_state.get("recommendation_tone") or ", ".join(cs_brand.get("tone") or []) or "bold, modern, confident, approachable",
             key=f"cs_tone_{cs_client}"
         )
+        ci_c1, ci_c2 = st.columns(2)
+        ci_brand = ci_c1.selectbox("Performance Drivers brand (label)", CI_BRANDS, key="cs_ci_brand")
+        ci_market = ci_c2.selectbox("Performance Drivers market", CI_MARKETS, key="cs_ci_market")
+        ci_best = load_best_attributes(ci_brand, ci_market)
+        st.caption(f"Net helpers for {ci_brand} in {ci_market} (synthetic creative data): {', '.join(ci_best)}"
+                   if ci_best else f"No net-helped attributes for {ci_brand} in {ci_market} (not enough evidence).")
         cs_direction = st.text_area(
             "Creative Direction",
-            value=st.session_state.get("recommendation_creative", "Clean modern visuals with lifestyle imagery showing product in everyday premium context"),
-            height=68, key="cs_direction"
+            value=st.session_state.get("recommendation_creative", "Clean modern visuals with lifestyle imagery showing product in everyday premium context")
+                  + (f" Lean into: {'; '.join(ci_best)}." if ci_best else ""),
+            height=68, key=f"cs_direction_{ci_brand}_{ci_market}"
         )
         cs_event = st.text_input(
             "Event Name (optional)",
@@ -1315,6 +1363,7 @@ with tab5:
 
     with ei_col1:
         event_options = [
+            "FIFA World Cup 2026", "Black Friday 2026",
             "Super Bowl 2025", "Black Friday 2025", "Holiday Season 2025",
             "Back to School 2025", "Valentine's Day 2026", "Summer Olympics 2028",
             "New Year Campaign 2026", "Spring Launch 2025"
@@ -1403,7 +1452,7 @@ with tab5:
 
         try:
             trends_df = run_query(f"""
-                SELECT keyword, trend_date, interest_score, is_peak_date, data_source
+                SELECT keyword, trend_date, interest_score, is_peak AS is_peak_date, confidence AS data_source
                 FROM MARKETING_COPILOT.ANALYTICS.DIM_EVENT_TRENDS
                 WHERE UPPER(event_name) LIKE '%{selected_event.upper().replace("'", "''")}%'
                 ORDER BY trend_date DESC
@@ -1416,8 +1465,8 @@ with tab5:
 
         try:
             news_df = run_query(f"""
-                SELECT title, source, sentiment_label, sentiment_score,
-                       published_date, relevance_score
+                SELECT title, source_name AS source, sentiment AS sentiment_label, sentiment_score,
+                       published_at AS published_date, brand_name
                 FROM MARKETING_COPILOT.ANALYTICS.DIM_NEWS_SENTIMENT
                 WHERE UPPER(event_name) LIKE '%{selected_event.upper().replace("'", "''")}%'
                 ORDER BY published_date DESC
@@ -1430,10 +1479,11 @@ with tab5:
 
         try:
             competitor_df = run_query(f"""
-                SELECT competitor_name, mention_count, sentiment_avg,
-                       market_share_indicator, threat_level
+                SELECT brand_name AS competitor_name, total_articles AS mention_count,
+                       avg_sentiment_score AS sentiment_avg, media_presence
                 FROM MARKETING_COPILOT.ANALYTICS.DIM_COMPETITOR_PRESENCE
                 WHERE UPPER(event_name) LIKE '%{selected_event.upper().replace("'", "''")}%'
+                  AND brand_name <> event_name
                 ORDER BY mention_count DESC
                 LIMIT 20
             """)
@@ -1503,7 +1553,7 @@ with tab5:
                     sent_fig.update_layout(height=300, margin=dict(t=20, b=20))
                     st.plotly_chart(sent_fig, use_container_width=True)
 
-                display_cols = [c for c in ["TITLE", "SOURCE", "SENTIMENT_LABEL", "PUBLISHED_DATE"] if c in news_df.columns]
+                display_cols = [c for c in ["TITLE", "BRAND_NAME", "SOURCE", "SENTIMENT_LABEL", "PUBLISHED_DATE"] if c in news_df.columns]
                 if display_cols:
                     st.dataframe(news_df[display_cols].head(15), use_container_width=True, hide_index=True)
 
@@ -1513,7 +1563,7 @@ with tab5:
             with st.expander("🏢 Competitor Landscape", expanded=True):
                 fig_comp = px.bar(
                     competitor_df, x="COMPETITOR_NAME", y="MENTION_COUNT",
-                    color="THREAT_LEVEL" if "THREAT_LEVEL" in competitor_df.columns else None,
+                    color="MEDIA_PRESENCE" if "MEDIA_PRESENCE" in competitor_df.columns else None,
                     color_discrete_sequence=COLORS,
                     template=PLOTLY_TEMPLATE
                 )
@@ -1595,3 +1645,133 @@ with tab5:
                                 "ei_comp_data", "ei_strategy"]:
                         st.session_state.pop(key, None)
                     st.experimental_rerun()
+
+
+# ============================
+# TAB 7: Performance Drivers (CREATIVE.NET_LEAN + model card)
+# ============================
+with tab7:
+    st.subheader("Performance Drivers: which creative attributes move CTR")
+    st.warning(f"⚠️ {CI_BANNER}")
+
+    f1, f2, f3 = st.columns(3)
+    pd_brand = f1.selectbox("Brand (label)", ["ALL"] + CI_BRANDS, key="pdv_brand")
+    pd_market = f2.selectbox("Market", ["ALL"] + CI_MARKETS, key="pdv_market")
+    pd_objective = f3.selectbox("Campaign objective", ["ALL"] + CI_OBJECTIVES, key="pdv_objective")
+
+    if pd_brand != "ALL":
+        stype, s_obj, s_brand = "MARKET_X_BRAND", "ALL", pd_brand
+        if pd_objective != "ALL":
+            st.info("Brand × market × objective cells are too thin to estimate, so this view is market × brand "
+                    "(the objective filter is ignored). Set brand to ALL to see market × objective.")
+    else:
+        stype, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_objective, "ALL"
+
+    nl = load_net_lean(stype, pd_market, s_obj, s_brand)
+    tk = load_net_lean_takeaway(stype, pd_market, s_obj, s_brand)
+    if nl.empty:
+        st.info("No NET_LEAN results for this selection. Run scripts/deploy_creative_ml.py to compute them.")
+    else:
+        n_ads = int(nl["N_ADS"].iloc[0])
+        st.caption(f"Stratum: {nl['STRATUM'].iloc[0]}  ·  {n_ads} ads  ·  adjusted CTR lift controls for log spend, "
+                   f"brand, placement and the other attribute families; 95% bootstrap interval over ads.")
+        if not tk.empty:
+            st.markdown(f"**Takeaway:** {tk['TAKEAWAY'].iloc[0]}")
+
+        nl = nl.copy()
+        nl["LABEL"] = nl["ATTRIBUTE_FAMILY"].str.replace("_", " ") + " = " + nl["ATTRIBUTE_VALUE"]
+        enough = nl[nl["NET_LEAN_CLASS"] != "INSUFFICIENT_DATA"].copy()
+        thin = nl[nl["NET_LEAN_CLASS"] == "INSUFFICIENT_DATA"]
+
+        helped = enough[enough["NET_LEAN_CLASS"] == "NET_HELPED"].sort_values("ADJ_LIFT_PCT", ascending=False)
+        hurt = enough[enough["NET_LEAN_CLASS"] == "NET_HURT"].sort_values("ADJ_LIFT_PCT")
+        b1, b2 = st.columns(2)
+        with b1:
+            if helped.empty:
+                st.info("**Best attribute:** none clears the evidence bar here.")
+            else:
+                h = helped.iloc[0]
+                st.success(f"**Best attribute:** {h['LABEL']}\n\n{h['ADJ_LIFT_PCT']:+.1f}% adjusted CTR "
+                           f"(95% CI {h['CI_LOW_PCT']:+.1f}% to {h['CI_HIGH_PCT']:+.1f}%, {int(h['N_ADS_WITH'])} ads)")
+        with b2:
+            if hurt.empty:
+                st.info("**Worst attribute:** none clears the evidence bar here.")
+            else:
+                h = hurt.iloc[0]
+                st.error(f"**Worst attribute:** {h['LABEL']}\n\n{h['ADJ_LIFT_PCT']:+.1f}% adjusted CTR "
+                         f"(95% CI {h['CI_LOW_PCT']:+.1f}% to {h['CI_HIGH_PCT']:+.1f}%, {int(h['N_ADS_WITH'])} ads)")
+
+        if enough.empty:
+            st.info("Every attribute value in this stratum has fewer than 30 ads: not enough data.")
+        else:
+            enough = enough.sort_values("ADJ_LIFT_PCT")
+            fig_nl = go.Figure(go.Bar(
+                x=enough["ADJ_LIFT_PCT"], y=enough["LABEL"], orientation="h",
+                marker_color=[CI_CLASS_COLORS.get(c, "#475569") for c in enough["NET_LEAN_CLASS"]],
+                error_x=dict(type="data", symmetric=False,
+                             array=(enough["CI_HIGH_PCT"] - enough["ADJ_LIFT_PCT"]).fillna(0),
+                             arrayminus=(enough["ADJ_LIFT_PCT"] - enough["CI_LOW_PCT"]).fillna(0), color="#CBD5E1"),
+                customdata=enough[["NET_LEAN_CLASS", "N_ADS_WITH"]].to_numpy(),
+                hovertemplate="%{y}<br>lift %{x:+.1f}%<br>%{customdata[0]}<br>%{customdata[1]} ads<extra></extra>"))
+            fig_nl.add_vline(x=0, line_color="#64748B")
+            fig_nl.update_layout(template=PLOTLY_TEMPLATE, height=max(300, 26 * len(enough) + 80),
+                                 margin=dict(t=20, b=40, l=10), xaxis_title="Adjusted CTR lift % (with 95% interval)")
+            st.plotly_chart(fig_nl, use_container_width=True)
+            st.caption("Green = net helped · Red = net hurt · Grey = negligible (interval within ±3%) · "
+                       "Amber = mixed (sign differs across brands) · Dark grey = inconclusive (interval too wide).")
+        if not thin.empty:
+            st.caption("Not enough data (< 30 ads with the value): " + ", ".join(thin["LABEL"].tolist()))
+
+        st.markdown("#### Sub-attribute breakdown by family")
+        fam = st.selectbox("Attribute family", list(CI_FAMILIES), key="pdv_family")
+        fam_df = nl[nl["ATTRIBUTE_FAMILY"] == fam].sort_values("ADJ_LIFT_PCT", ascending=False, na_position="last")
+        st.dataframe(pd.DataFrame([{
+            "Value": r.ATTRIBUTE_VALUE,
+            "Adjusted lift": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.ADJ_LIFT_PCT:+.1f}%",
+            "95% interval": "" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.CI_LOW_PCT:+.1f}% to {r.CI_HIGH_PCT:+.1f}%",
+            "Ads with": int(r.N_ADS_WITH), "Ads without": int(r.N_ADS_WITHOUT),
+            "Class": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else r.NET_LEAN_CLASS,
+            "Brand-level lifts": "" if r.BRAND_LIFTS_JSON in (None, "{}") else r.BRAND_LIFTS_JSON,
+        } for r in fam_df.itertuples()]), use_container_width=True, hide_index=True)
+
+    with st.expander("📇 Model card: CTR predictor", expanded=False):
+        mm = load_model_metrics()
+        fe = load_feature_effects()
+        if mm.empty:
+            st.info("Model not trained yet. Run scripts/deploy_creative_ml.py.")
+        else:
+            m0 = mm.iloc[0]
+            st.markdown(
+                f"- **Point model:** {m0['CHOSEN_POINT_MODEL']} (HistGradientBoostingRegressor on log-odds CTR); "
+                f"Ridge and a brand × placement historical-mean baseline are kept for comparison.\n"
+                f"- **Interval model:** HistGradientBoosting quantile regressors (p10, p90), conformally widened using "
+                f"the last 8 training weeks (from {m0['CALIBRATION_START']}).\n"
+                f"- **Features:** brand, market, objective, placement, ad type, aspect ratio, platform, the 8 creative "
+                f"attribute families, log weekly spend, frequency (and excess over 6), weeks since start.\n"
+                f"- **Training period:** {m0['TRAIN_START']} to {m0['TRAIN_END']} ({int(m0['N_TRAIN_ROWS'])} ad-weeks).\n"
+                f"- **Holdout period:** {m0['HOLDOUT_START']} to {m0['HOLDOUT_END']} ({int(m0['N_HOLDOUT_ROWS'])} ad-weeks, "
+                f"last 10 weeks, never used for training or calibration).")
+            show = mm[["MODEL", "LEVEL", "N_HOLDOUT", "MAE_CTR_PP", "MAPE_PCT", "R2", "MSE_SKILL_VS_BASELINE",
+                       "P10_P90_COVERAGE"]].rename(columns={
+                "MAE_CTR_PP": "MAE (CTR pp)", "MAPE_PCT": "MAPE %", "MSE_SKILL_VS_BASELINE": "Skill vs baseline",
+                "P10_P90_COVERAGE": "p10-p90 coverage"})
+            st.dataframe(show, use_container_width=True, hide_index=True)
+            st.caption("Ad level = holdout weeks aggregated per ad before scoring. Coverage target is ~80%. "
+                       "Gradient boosting beats Ridge only modestly (ad-week R² gap ~0.04); most of the signal is "
+                       "captured by a linear model, and the remaining edge plausibly comes from brand-specific interactions.")
+            if not fe.empty:
+                top = fe[fe["RANK"] <= 8].copy()
+                fig_fe = px.bar(top, x="IMPORTANCE_R2_DROP", y="FEATURE", color="MODEL", barmode="group",
+                                orientation="h", template=PLOTLY_TEMPLATE, color_discrete_sequence=[PRIMARY, ACCENT])
+                fig_fe.update_layout(height=420, margin=dict(t=20, b=40), yaxis=dict(categoryorder="total ascending"),
+                                     xaxis_title="Permutation importance (drop in holdout R² on log-odds CTR)")
+                st.plotly_chart(fig_fe, use_container_width=True)
+            st.markdown(
+                "**Known limitations**\n"
+                "- Synthetic data with planted effects; brand names are labels only. Not a forecast of real campaigns.\n"
+                "- Small samples: ~40 ads per market × objective cell; many attribute values have < 30 ads and are "
+                "reported as not enough data.\n"
+                "- Wide intervals on small cells; the Predictor's p10-p90 is calibrated overall, not per cell.\n"
+                "- Driver explanations come from the Ridge model (contribution vs an average ad), while the point "
+                "estimate comes from gradient boosting.\n"
+                "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.")
