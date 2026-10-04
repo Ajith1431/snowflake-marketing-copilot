@@ -17,6 +17,11 @@ venv/
 # Data files (regenerate with data/generators/generate_all.py)
 data/samples/*.csv
 
+# Creative dataset (regenerate with data/generators/generate_creative.py, seed=42)
+data/samples/creative/*.csv
+# Answer key is committed once, at tests/fixtures/ground_truth_effects.json
+data/samples/creative/ground_truth_effects.json
+
 # Snowflake connections (secrets)
 .snowflake/connections.toml
 
