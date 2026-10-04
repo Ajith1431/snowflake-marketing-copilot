@@ -70,6 +70,16 @@ def install_fakes(conn):
     sys.modules["snowflake.snowpark.context"] = ctx
     if not hasattr(st, "experimental_rerun"):
         st.experimental_rerun = st.rerun
+    # Emulate the older SiS runtime, which rejects st.dataframe(hide_index=)
+    if not getattr(st.dataframe, "_sis_compat", False):
+        _orig_df = st.dataframe
+
+        def _old_dataframe(*args, **kwargs):
+            if "hide_index" in kwargs:
+                raise TypeError("dataframe() got an unexpected keyword argument 'hide_index'")
+            return _orig_df(*args, **kwargs)
+        _old_dataframe._sis_compat = True
+        st.dataframe = _old_dataframe
 
 
 def summary(at, label):
