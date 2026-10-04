@@ -131,12 +131,17 @@ def main():
         md = [m.value for m in at.markdown if m.value.startswith("**Takeaway:**")]
         print(f"  contrast, market=UK takeaway: {md[0][:200] if md else 'MISSING'}")
 
-        at.button(key="pred_score_btn").click().run()                         # Tab 3 Predictor
-        failures += summary(at, "Tab 3: score default A (Nike UK urgent) vs B (conversational)")
-        metrics = [(m.label, m.value) for m in at.metric if "Scenario" in m.label or "Lift" in m.label]
-        print(f"  metrics: {metrics}")
-        print(f"  warnings: {[w.value[:100] for w in at.warning if 'overlap' in w.value or 'identical' in w.value]}")
-        print(f"  success: {[s.value[:100] for s in at.success if 'overlap' in s.value]}")
+        for preset in at.selectbox(key="pred_preset").options:                # Tab 3 Predictor presets
+            at.selectbox(key="pred_preset").select(preset).run()
+            at.button(key="pred_score_btn").click().run()
+            failures += summary(at, f"Tab 3: {preset}")
+            metrics = [(m.label, m.value) for m in at.metric if "Scenario" in m.label or "Lift" in m.label]
+            print(f"  metrics: {metrics}")
+            print(f"  changed: {[c.value for c in at.caption if c.value.startswith('Changed in B')]}")
+            print(f"  ranges: {[c.value for c in at.caption if c.value.startswith(('p10-p90 range', 'Range:'))]}")
+            msgs = [x.value for x in list(at.info) + list(at.warning) + list(at.success)
+                    if "Expected difference" in x.value]
+            print(f"  message: {msgs}")
     finally:
         conn.close()
     print(f"\nTotal exceptions: {failures}")

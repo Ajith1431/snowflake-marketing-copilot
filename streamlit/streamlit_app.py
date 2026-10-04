@@ -888,19 +888,33 @@ with tab3:
                                         key=f"{prefix}_budget_{base.get('budget', '')}")
         return out
 
-    PRED_DEFAULT_A = {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "feed",
-                      "budget": 2000, "attributes": {"headline_tone": "urgent"}}
+    PRED_PRESETS = {
+        "(a) Nike · UK · LINK_CLICKS: urgent headline vs conversational": (
+            {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "feed", "budget": 2000,
+             "attributes": {"headline_tone": "urgent"}},
+            {"attributes": {"headline_tone": "conversational"}}),
+        "(b) Nike · UK · LINK_CLICKS: stories + urgent + product-led vs feed + conversational + person on camera": (
+            {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "stories", "budget": 2000,
+             "attributes": {"headline_tone": "urgent", "hook_type": "product_led"}},
+            {"placement": "feed", "attributes": {"headline_tone": "conversational", "hook_type": "person_on_camera"}}),
+        "(c) Pepsi · UAE · AWARENESS: no logo in first 3s vs logo in first 3s": (
+            {"brand": "Pepsi", "market": "UAE", "objective": "AWARENESS", "placement": "feed", "budget": 2000,
+             "attributes": {"has_logo_first_3s": "N"}},
+            {"attributes": {"has_logo_first_3s": "Y"}}),
+    }
+    preset_names = list(PRED_PRESETS)
+    preset = st.selectbox("Preset scenario pair (edit any field afterwards)", preset_names, index=1, key="pred_preset")
+    preset_a, preset_b_changes = PRED_PRESETS[preset]
 
     col_a, col_b = st.columns(2)
     with col_a:
         st.markdown("### Scenario A")
-        scen_a = _scenario_inputs("pa", PRED_DEFAULT_A)
+        scen_a = _scenario_inputs("pa", preset_a)
     with col_b:
         st.markdown("### Scenario B")
-        b_base = {**scen_a, "attributes": dict(scen_a["attributes"])}
-        b_base["attributes"]["headline_tone"] = ("conversational" if scen_a["attributes"]["headline_tone"] != "conversational"
-                                               else "informational")
-        st.caption(f"Starts as a copy of A with headline tone = {b_base['attributes']['headline_tone']}; change any field.")
+        b_base = {**scen_a, **{k: v for k, v in preset_b_changes.items() if k != "attributes"},
+                  "attributes": {**scen_a["attributes"], **preset_b_changes.get("attributes", {})}}
+        st.caption("Starts as A with the preset's changes; change any field.")
         scen_b = _scenario_inputs("pb", b_base)
 
     if scen_a == scen_b:
@@ -932,10 +946,13 @@ with tab3:
         m2.caption(f"p10-p90 range: {rb['p10'] * 100:.2f}% to {rb['p90'] * 100:.2f}%")
         m3.metric("Lift of B vs A (point estimate)", f"{lift:+.1f}%")
         m3.caption(f"Range: {lift_lo:+.1f}% to {lift_hi:+.1f}% (B's p10-p90 against A's p90-p10).")
-        if overlap:
-            st.warning("⚠️ The p10-p90 ranges overlap: the difference is not distinguishable from noise.")
+        if abs(lift) < 5:
+            st.warning(f"⚠️ Expected difference is only {lift:+.1f}% (A vs B): too small to distinguish from noise.")
+        elif overlap:
+            st.info(f"Ranges for individual ad-weeks overlap, so any single ad can go either way. "
+                    f"Expected difference: {lift:+.1f}% (A vs B).")
         else:
-            st.success("The p10-p90 ranges do not overlap, so the difference is likely real in this synthetic data.")
+            st.success(f"Expected difference: {lift:+.1f}% (A vs B), and the individual ad-week ranges do not overlap.")
 
         fig_pred = go.Figure()
         for name, r, color in [("A", ra, PRIMARY), ("B", rb, ACCENT)]:
@@ -965,7 +982,7 @@ with tab3:
             f"## Scenario B\n- Inputs: {json.dumps(sb)}\n- Predicted CTR: {rb['predicted_ctr'] * 100:.2f}% "
             f"(p10 {rb['p10'] * 100:.2f}%, p90 {rb['p90'] * 100:.2f}%)\n\n"
             f"## Comparison\n- Lift of B vs A: {lift:+.1f}% (point estimate)\n"
-            f"- {'Ranges overlap: difference is uncertain.' if overlap else 'Ranges do not overlap.'}\n\n"
+            f"- {'Individual ad-week ranges overlap, so any single ad can go either way.' if overlap else 'Individual ad-week ranges do not overlap.'}\n\n"
             f"## Caveat\n{CI_BANNER}"
         )
         js_download_button(
@@ -1835,4 +1852,6 @@ with tab7:
                 "- Wide intervals on small cells; the Predictor's p10-p90 is calibrated overall, not per cell.\n"
                 "- Driver explanations come from the Ridge model (contribution vs an average ad), while the point "
                 "estimate comes from gradient boosting.\n"
-                "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.")
+                "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.\n"
+                "- No multiple-comparison correction was applied across the ~1,000 net-lean cells; borderline results "
+                "are hypotheses (for example IN shows one borderline NET_HURT where no effect was planted).")
