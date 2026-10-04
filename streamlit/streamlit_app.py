@@ -535,13 +535,17 @@ def load_net_lean_takeaway(stratum_type, market, objective, brand_label):
 
 @st.cache_data(ttl=300)
 def load_best_attributes(brand_label, market):
-    df = run_query(f"""
-        SELECT attribute_family, attribute_value, adj_lift_pct FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
-        WHERE stratum_type = 'MARKET_X_BRAND' AND market = '{market}' AND brand = '{brand_label}'
-          AND net_lean_class = 'NET_HELPED'
-        ORDER BY adj_lift_pct DESC LIMIT 3
-    """)
-    return [f"{r.ATTRIBUTE_FAMILY.replace('_', ' ')} = {r.ATTRIBUTE_VALUE}" for r in df.itertuples()]
+    """NET_HELPED values for brand x market; falls back to the brand across all markets when that cell is thin."""
+    for scope in (market, "ALL"):
+        df = run_query(f"""
+            SELECT attribute_family, attribute_value, adj_lift_pct FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
+            WHERE stratum_type = 'MARKET_X_BRAND' AND market = '{scope}' AND brand = '{brand_label}'
+              AND net_lean_class = 'NET_HELPED'
+            ORDER BY adj_lift_pct DESC LIMIT 3
+        """)
+        if not df.empty:
+            return [f"{r.ATTRIBUTE_FAMILY.replace('_', ' ')} = {r.ATTRIBUTE_VALUE}" for r in df.itertuples()], scope
+    return [], None
 
 
 @st.cache_data(ttl=300)
@@ -884,14 +888,23 @@ with tab3:
                                         key=f"{prefix}_budget_{base.get('budget', '')}")
         return out
 
+    PRED_DEFAULT_A = {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "feed",
+                      "budget": 2000, "attributes": {"headline_tone": "urgent"}}
+
     col_a, col_b = st.columns(2)
     with col_a:
         st.markdown("### Scenario A")
-        scen_a = _scenario_inputs("pa")
+        scen_a = _scenario_inputs("pa", PRED_DEFAULT_A)
     with col_b:
         st.markdown("### Scenario B")
-        st.caption("Starts as a copy of A; change any field.")
-        scen_b = _scenario_inputs("pb", scen_a)
+        b_base = {**scen_a, "attributes": dict(scen_a["attributes"])}
+        b_base["attributes"]["headline_tone"] = ("conversational" if scen_a["attributes"]["headline_tone"] != "conversational"
+                                               else "informational")
+        st.caption(f"Starts as a copy of A with headline tone = {b_base['attributes']['headline_tone']}; change any field.")
+        scen_b = _scenario_inputs("pb", b_base)
+
+    if scen_a == scen_b:
+        st.warning("Scenario B is identical to A. Change at least one field to compare.")
 
     if st.button("🔮 Score both scenarios", type="primary", key="pred_score_btn"):
         try:
@@ -906,6 +919,11 @@ with tab3:
         st.divider()
         lift = (rb["predicted_ctr"] / ra["predicted_ctr"] - 1) * 100 if ra["predicted_ctr"] else 0.0
         overlap = not (rb["p10"] > ra["p90"] or rb["p90"] < ra["p10"])
+        lift_lo = (rb["p10"] / ra["p90"] - 1) * 100 if ra["p90"] else 0.0
+        lift_hi = (rb["p90"] / ra["p10"] - 1) * 100 if ra["p10"] else 0.0
+        changed = [k for k in ("brand", "market", "objective", "placement", "budget") if sa[k] != sb[k]] + \
+                  [f for f in CI_FAMILIES if sa["attributes"][f] != sb["attributes"][f]]
+        st.caption("Changed in B: " + (", ".join(changed) if changed else "nothing (B = A)"))
         m1, m2, m3 = st.columns(3)
         m1.metric("Scenario A: predicted CTR", f"{ra['predicted_ctr'] * 100:.2f}%",
                   help=f"p10-p90: {ra['p10'] * 100:.2f}% to {ra['p90'] * 100:.2f}%")
@@ -913,8 +931,11 @@ with tab3:
         m2.metric("Scenario B: predicted CTR", f"{rb['predicted_ctr'] * 100:.2f}%", delta=f"{lift:+.1f}% vs A")
         m2.caption(f"p10-p90 range: {rb['p10'] * 100:.2f}% to {rb['p90'] * 100:.2f}%")
         m3.metric("Lift of B vs A (point estimate)", f"{lift:+.1f}%")
-        m3.caption("Ranges overlap, so the difference is uncertain." if overlap
-                   else "Ranges do not overlap, so the difference is likely real in this synthetic data.")
+        m3.caption(f"Range: {lift_lo:+.1f}% to {lift_hi:+.1f}% (B's p10-p90 against A's p90-p10).")
+        if overlap:
+            st.warning("⚠️ The p10-p90 ranges overlap: the difference is not distinguishable from noise.")
+        else:
+            st.success("The p10-p90 ranges do not overlap, so the difference is likely real in this synthetic data.")
 
         fig_pred = go.Figure()
         for name, r, color in [("A", ra, PRIMARY), ("B", rb, ACCENT)]:
@@ -1064,9 +1085,10 @@ with tab6:
         ci_c1, ci_c2 = st.columns(2)
         ci_brand = ci_c1.selectbox("Performance Drivers brand (label)", CI_BRANDS, key="cs_ci_brand")
         ci_market = ci_c2.selectbox("Performance Drivers market", CI_MARKETS, key="cs_ci_market")
-        ci_best = load_best_attributes(ci_brand, ci_market)
-        st.caption(f"Net helpers for {ci_brand} in {ci_market} (synthetic creative data): {', '.join(ci_best)}"
-                   if ci_best else f"No net-helped attributes for {ci_brand} in {ci_market} (not enough evidence).")
+        ci_best, ci_scope = load_best_attributes(ci_brand, ci_market)
+        ci_where = ci_market if ci_scope == ci_market else "all markets (too few ads in " + ci_market + ")"
+        st.caption(f"Net helpers for {ci_brand} in {ci_where} (synthetic creative data): {', '.join(ci_best)}"
+                   if ci_best else f"No net-helped attributes for {ci_brand} (not enough evidence).")
         cs_direction = st.text_area(
             "Creative Direction",
             value=st.session_state.get("recommendation_creative", "Clean modern visuals with lifestyle imagery showing product in everyday premium context")
@@ -1654,27 +1676,39 @@ with tab7:
     st.subheader("Performance Drivers: which creative attributes move CTR")
     st.warning(f"⚠️ {CI_BANNER}")
 
+    CI_CLASS_INFO = {
+        "NET_HELPED": ("#22C55E", "net helped: lift > +3% and the 95% interval excludes 0"),
+        "NET_HURT": ("#EF4444", "net hurt: lift < -3% and the 95% interval excludes 0"),
+        "NEGLIGIBLE": ("#94A3B8", "negligible: the whole 95% interval is within ±3%"),
+        "MIXED": ("#F59E0B", "mixed: the sign differs across brands"),
+        "INCONCLUSIVE": ("#64748B", "inconclusive: interval too wide to call (includes 0, wider than ±3%)"),
+        "INSUFFICIENT_DATA": ("#1E293B", "not enough data: fewer than 30 ads have this value"),
+    }
+
     f1, f2, f3 = st.columns(3)
-    pd_brand = f1.selectbox("Brand (label)", ["ALL"] + CI_BRANDS, key="pdv_brand")
-    pd_market = f2.selectbox("Market", ["ALL"] + CI_MARKETS, key="pdv_market")
-    pd_objective = f3.selectbox("Campaign objective", ["ALL"] + CI_OBJECTIVES, key="pdv_objective")
+    pd_brand = f1.selectbox("Brand (label)", CI_BRANDS + ["ALL brands"], index=0, key="pdv_brand2")
+    pd_market = f2.selectbox("Drill down: market", ["ALL"] + CI_MARKETS, key="pdv_market2")
+    pd_objective = f3.selectbox("Drill down: objective", ["ALL"] + CI_OBJECTIVES, key="pdv_objective2")
 
-    if pd_brand != "ALL":
-        stype, s_obj, s_brand = "MARKET_X_BRAND", "ALL", pd_brand
-        if pd_objective != "ALL":
-            st.info("Brand × market × objective cells are too thin to estimate, so this view is market × brand "
-                    "(the objective filter is ignored). Set brand to ALL to see market × objective.")
+    if pd_brand != "ALL brands" and pd_objective == "ALL":
+        stype, s_mkt, s_obj, s_brand = "MARKET_X_BRAND", pd_market, "ALL", pd_brand
     else:
-        stype, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_objective, "ALL"
+        stype, s_mkt, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_market, pd_objective, "ALL"
+        if pd_brand != "ALL brands":
+            st.info(f"Brand × objective cells are not computed (too few ads), so this view shows all brands for "
+                    f"objective = {pd_objective}. Set objective to ALL to see {pd_brand} on its own.")
 
-    nl = load_net_lean(stype, pd_market, s_obj, s_brand)
-    tk = load_net_lean_takeaway(stype, pd_market, s_obj, s_brand)
+    nl = load_net_lean(stype, s_mkt, s_obj, s_brand)
+    tk = load_net_lean_takeaway(stype, s_mkt, s_obj, s_brand)
     if nl.empty:
         st.info("No NET_LEAN results for this selection. Run scripts/deploy_creative_ml.py to compute them.")
     else:
         n_ads = int(nl["N_ADS"].iloc[0])
         st.caption(f"Stratum: {nl['STRATUM'].iloc[0]}  ·  {n_ads} ads  ·  adjusted CTR lift controls for log spend, "
                    f"brand, placement and the other attribute families; 95% bootstrap interval over ads.")
+        if n_ads < 60:
+            st.info(f"Only {n_ads} ads in this cell, so most values will show 'not enough data'. "
+                    f"Widen the drill-down (set market or objective to ALL) for more evidence.")
         if not tk.empty:
             st.markdown(f"**Takeaway:** {tk['TAKEAWAY'].iloc[0]}")
 
@@ -1701,26 +1735,53 @@ with tab7:
                 st.error(f"**Worst attribute:** {h['LABEL']}\n\n{h['ADJ_LIFT_PCT']:+.1f}% adjusted CTR "
                          f"(95% CI {h['CI_LOW_PCT']:+.1f}% to {h['CI_HIGH_PCT']:+.1f}%, {int(h['N_ADS_WITH'])} ads)")
 
+        st.markdown("#### Net lean by attribute family")
+        st.markdown(" ".join(
+            f"<span style='display:inline-block;margin:2px 10px 2px 0;font-size:12px;'>"
+            f"<span style='display:inline-block;width:11px;height:11px;background:{c};border:1px solid #475569;"
+            f"margin-right:5px;vertical-align:middle;'></span>{d}</span>"
+            for c, d in CI_CLASS_INFO.values()), unsafe_allow_html=True)
+
         if enough.empty:
             st.info("Every attribute value in this stratum has fewer than 30 ads: not enough data.")
         else:
-            enough = enough.sort_values("ADJ_LIFT_PCT")
+            fam_order = {f: i for i, f in enumerate(CI_FAMILIES)}
+            enough["FAM_ORDER"] = enough["ATTRIBUTE_FAMILY"].map(fam_order)
+            enough = enough.sort_values(["FAM_ORDER", "ADJ_LIFT_PCT"], ascending=[False, True])
+            enough["YLABEL"] = [
+                f"{r.LABEL}<br><span style='font-size:10px;color:#94A3B8'>n={int(r.N_ADS_WITH)} ads · "
+                f"95% CI {r.CI_LOW_PCT:+.1f}% to {r.CI_HIGH_PCT:+.1f}%</span>" for r in enough.itertuples()]
             fig_nl = go.Figure(go.Bar(
-                x=enough["ADJ_LIFT_PCT"], y=enough["LABEL"], orientation="h",
-                marker_color=[CI_CLASS_COLORS.get(c, "#475569") for c in enough["NET_LEAN_CLASS"]],
+                x=enough["ADJ_LIFT_PCT"], y=enough["YLABEL"], orientation="h",
+                marker_color=[CI_CLASS_INFO.get(c, ("#64748B", ""))[0] for c in enough["NET_LEAN_CLASS"]],
                 error_x=dict(type="data", symmetric=False,
                              array=(enough["CI_HIGH_PCT"] - enough["ADJ_LIFT_PCT"]).fillna(0),
                              arrayminus=(enough["ADJ_LIFT_PCT"] - enough["CI_LOW_PCT"]).fillna(0), color="#CBD5E1"),
-                customdata=enough[["NET_LEAN_CLASS", "N_ADS_WITH"]].to_numpy(),
-                hovertemplate="%{y}<br>lift %{x:+.1f}%<br>%{customdata[0]}<br>%{customdata[1]} ads<extra></extra>"))
+                text=[f"n={int(n)}" for n in enough["N_ADS_WITH"]], textposition="outside",
+                customdata=[[r.LABEL, CI_CLASS_INFO.get(r.NET_LEAN_CLASS, ("", r.NET_LEAN_CLASS))[1],
+                             int(r.N_ADS_WITH), r.CI_LOW_PCT, r.CI_HIGH_PCT] for r in enough.itertuples()],
+                hovertemplate="%{customdata[0]}<br>adjusted lift %{x:+.1f}%<br>95% CI %{customdata[3]:+.1f}% to "
+                              "%{customdata[4]:+.1f}%<br>%{customdata[2]} ads<br>%{customdata[1]}<extra></extra>"))
             fig_nl.add_vline(x=0, line_color="#64748B")
-            fig_nl.update_layout(template=PLOTLY_TEMPLATE, height=max(300, 26 * len(enough) + 80),
-                                 margin=dict(t=20, b=40, l=10), xaxis_title="Adjusted CTR lift % (with 95% interval)")
+            fig_nl.update_layout(template=PLOTLY_TEMPLATE, height=max(320, 40 * len(enough) + 80),
+                                 margin=dict(t=20, b=40, l=10, r=40), xaxis_title="Adjusted CTR lift % (with 95% interval)")
             st.plotly_chart(fig_nl, use_container_width=True)
-            st.caption("Green = net helped · Red = net hurt · Grey = negligible (interval within ±3%) · "
-                       "Amber = mixed (sign differs across brands) · Dark grey = inconclusive (interval too wide).")
+
+            fam_rows = []
+            for fam_name in CI_FAMILIES:
+                g = enough[enough["ATTRIBUTE_FAMILY"] == fam_name]
+                if g.empty:
+                    fam_rows.append({"Family": fam_name, "Strongest helper": "not enough data", "Strongest hurter": ""})
+                    continue
+                top, low = g.loc[g["ADJ_LIFT_PCT"].idxmax()], g.loc[g["ADJ_LIFT_PCT"].idxmin()]
+                fam_rows.append({
+                    "Family": fam_name,
+                    "Strongest helper": f"{top['ATTRIBUTE_VALUE']} ({top['ADJ_LIFT_PCT']:+.1f}%, {top['NET_LEAN_CLASS']}, n={int(top['N_ADS_WITH'])})",
+                    "Strongest hurter": f"{low['ATTRIBUTE_VALUE']} ({low['ADJ_LIFT_PCT']:+.1f}%, {low['NET_LEAN_CLASS']}, n={int(low['N_ADS_WITH'])})"})
+            st.dataframe(pd.DataFrame(fam_rows), use_container_width=True, hide_index=True)
         if not thin.empty:
-            st.caption("Not enough data (< 30 ads with the value): " + ", ".join(thin["LABEL"].tolist()))
+            st.caption("Not enough data (< 30 ads with the value): "
+                       + ", ".join(f"{l} (n={int(n)})" for l, n in zip(thin["LABEL"], thin["N_ADS_WITH"])))
 
         st.markdown("#### Sub-attribute breakdown by family")
         fam = st.selectbox("Attribute family", list(CI_FAMILIES), key="pdv_family")
