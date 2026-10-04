@@ -1,651 +1,545 @@
-# Snowflake Marketing Co-Pilot and Pitch Engine - Complete Project Documentation
+# NovaSpark Marketing Co-Pilot & Pitch Engine — Complete Documentation
 
 **Hackathon:** Snowflake CoCo CLI Hackathon (GCC Edition)
-**Project:** NovaSpark Agency Marketing Co-Pilot and Pitch Engine
-**Account:** WFVAMNP-AP54607
-**Team Contact:** Ajithkumar M (ajithkumar.m@wpp.com)
+**Project:** NovaSpark Agency Marketing Co-Pilot & Pitch Engine
+**Repository:** github.com/Ajith1431/snowflake-marketing-copilot (branch `master`)
+**Deployed account:** CLVULGZ-ZJ61620 (AWS ap-south-1), database `MARKETING_COPILOT`
+**Team:** Ajithkumar M (ajithkumar.m@wpp.com), with coworker contributions from `sriramnb/Campaign-intelligence-AI-snowflake`
+
+---
+
+## Contents
+
+1. [Project Overview](#1-project-overview)
+2. [Architecture](#2-architecture)
+3. [Data Layer](#3-data-layer)
+4. [AI Layer: Semantic View, Search, Agents](#4-ai-layer-semantic-view-search-agents)
+5. [Event Intelligence Pipeline](#5-event-intelligence-pipeline)
+6. [Creative Studio and the Cortex Intelligence Layer](#6-creative-studio-and-the-cortex-intelligence-layer)
+7. [MCP Server](#7-mcp-server)
+8. [Streamlit App (6 Tabs)](#8-streamlit-app-6-tabs)
+9. [CoCo Skills](#9-coco-skills)
+10. [Build and Deployment Guide](#10-build-and-deployment-guide)
+11. [Configuration and Secrets](#11-configuration-and-secrets)
+12. [Validation](#12-validation)
+13. [Snowflake Objects Inventory](#13-snowflake-objects-inventory)
+14. [Repository Structure](#14-repository-structure)
+15. [Known Limitations](#15-known-limitations)
+16. [Issues Fixed and Technical Decisions](#16-issues-fixed-and-technical-decisions)
+17. [Demo Walkthrough](#17-demo-walkthrough)
 
 ---
 
 ## 1. Project Overview
 
-### What It Is
-An AI-powered marketing intelligence platform built entirely on Snowflake that helps agency teams:
+### What it is
+An AI-powered marketing intelligence platform built on Snowflake. It helps agency teams:
+
 - Analyze campaign performance across 12 client brands
-- Generate data-backed campaign recommendations
-- Compare budget allocation scenarios with projected outcomes
-- Produce client-ready pitch documents grounded in real data and brand guidelines
-- Pull live internet intelligence (Google Trends, news, web research) for market events
-- Generate event-specific marketing strategies with competitive analysis
+- Generate data-backed campaign recommendations and client pitch documents
+- Compare budget-allocation scenarios with projected outcomes
+- Pull live market intelligence (Google Trends, news, Cortex web research) for market events
+- Build event-specific marketing strategies with competitor analysis
+- Produce creative briefs (poster prompt, video storyboard, design system, audio script) grounded in each client's own performance data and brand guidelines
+- Expose all of the above to external AI clients (Claude, ChatGPT, Cursor) through a Snowflake-managed MCP server
 
-### The Business Problem
-Marketing agencies waste days manually assembling performance data, audience insights, and competitive intelligence to produce a single client pitch. Analysts query multiple sources, strategists interpret trends, and creatives package the narrative -- all disconnected. This project collapses that into minutes with a unified AI-powered platform that combines internal campaign data with live market intelligence.
+### The business problem
+Agencies spend days assembling performance data, audience insights and competitive intelligence for a single pitch. Analysts, strategists and creatives work from disconnected sources. NovaSpark collapses that workflow into one Snowflake-native app where every recommendation, strategy and creative brief is grounded in the same governed data.
 
-### How It Works (End-to-End Flow)
-
-```
-  [Account Director]
-        |
-        v
-  [Sidebar: Select Client + Product + Budget]
-        |
-        +---> [Tab 1: Client Intelligence]
-        |         |
-        |         v
-        |     SQL Queries --> Dynamic Tables --> Plotly Charts + KPI Cards
-        |
-        +---> [Tab 2: Campaign Recommendation]
-        |         |
-        |         v
-        |     Marketing Co-Pilot Agent (auto-continue up to 3 rounds)
-        |       |         |           |
-        |       v         v           v
-        |   Campaign   Brand       Market
-        |   Analytics  Search      Search
-        |   (Analyst)  (Search)   (Search)
-        |       |         |           |
-        |       v         v           v
-        |     Semantic  BRAND_     MARKET_
-        |     View      SEARCH     SEARCH
-        |       |
-        |       v
-        |     Dynamic Tables --> RAW Tables
-        |         |
-        |         v
-        |     Structured Recommendation --> Download as styled HTML
-        |         |
-        |        Yes (Approve)
-        |         |
-        +---> [Tab 4: Generate Pitch]
-        |         |
-        |         v
-        |     Marketing Co-Pilot Agent --> 7-Section Pitch --> Download as styled HTML
-        |
-        +---> [Tab 3: What-If Analysis]
-        |         |
-        |         v
-        |     Budget Sliders --> Historical Metrics --> Projected Revenue + Conversions
-        |         |
-        |         v
-        |     Scenario Comparison Chart --> Download as styled HTML
-        |
-        +---> [Tab 5: Event Intelligence]  *** NEW ***
-                  |
-                  v
-              Internet Intelligence Agent (auto-continue)
-                |         |           |
-                v         v           v
-            Web Search  Event News  Campaign
-            (Live)      Search      Benchmarks
-                |
-                v
-              Trend/News/Competitor Data from Snowflake Tables
-                |
-                v
-              Strategy Synthesis Agent (auto-continue)
-                |         |           |           |
-                v         v           v           v
-            Campaign   Brand       Event News  Web Search
-            Analytics  Search      Search      (Live)
-                |
-                v
-              9-Section Event Strategy --> Download as styled HTML
-```
+### What it is not
+NovaSpark is a marketing intelligence platform at the client-brand, campaign, channel and segment level. It is not a Customer 360: customer profiles and feedback exist (10,000 profiles, 25,000 feedback rows) but there is no individual-level identity resolution or per-customer activation.
 
 ---
 
-## 2. Architecture Layers
+## 2. Architecture
 
-### Layer 1: Data Generation (Python)
-**File:** `data/generators/generate_all.py` (864 lines, 14 functions)
+```
+                        ┌───────────────────────────────────────────────┐
+                        │  Streamlit in Snowflake: MARKETING_COPILOT_APP │
+                        │  1 Client Intel  2 Recommendation  3 What-If   │
+                        │  4 Pitch  5 Event Intelligence  6 Creative     │
+                        └──────────────┬────────────────────────────────┘
+                                       │ SQL / DATA_AGENT_RUN / CALL
+     ┌─────────────────────────────────┼──────────────────────────────────────┐
+     │                                 │                                      │
+┌────▼─────────────┐  ┌────────────────▼──────────┐  ┌─────────────────────────▼──┐
+│ MARKETING_COPILOT│  │ INTERNET_INTELLIGENCE_AGENT│  │ STRATEGY_SYNTHESIS_AGENT   │
+│ Analyst + Brand/ │  │ web_search + EventNews +   │  │ Analyst + Brand + EventNews│
+│ Market Search    │  │ Analyst benchmarks         │  │ + web_search               │
+└────┬─────────────┘  └────────────┬───────────────┘  └──────────┬─────────────────┘
+     │                             │                             │
+     ▼                             ▼                             ▼
+ Semantic View            Cortex Search (x3)            Stored procedures (x5)
+ CAMPAIGN_ANALYTICS       BRAND / MARKET / EVENT_NEWS   creative + intelligence
+     │                             │                             │
+     └──────────────┬──────────────┴─────────────────────────────┘
+                    ▼
+       ANALYTICS: 14 Dynamic Tables (TARGET_LAG 1 minute)
+                    ▲
+       RAW: 11 base tables (CSV via COPY INTO) + 4 event tables (Python pipeline)
+                    ▲                                   ▲
+   data/generators/generate_all.py         src/intelligence/run_pipeline.py
+   (synthetic agency data)                 (Google Trends, Event Registry, Cortex COMPLETE)
 
-Generates 11 CSV files with 114,365 total rows of synthetic but realistic marketing data for "NovaSpark Agency" -- a fictional full-service agency managing 12 client brands.
+   External AI clients ──OAuth──► MCP server NOVASPARK_MCP (12 tools) ──► agents / analyst / search / procedures
+```
 
-**The 12 Client Brands:**
-
-| Client ID | Brand Name | Industry |
-|-----------|-----------|----------|
-| C001 | LuminaRetail | Retail |
-| C002 | TechVista | Technology |
-| C003 | CareWell | Healthcare |
-| C004 | FinEdge | Finance |
-| C005 | PureLife | CPG |
-| C006 | DriveMax | Automotive |
-| C007 | Wanderlux | Travel |
-| C008 | ConnectSphere | Telecom |
-| C009 | FlavorCo | Food and Beverage |
-| C010 | UrbanThread | Fashion |
-| C011 | MediaPulse | Media and Entertainment |
-| C012 | GreenCore | Energy |
-
-**Generator Functions and Their Outputs:**
-
-| Function | Output CSV | Rows | Description |
-|----------|-----------|------|-------------|
-| `generate_clients()` | clients.csv | 12 | One row per brand |
-| `generate_products(clients_df)` | products.csv | 52 | 3-5 industry-specific products per client |
-| `generate_channels()` | channels.csv | 10 | Instagram, YouTube, Google Search, Facebook, LinkedIn, TikTok, Email, Programmatic Display, TV, Out-of-Home |
-| `generate_audience_segments(clients_df)` | audience_segments.csv | 71 | 5-8 demographic segments per client |
-| `generate_customer_profiles(segments_df)` | customer_profiles.csv | 10,000 | Distributed proportionally across segments |
-| `generate_campaigns(clients_df, products_df)` | campaigns.csv | 600 | 50 campaigns per client, 2023-2025 |
-| `generate_bridge_campaign_segment(...)` | bridge_campaign_segment.csv | 1,789 | 2-4 segments per campaign, allocations sum to 100% |
-| `generate_campaign_metrics(campaigns_df, channels_df)` | campaign_metrics.csv | 76,668 | Daily metrics per campaign-channel combo |
-| `generate_customer_feedback(...)` | customer_feedback.csv | 25,000 | Sentiment-correlated text and ratings |
-| `generate_market_events()` | market_events.csv | 53 | Holidays, economic, competitor, regulatory, cultural |
-| `generate_brand_guidelines(clients_df)` | brand_guidelines.csv | 110 | 8-10 guideline sections per client, 100-200 words each |
-
-**Realistic Metric Distributions:**
-- CTR: 0.5% to 5.0% (beta distribution)
-- ROAS: 1.2 to 7.0 (lognormal distribution)
-- Conversion rate: 1% to 8% (beta distribution)
-- Spend varies by channel: TV $2K-$10K/day, Social $100-$2K/day, Email $50-$500/day
-- Self-consistent: clicks = impressions x CTR, conversions = clicks x conversion_rate, revenue = spend x ROAS
+### Design principles
+- **Everything lives in Snowflake.** Data, transformations, AI services, app and MCP endpoint are all Snowflake objects; the only off-platform pieces are the local Python pipeline (because trial accounts can't create External Access Integrations) and optional local Gemini image generation.
+- **One source of truth for creative and strategy.** Agents and Creative Studio read the same dynamic tables, so a poster prompt and a channel recommendation can't disagree about which channel performs best.
+- **Human in the loop.** A recommendation must be approved (Tab 2) before a client pitch can be generated (Tab 4).
 
 ---
 
-### Layer 2: RAW Storage (Snowflake)
-**Database:** `MARKETING_COPILOT`
-**Schema:** `RAW`
+## 3. Data Layer
+
+### 3.1 Synthetic data generation
+**File:** `data/generators/generate_all.py` — generates 11 CSVs (114,365 rows) for the fictional NovaSpark Agency.
+
+| Client | Industry | Client | Industry |
+|---|---|---|---|
+| LuminaRetail | Retail | Wanderlux | Travel |
+| TechVista | Technology | ConnectSphere | Telecom |
+| CareWell | Healthcare | FlavorCo | Food & Beverage |
+| FinEdge | Finance | UrbanThread | Fashion |
+| PureLife | CPG | MediaPulse | Media & Entertainment |
+| DriveMax | Automotive | GreenCore | Energy |
+
+Distributions are realistic and self-consistent: CTR 0.5–5% (beta), ROAS 1.2–7.0 (lognormal), conversion rate 1–8% (beta); clicks = impressions × CTR, conversions = clicks × conversion rate, revenue = spend × ROAS. Channel spend scales by channel type (TV $2K–10K/day, social $100–2K/day, email $50–500/day).
+
+### 3.2 RAW schema (15 tables)
 **Files:** `sql/ddl/02_tables.sql`, `sql/ddl/03_event_intelligence_tables.sql`
 
-16 tables total (11 base + 5 event intelligence), loaded via `COPY INTO` from internal stages:
+| Table | Rows | Source | Description |
+|---|---|---|---|
+| RAW_CLIENTS | 12 | CSV | Client brands |
+| RAW_PRODUCTS | 52 | CSV | 3–5 products per client |
+| RAW_CHANNELS | 10 | CSV | Instagram, YouTube, Google Search, Facebook, LinkedIn, TikTok, Email, Programmatic Display, TV, Out-of-Home |
+| RAW_AUDIENCE_SEGMENTS | 71 | CSV | 5–8 segments per client, interests as JSON |
+| RAW_CUSTOMER_PROFILES | 10,000 | CSV | Customer demographics |
+| RAW_CAMPAIGNS | 600 | CSV | 50 campaigns per client, 2023–2025 |
+| RAW_BRIDGE_CAMPAIGN_SEGMENT | 1,789 | CSV | Campaign→segment allocation (sums to 100%) |
+| RAW_CAMPAIGN_METRICS | 76,668 | CSV | Daily campaign × channel metrics |
+| RAW_CUSTOMER_FEEDBACK | 25,000 | CSV | Sentiment-scored feedback |
+| RAW_MARKET_EVENTS | 53 | CSV | Holidays, economic, competitor, regulatory, cultural events (2025) |
+| RAW_BRAND_GUIDELINES | 110 | CSV | 8–10 guideline sections per client incl. dos/donts, tone, palette |
+| EVENT_INTELLIGENCE_RUNS | 2 | pipeline | One row per intelligence run (client, event, competitors, markets, confidence) |
+| GOOGLE_TRENDS_DATA | 837 | pipeline | Daily interest score per keyword, peak flag |
+| NEWS_ARTICLES | 73 | pipeline | Event / brand / competitor news with sentiment |
+| WEB_INTELLIGENCE | 16 | pipeline | Cortex COMPLETE research: summary, key findings, channels, sentiment |
 
-#### Base Tables (11)
+`ANALYTICS.EVENT_STRATEGY_OUTPUT` is also created by `03_event_intelligence_tables.sql` for the `event-strategy` skill to persist strategies; the Streamlit app does not write to it.
 
-| Table | Primary Key | Rows | Description |
-|-------|------------|------|-------------|
-| RAW_CLIENTS | client_id | 12 | Client brands |
-| RAW_PRODUCTS | product_id | 52 | Products per client |
-| RAW_CHANNELS | channel_id | 10 | Marketing channels |
-| RAW_AUDIENCE_SEGMENTS | segment_id | 71 | Audience segments |
-| RAW_CUSTOMER_PROFILES | customer_id | 10,000 | Customer demographics |
-| RAW_CAMPAIGNS | campaign_id | 600 | Campaigns 2023-2025 |
-| RAW_BRIDGE_CAMPAIGN_SEGMENT | campaign_id+segment_id | 1,789 | Campaign-segment allocation |
-| RAW_CAMPAIGN_METRICS | metric_id | 76,668 | Daily channel metrics |
-| RAW_CUSTOMER_FEEDBACK | feedback_id | 25,000 | Customer feedback with sentiment |
-| RAW_MARKET_EVENTS | event_id | 53 | Market events calendar |
-| RAW_BRAND_GUIDELINES | guideline_id | 110 | Brand guidelines per section |
-
-#### Event Intelligence Tables (5) -- NEW
-
-| Table | Description |
-|-------|-------------|
-| RAW_INTELLIGENCE_RUNS | Tracks each intelligence run (run_id, client, event, timestamps, confidence) |
-| RAW_EVENT_TRENDS | Google Trends data (keyword, date, interest_score, is_peak, rising_queries) |
-| RAW_NEWS_ARTICLES | News articles from Event Registry + Google News RSS (title, source, sentiment, URL) |
-| RAW_WEB_INTELLIGENCE | Cortex Complete web research queries and responses |
-| RAW_COMPETITOR_INTEL | Competitor analysis (name, mentions, sentiment, platforms, themes, threat_level) |
-
----
-
-### Layer 3: Analytics (Dynamic Tables)
-**Schema:** `ANALYTICS`
+### 3.3 ANALYTICS schema (14 dynamic tables, TARGET_LAG = 1 minute)
 **Files:** `sql/dynamic_tables/01_analytics_layer.sql`, `sql/dynamic_tables/02_event_analytics.sql`
-**Refresh:** TARGET_LAG = 1 minute
 
-14 Dynamic Tables total (10 base + 4 event analytics):
+| Dynamic table | Built from | Enrichment |
+|---|---|---|
+| DIM_CLIENT | RAW_CLIENTS | status uppercased |
+| DIM_PRODUCT | + RAW_CLIENTS | client_name |
+| DIM_CHANNEL | RAW_CHANNELS | passthrough |
+| DIM_AUDIENCE_SEGMENT | + RAW_CLIENTS | interests parsed to VARIANT, client_name |
+| DIM_CUSTOMER_PROFILE | + clients, segments | client_name, segment_name |
+| DIM_MARKET_EVENT | RAW_MARKET_EVENTS | duration_days |
+| FACT_CAMPAIGN | + clients, products | product_name, industry, duration |
+| FACT_CAMPAIGN_METRICS | + campaigns, clients, channels | recomputed CTR, ROAS, CPC, conversion rate (divide-by-zero safe) |
+| FACT_CUSTOMER_FEEDBACK | + campaigns, clients | sentiment_category |
+| FACT_BRAND_GUIDELINES | + clients | search_title, search_content |
+| DIM_EVENT_TRENDS | GOOGLE_TRENDS_DATA + runs | client, event, interest_level (High/Medium/Low) |
+| DIM_NEWS_SENTIMENT | NEWS_ARTICLES + runs | brand_type |
+| DIM_WEB_INTELLIGENCE | WEB_INTELLIGENCE + runs | client, event, confidence |
+| DIM_COMPETITOR_PRESENCE | NEWS_ARTICLES + runs | article counts, sentiment mix, overall_sentiment, media_presence |
 
-#### Base Dynamic Tables (10)
-
-| Dynamic Table | Source Tables | Key Enrichments |
-|--------------|--------------|-----------------|
-| DIM_CLIENT | RAW_CLIENTS | Status uppercased |
-| DIM_PRODUCT | RAW_PRODUCTS + RAW_CLIENTS | Added client_name |
-| DIM_CHANNEL | RAW_CHANNELS | Clean passthrough |
-| DIM_AUDIENCE_SEGMENT | RAW_AUDIENCE_SEGMENTS + RAW_CLIENTS | interests parsed to VARIANT, added client_name |
-| DIM_CUSTOMER_PROFILE | RAW_CUSTOMER_PROFILES + RAW_CLIENTS + RAW_AUDIENCE_SEGMENTS | Added client_name, segment_name |
-| DIM_MARKET_EVENT | RAW_MARKET_EVENTS | Added duration_days |
-| FACT_CAMPAIGN | RAW_CAMPAIGNS + RAW_CLIENTS + RAW_PRODUCTS | Added product_name, industry, campaign_duration_days |
-| FACT_CAMPAIGN_METRICS | RAW_CAMPAIGN_METRICS + RAW_CAMPAIGNS + RAW_CLIENTS + RAW_CHANNELS | Recomputed CTR, ROAS, CPC, conversion_rate; added client_name, campaign_name, channel_name |
-| FACT_CUSTOMER_FEEDBACK | RAW_CUSTOMER_FEEDBACK + RAW_CAMPAIGNS + RAW_CLIENTS | Added sentiment_category, client_name |
-| FACT_BRAND_GUIDELINES | RAW_BRAND_GUIDELINES + RAW_CLIENTS | Added search_title, search_content for Cortex Search |
-
-#### Event Analytics Dynamic Tables (4) -- NEW
-
-| Dynamic Table | Source | Purpose |
-|--------------|--------|---------|
-| DIM_EVENT_TRENDS | RAW_EVENT_TRENDS + RAW_INTELLIGENCE_RUNS | Enriched trend data with event context, peak detection |
-| DIM_NEWS_SENTIMENT | RAW_NEWS_ARTICLES + RAW_INTELLIGENCE_RUNS | News with sentiment labels, relevance scores |
-| DIM_COMPETITOR_PRESENCE | RAW_COMPETITOR_INTEL + RAW_INTELLIGENCE_RUNS | Competitor mentions, threat levels, market share indicators |
-| FACT_INTELLIGENCE_SUMMARY | RAW_INTELLIGENCE_RUNS | Run-level summary with confidence scores |
+Four of the joins are complex enough that Snowflake auto-selects FULL refresh (DIM_CUSTOMER_PROFILE, FACT_CAMPAIGN, FACT_CAMPAIGN_METRICS, FACT_CUSTOMER_FEEDBACK); the rest refresh incrementally.
 
 ---
 
-### Layer 4: Intelligence (Semantic Schema)
+## 4. AI Layer: Semantic View, Search, Agents
 
-#### 4A. Cortex Analyst -- Semantic View
-**Object:** `MARKETING_COPILOT.SEMANTIC.CAMPAIGN_ANALYTICS`
-**File:** `semantic_models/campaign_analytics.yaml`
+### 4.1 Cortex Analyst semantic view
+**Object:** `SEMANTIC.CAMPAIGN_ANALYTICS` — **File:** `semantic_models/campaign_analytics.yaml` (created with `SYSTEM$CREATE_SEMANTIC_VIEW_FROM_YAML`).
 
-The semantic view defines the business ontology that lets Cortex Analyst translate natural language questions into SQL.
-
-**7 Logical Tables:**
+7 logical tables and 6 relationships:
 ```
-FACT_CAMPAIGN_METRICS ---[CAMPAIGN_ID]---> FACT_CAMPAIGN
-FACT_CAMPAIGN ---[CLIENT_ID]---> DIM_CLIENT
-FACT_CAMPAIGN ---[PRODUCT_ID]---> DIM_PRODUCT
-FACT_CAMPAIGN_METRICS ---[CHANNEL_ID]---> DIM_CHANNEL
-BRIDGE_CAMPAIGN_SEGMENT ---[CAMPAIGN_ID]---> FACT_CAMPAIGN
-BRIDGE_CAMPAIGN_SEGMENT ---[SEGMENT_ID]---> DIM_AUDIENCE_SEGMENT
+FACT_CAMPAIGN_METRICS ─CAMPAIGN_ID─► FACT_CAMPAIGN ─CLIENT_ID─► DIM_CLIENT
+FACT_CAMPAIGN_METRICS ─CHANNEL_ID──► DIM_CHANNEL   FACT_CAMPAIGN ─PRODUCT_ID─► DIM_PRODUCT
+BRIDGE_CAMPAIGN_SEGMENT ─CAMPAIGN_ID─► FACT_CAMPAIGN
+BRIDGE_CAMPAIGN_SEGMENT ─SEGMENT_ID──► DIM_AUDIENCE_SEGMENT
 ```
 
-**11 Metrics:**
+11 metrics: TOTAL_IMPRESSIONS, TOTAL_CLICKS, TOTAL_CONVERSIONS, TOTAL_SPEND, TOTAL_REVENUE, AVG_CTR, AVG_ROAS, AVG_CPC, AVG_CONVERSION_RATE (FACT_CAMPAIGN_METRICS); TOTAL_BUDGET, CAMPAIGN_COUNT (FACT_CAMPAIGN).
 
-| Metric | Expression | Table |
-|--------|-----------|-------|
-| TOTAL_IMPRESSIONS | SUM(IMPRESSIONS) | FACT_CAMPAIGN_METRICS |
-| TOTAL_CLICKS | SUM(CLICKS) | FACT_CAMPAIGN_METRICS |
-| TOTAL_CONVERSIONS | SUM(CONVERSIONS) | FACT_CAMPAIGN_METRICS |
-| TOTAL_SPEND | SUM(SPEND_USD) | FACT_CAMPAIGN_METRICS |
-| TOTAL_REVENUE | SUM(REVENUE_USD) | FACT_CAMPAIGN_METRICS |
-| AVG_CTR | AVG(CTR) | FACT_CAMPAIGN_METRICS |
-| AVG_ROAS | AVG(ROAS) | FACT_CAMPAIGN_METRICS |
-| AVG_CPC | AVG(CPC) | FACT_CAMPAIGN_METRICS |
-| AVG_CONVERSION_RATE | AVG(CONVERSION_RATE) | FACT_CAMPAIGN_METRICS |
-| TOTAL_BUDGET | SUM(TOTAL_BUDGET_USD) | FACT_CAMPAIGN |
-| CAMPAIGN_COUNT | COUNT(CAMPAIGN_ID) | FACT_CAMPAIGN |
+10 verified queries: highest-ROAS campaigns for LuminaRetail; spend by channel in 2024; best-converting segment; performance by industry; TechVista monthly revenue; best channel for fashion; CTR by campaign type; top 5 campaigns by ROI; lowest-CPC segment; budget vs actual spend by client.
 
-**10 Verified Queries (VQRs):**
+### 4.2 Cortex Search services
+**File:** `sql/ddl/07_cortex_search.sql` (TARGET_LAG 1 hour, embedding model snowflake-arctic-embed-m-v1.5)
 
-| # | Question | Tables Involved |
-|---|---------|----------------|
-| 1 | Highest ROAS campaigns for LuminaRetail | METRICS + CAMPAIGN, filtered by client |
-| 2 | Total spend by channel in 2024 | METRICS, filtered by year |
-| 3 | Highest conversion rate audience segment | METRICS + BRIDGE + SEGMENT |
-| 4 | Performance by industry across all clients | METRICS + CAMPAIGN, grouped by industry |
-| 5 | Monthly revenue trend for TechVista | METRICS, filtered by client, grouped by month |
-| 6 | Best channel for fashion clients | METRICS + CAMPAIGN, filtered by industry |
-| 7 | Average CTR by campaign type | METRICS, grouped by campaign_type |
-| 8 | Top 5 campaigns by ROI % | METRICS + CAMPAIGN, computed ROI |
-| 9 | Lowest CPC market segment | METRICS + BRIDGE + SEGMENT |
-| 10 | Budget allocated vs actual spend by client | CAMPAIGN + METRICS, grouped by client |
+| Service | Search column | Filter attributes | Source | Docs |
+|---|---|---|---|---|
+| BRAND_SEARCH | GUIDELINE_TEXT | CLIENT_NAME, SECTION_TITLE | FACT_BRAND_GUIDELINES | 110 |
+| MARKET_SEARCH | DESCRIPTION | EVENT_TYPE, REGION, IMPACT_LEVEL | DIM_MARKET_EVENT | 53 |
+| EVENT_NEWS_SEARCH | SEARCH_TEXT (title + description) | BRAND_NAME, SENTIMENT, ARTICLE_TYPE | RAW.NEWS_ARTICLES | 73 |
 
-#### 4B. Cortex Search Services (3)
+### 4.3 Cortex Agents (3)
+**Files:** `agents/*.yaml` — each file is the exact `CREATE AGENT … FROM SPECIFICATION` body. All use `orchestration: auto` and a 300 s / 128,000-token budget.
 
-| Service | Object | Source | Documents | Purpose |
-|---------|--------|--------|-----------|---------|
-| BRAND_SEARCH | `SEMANTIC.BRAND_SEARCH` | FACT_BRAND_GUIDELINES | 110 | Brand guidelines (voice, tone, visual identity, messaging) |
-| MARKET_SEARCH | `SEMANTIC.MARKET_SEARCH` | DIM_MARKET_EVENT | 53 | Market events (holidays, economic, competitor, cultural) |
-| EVENT_NEWS_SEARCH | `SEMANTIC.EVENT_NEWS_SEARCH` | RAW_NEWS_ARTICLES | varies | News articles from intelligence runs (NEW) |
+| Agent | Tools | Role |
+|---|---|---|
+| MARKETING_COPILOT | CampaignAnalytics (Analyst), BrandSearch, MarketSearch, data_to_chart | Campaign Q&A, recommendations, pitches (Tabs 2 and 4) |
+| INTERNET_INTELLIGENCE_AGENT | web_search, EventNewsSearch, CampaignBenchmarks (Analyst), data_to_chart | Structured event research report with confidence rating (Tab 5 stage 2) |
+| STRATEGY_SYNTHESIS_AGENT | CampaignAnalytics, BrandSearch, EventNewsSearch, web_search, data_to_chart | 9-section event strategy with dual-justified channel allocation (Tab 5 stage 3) |
 
-#### 4C. Cortex Agents (3)
-
-**Agent 1: MARKETING_COPILOT** (Primary)
-- **Object:** `SEMANTIC.MARKETING_COPILOT`
-- **Model:** auto
-- **Budget:** 300 seconds, 128,000 tokens
-- **Tools:** CampaignAnalytics (Analyst), BrandSearch (Search), MarketSearch (Search), data_to_chart
-- **Role:** Answers campaign questions, generates recommendations and pitches using all internal data
-
-**Agent 2: INTERNET_INTELLIGENCE_AGENT** (NEW)
-- **Object:** `SEMANTIC.INTERNET_INTELLIGENCE_AGENT`
-- **Model:** auto
-- **Budget:** 300 seconds, 128,000 tokens
-- **Tools:** web_search (live internet), EventNewsSearch (Search), CampaignBenchmarks (Analyst), data_to_chart
-- **Role:** Researches market events using live web data, produces structured intelligence reports with trend analysis, news sentiment, competitor activity, and confidence ratings
-
-**Agent 3: STRATEGY_SYNTHESIS_AGENT** (NEW)
-- **Object:** `SEMANTIC.STRATEGY_SYNTHESIS_AGENT`
-- **Model:** auto
-- **Budget:** 300 seconds, 128,000 tokens
-- **Tools:** CampaignAnalytics (Analyst), BrandSearch (Search), EventNewsSearch (Search), web_search (live), data_to_chart
-- **Role:** Combines internal campaign data with live market intelligence to produce 9-section event marketing strategies with channel allocation, creative direction, timeline, and competitive positioning
-
-**Agent Orchestration Pattern:**
-```
-User Question
-     |
-     v
-[Marketing Co-Pilot]          [Internet Intelligence]       [Strategy Synthesis]
-     |                              |                              |
-     v                              v                              v
-1. CampaignAnalytics         1. web_search (live)          1. CampaignAnalytics
-2. BrandSearch               2. EventNewsSearch            2. BrandSearch
-3. MarketSearch              3. CampaignBenchmarks         3. EventNewsSearch
-4. data_to_chart             4. data_to_chart              4. web_search (live)
-     |                              |                      5. data_to_chart
-     v                              v                              |
-Recommendation/Pitch         Intelligence Report                   v
-                                                          9-Section Strategy
-```
+The Analyst tools set `execution_environment: {type: warehouse, warehouse: MARKETING_WH}`; without it, agent calls return empty responses.
 
 ---
 
-### Layer 5: Event Intelligence Pipeline (NEW)
-**Directory:** `src/intelligence/`
+## 5. Event Intelligence Pipeline
 
-A Python-based pipeline that pulls live internet data and loads it into Snowflake:
+**Directory:** `src/intelligence/` — runs locally and loads results into Snowflake. (A Snowflake-native version would need External Access Integrations, which trial accounts can't create.)
 
-| Module | Lines | Function | Description |
-|--------|-------|----------|-------------|
-| `intelligence_orchestrator.py` | 177 | `run_full_intelligence()` | Orchestrates all 3 pullers, aggregates results |
-| `snowflake_loader.py` | 181 | `load_intelligence_run()` | Loads results into 5 RAW tables |
-| `google_trends_puller.py` | 123 | `get_trend_data()` | Pulls Google Trends via pytrends |
-| `news_puller.py` | ~200 | `get_news()` | Event Registry (primary) + Google News RSS (fallback) |
-| `web_intelligence_puller.py` | 228 | `get_web_intelligence()` | Cortex Complete (claude-sonnet-4-6) for web research |
-| `config.py` | 3 | - | API keys for Event Registry |
+| Module | Responsibility |
+|---|---|
+| `run_pipeline.py` | Entry point. Runs the configured events and loads each run. `python src/intelligence/run_pipeline.py [FIFA ...]` runs a subset by event-name substring. |
+| `intelligence_orchestrator.py` | `run_full_intelligence()` runs the three pullers, scores confidence (3 sources = HIGH, 2 = MEDIUM, 1 = LOW) and builds a summary. |
+| `google_trends_puller.py` | pytrends, last 3 months (`today 3-m`), peak detection, rising queries. |
+| `news_puller.py` | Event Registry (primary) + Google News RSS (fallback); event, brand and competitor articles with sentiment. |
+| `web_intelligence_puller.py` | 8 research queries per run via `SNOWFLAKE.CORTEX.COMPLETE('claude-sonnet-4-6', messages, {max_tokens: 2048})`; parses JSON findings, channels and sentiment. |
+| `snowflake_loader.py` | Inserts into the 4 RAW event tables (batched, escaped). |
+| `config.py` | Reads `EVENT_REGISTRY_API_KEY`, `NEWS_API_KEY`, `SNOWFLAKE_CONNECTION` via `src/env_keys.py`. |
 
-**Data Flow:**
-```
-Event Registry API  --->  news_puller.py     --->  RAW_NEWS_ARTICLES
-Google News RSS     --->  (fallback)         --->
-Google Trends API   --->  google_trends.py   --->  RAW_EVENT_TRENDS
-Cortex Complete     --->  web_intel.py       --->  RAW_WEB_INTELLIGENCE
-                                             --->  RAW_COMPETITOR_INTEL
-                                             --->  RAW_INTELLIGENCE_RUNS
-```
+Loaded runs:
 
----
+| Client / event | Competitors | Confidence | Trends | News | Web queries |
+|---|---|---|---|---|---|
+| UrbanThread / FIFA World Cup 2026 | Nike, Adidas, Puma | HIGH | 465 | 39 | 8 |
+| LuminaRetail / Black Friday 2026 | Walmart, Target, Amazon | HIGH | 372 | 34 | 8 |
 
-### Layer 6: CoCo Skills (7 Skills)
-**Directory:** `.snowflake/cortex/skills/`
-
-Skills are structured instruction sets that CoCo Desktop uses for specialized workflows.
-
-#### Original Skills (4)
-
-| Skill | File | Steps | Output |
-|-------|------|-------|--------|
-| client-intelligence | `client-intelligence/SKILL.md` | 7 steps: resolve client, campaign portfolio, performance snapshot, channel ranking, sentiment, brand guidelines, compile briefing | Structured markdown briefing |
-| campaign-analysis | `campaign-analysis/SKILL.md` | 7 steps: resolve client, channel ranking, type breakdown, top/bottom campaigns, segment performance, seasonality, compile with confidence | Channel tables, campaign rankings, seasonal patterns |
-| pitch-generator | `pitch-generator/SKILL.md` | 6 steps: gather context, select channels, allocate budget, project KPIs, generate 7-section document, quality checks | 7-section pitch document |
-| what-if-analysis | `what-if-analysis/SKILL.md` | 6 steps: resolve client, historical metrics, current projection, proposed projection, compute deltas, comparison report | Side-by-side scenario comparison |
-
-#### New Skills (3) -- EVENT INTELLIGENCE
-
-| Skill | File | Steps | Output |
-|-------|------|-------|--------|
-| event-intelligence | `event-intelligence/SKILL.md` | Orchestrate live data pull for event + client, load to Snowflake, produce intelligence report | Google Trends, news articles, web intelligence, confidence rating |
-| competitor-analysis | `competitor-analysis/SKILL.md` | Compare client vs competitors across news sentiment, web presence, campaign benchmarks | Competitor ranking, threat assessment, opportunity gaps |
-| event-strategy | `event-strategy/SKILL.md` | Synthesize internal campaign data + live intelligence into complete event strategy | 9-section strategy: opportunity, competitors, position, channels, creative, timeline, audience, impact, confidence |
+After a run, the 4 event dynamic tables refresh within a minute and `EVENT_NEWS_SEARCH` within an hour (or immediately with `ALTER CORTEX SEARCH SERVICE … REFRESH`).
 
 ---
 
-### Layer 7: Streamlit Dashboard (5 Tabs)
-**Object:** `MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT_APP`
-**File:** `streamlit/streamlit_app.py` (~900 lines)
-**Runtime:** Warehouse (Python 3.11)
-**Dependencies:** plotly (via environment.yml)
+## 6. Creative Studio and the Cortex Intelligence Layer
 
-#### Key Technical Features
-- **parse_agent_response()** -- Robust parser that extracts clean text from any Cortex agent response format (dict, string, list, JSON, nested content arrays). Filters out thinking blocks and tool_use blocks. Never crashes.
-- **call_agent_with_auto_continue()** -- Calls agent and automatically retries up to 3 times if response is detected as incomplete (scanning for "time limit", "token limit", etc.)
-- **build_html_document()** -- Generates styled HTML documents with NovaSpark branding, dark theme, metadata pills, markdown-to-HTML conversion for downloads
-- **js_download_button()** -- JavaScript-based browser download using base64 data URIs. Bypasses Snowflake's S3 presigned URL pipeline entirely, preventing XML/expiry errors
-- **render_agent_markdown()** -- Renders agent text as formatted markdown with expandable sections for `## ` headers
-- **$$dollar-quoting$$** -- All agent calls use dollar-quoting to prevent SQL injection from special characters in prompts
-- **st.experimental_rerun()** -- Used instead of st.rerun() for SiS warehouse runtime compatibility
-- **@st.cache_data(ttl=300)** -- 5-minute caching on all SQL queries
+**Files:** `sql/ddl/05_mcp_procedures.sql`, Tab 6 in `streamlit/streamlit_app.py`, local variant `src/creative/creative_studio.py`.
 
-#### Sidebar Controls
-- Client selector dropdown (12 brands from DIM_CLIENT)
-- Product selector (filtered by selected client from DIM_PRODUCT)
-- Campaign Objective: Brand Awareness, Lead Generation, Sales Conversion, Customer Retention
-- Budget input (USD number field)
-- "Analyze and Recommend" button
+### 6.1 Stored procedures (Python 3.11)
 
-#### Tab 1: Client Intelligence (Pure SQL, No Agent)
+| Procedure | Returns | Purpose |
+|---|---|---|
+| `GET_CREATIVE_INTELLIGENCE(CLIENT_NAME, EVENT_NAME DEFAULT '')` | VARIANT | The Cortex intelligence layer (below) |
+| `BUILD_POSTER_PROMPT(8 brief fields, INTEL_JSON DEFAULT '')` | VARCHAR | Poster prompt; enriched when INTEL_JSON is supplied |
+| `GENERATE_STORYBOARD(CLIENT, PRODUCT, OBJECTIVE, DIRECTION)` | VARIANT | 4-scene, 5-second video storyboard + video prompt |
+| `BUILD_DESIGN_SYSTEM(CLIENT, COLOURS, TONE)` | VARIANT | Palette, tone, dos/donts |
+| `BUILD_AUDIO_SCRIPT(CLIENT, PRODUCT, OBJECTIVE, TONE)` | VARIANT | 30-second voiceover script prompt |
 
-| Component | Data Source | Visualization |
-|-----------|-----------|---------------|
-| Client Overview (Industry, Region, Products) | DIM_CLIENT, DIM_PRODUCT | st.metric cards |
-| Total Campaigns | FACT_CAMPAIGN | st.metric |
-| Avg ROAS | FACT_CAMPAIGN_METRICS | st.metric |
-| Total Spend | FACT_CAMPAIGN_METRICS | st.metric |
-| Total Revenue | FACT_CAMPAIGN_METRICS | st.metric |
-| Total Conversions | FACT_CAMPAIGN_METRICS | st.metric |
-| Avg Sentiment | FACT_CUSTOMER_FEEDBACK | st.metric |
-| ROAS by Channel | FACT_CAMPAIGN_METRICS | Plotly bar chart |
-| Monthly Revenue Trend | FACT_CAMPAIGN_METRICS | Plotly line chart |
-| Top 5 Campaigns by ROI | FACT_CAMPAIGN_METRICS | Plotly horizontal bar |
-| Budget by Campaign Type | FACT_CAMPAIGN | Plotly pie chart |
+### 6.2 What the intelligence layer adds
+`GET_CREATIVE_INTELLIGENCE` returns, from live Snowflake data:
 
-#### Tab 2: Campaign Recommendation (Agent-Powered)
-1. User clicks "Analyze and Recommend"
-2. Builds prompt: client + product + objective + budget
-3. Calls `call_agent_with_auto_continue()` (auto-retries up to 3x)
-4. Agent orchestrates: CampaignAnalytics --> BrandSearch --> MarketSearch --> synthesize
-5. Displays structured recommendation via `render_agent_markdown()`
-6. Context bar: Client, Product, Objective, Budget, Date
-7. Three action buttons: Download as HTML | Approve | Regenerate
-8. Download generates styled HTML via `js_download_button()` (no S3)
+| Signal | Source | Used in the poster prompt as |
+|---|---|---|
+| Top 3 channels by avg ROAS (+ CTR, revenue) | FACT_CAMPAIGN_METRICS | "Compose primarily for YouTube (best channel, avg ROAS 2.64x)…" |
+| Highest-converting segment (age, gender skew, income, interests) | metrics × bridge × DIM_AUDIENCE_SEGMENT | "Cast and styling for 'Athleisure Fans' (22-39 … yoga, running)" |
+| Most common brand dos / don'ts, tone, palette | FACT_BRAND_GUIDELINES | "Brand dos: … Avoid: …"; palette and tone also pre-fill the form |
+| Market timing: event trend peak and launch date (6 weeks before peak); most relevant market event | DIM_EVENT_TRENDS, DIM_MARKET_EVENT | Urgency / seasonal clause |
 
-#### Tab 3: What-If Analysis (Pure Computation, No Agent)
-1. Loads historical channel metrics via `load_channel_history()`
-2. Shows top 5 channels with equal-split baseline (markdown bullets)
-3. Sliders for proposed allocation percentages
-4. Real-time projection: revenue = budget x historical_ROAS, clicks = budget / CPC, conversions = clicks x conv_rate
-5. Recommendation box (success/warning based on outcome)
-6. Grouped bar chart: current vs proposed revenue per channel
-7. Delta metrics: projected revenue change, conversion change
-8. Download scenario analysis as styled HTML
+Rules that keep the output honest:
+- If the trend peak is already in the past, `peak_in_past` is set, no launch date is recommended, and the prompt says "ride proven demand" rather than inventing a future date.
+- A market event is only described as upcoming if its start date is in the future; otherwise it's labelled "latest relevant market event" and kept out of the prompt.
 
-#### Tab 4: Generate Pitch (Agent-Powered)
-1. Only available after recommendation is approved (human-in-the-loop gate)
-2. Context bar: Client, Product, Budget, Date
-3. Calls agent with 7-section pitch prompt via `call_agent_with_auto_continue()`
-4. Displays response via `render_agent_markdown()` with expandable section panels
-5. Download as styled HTML with NovaSpark branding
-6. "Start Over" resets all session state
+Example (UrbanThread, FIFA World Cup 2026):
+> …Event: FIFA World Cup 2026. Cast and styling for the highest-converting segment 'Athleisure Fans' (22-39, Balanced, Medium income; interests: yoga, running, comfortable). Compose primarily for YouTube (best channel, avg ROAS 2.64x): bold focal point, legible at small sizes, clear space for a call to action. Brand dos: Optimize for mobile; … Avoid: Use stock photos; … Ride proven 'World Cup 2026' search demand (peaked 2026-07-19)…
 
-#### Tab 5: Event Intelligence (NEW -- Agent-Powered, 3 Stages)
-
-**Stage 1: Input Panel**
-- Event selector (Super Bowl, Black Friday, Holiday Season, etc.)
-- Keywords, competitors, markets text inputs
-- Event budget and objective
-- "How It Works" info card explaining the 3-phase process
-
-**Stage 2: Research and Intelligence**
-1. Calls Internet Intelligence Agent via `call_agent_with_auto_continue()`
-2. Progress bar tracks each step (10% --> 40% --> 80% --> 100%)
-3. Queries DIM_EVENT_TRENDS, DIM_NEWS_SENTIMENT, DIM_COMPETITOR_PRESENCE
-4. Displays in expandable sections:
-   - Intelligence Agent Findings (parsed markdown)
-   - Google Trends Analysis (Plotly line chart by keyword, peak detection)
-   - News Sentiment Overview (metric cards + pie chart + data table)
-   - Competitor Landscape (bar chart by mentions, colored by threat level)
-
-**Stage 3: Strategy Synthesis**
-1. Calls Strategy Synthesis Agent via `call_agent_with_auto_continue()`
-2. Agent combines internal ROAS data + brand guidelines + live intelligence
-3. Displays 9-section strategy via `render_agent_markdown()`
-4. Download as styled HTML with event/client/budget metadata
-5. "New Research" button resets event intelligence state
+### 6.3 Image generation
+- **In Snowflake:** Streamlit in Snowflake (warehouse runtime) has no outbound HTTP, so Tab 6 shows poster placeholders plus the enriched prompt to paste into Google AI Studio.
+- **Locally:** `python scripts/generate_creative.py` calls `gemini-2.5-flash-image:generateContent` and writes PNGs, JSON and a ZIP to `output/creative/`. This needs a Gemini key on a billing-enabled Google Cloud project; on the free tier image models return 429 (quota limit 0).
 
 ---
 
-## 3. Data Flow: Complete System
+## 7. MCP Server
 
+**Object:** `SEMANTIC.NOVASPARK_MCP` — **File:** `sql/ddl/06_mcp_server.sql`
+
+| Tool | Type | Backed by |
+|---|---|---|
+| marketing_copilot | CORTEX_AGENT_RUN | MARKETING_COPILOT |
+| internet_intelligence | CORTEX_AGENT_RUN | INTERNET_INTELLIGENCE_AGENT |
+| strategy_synthesis | CORTEX_AGENT_RUN | STRATEGY_SYNTHESIS_AGENT |
+| campaign_analytics | CORTEX_ANALYST_MESSAGE | CAMPAIGN_ANALYTICS |
+| brand_search / market_search / event_news_search | CORTEX_SEARCH_SERVICE_QUERY | the 3 search services |
+| get_creative_intelligence | GENERIC (procedure) | GET_CREATIVE_INTELLIGENCE |
+| generate_storyboard / build_design_system / build_poster_prompt / build_audio_script | GENERIC (procedure) | creative procedures |
+
+Access: OAuth security integration `NOVASPARK_MCP_OAUTH` (redirect URI set for Claude; change it for other clients) and role `MCP_USER_ROLE`, which holds usage on the agents, search services, semantic view, procedures and warehouse. The script grants the role to whoever runs it.
+
+Endpoint:
 ```
-Data Generation         RAW Schema              ANALYTICS Schema         SEMANTIC Schema
-================        ==========              ================         ===============
+https://<account>.snowflakecomputing.com/api/v2/databases/MARKETING_COPILOT/schemas/SEMANTIC/mcp-servers/NOVASPARK_MCP
+```
+Get the OAuth client ID and secret with `SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS('NOVASPARK_MCP_OAUTH');`. Re-running `06_mcp_server.sql` recreates the integration, which issues new credentials.
 
-generate_all.py  --->  @MARKETING_STAGE  --->  11 RAW Tables  --->  10 Dynamic Tables
-  (Python)              (Internal Stage)        (COPY INTO)          (TARGET_LAG 1min)
-                                                                           |
-Live Intelligence  --->  5 Event RAW Tables  --->  4 Event Dynamic Tables  |
-  (Python pullers)       (INSERT INTO)             (TARGET_LAG 1min)       |
-                                                                           |
-                                                          +----------------+----+
-                                                          |                |    |
-                                                    Semantic View    3 Cortex   3 Cortex
-                                                   (CAMPAIGN_        Search     Agents
-                                                    ANALYTICS)       Services
-                                                          |                     |
-                                                          +--------+------------+
-                                                                   |
-                                                            Streamlit App
-                                                       (5-Tab Dashboard)
-                                                                   |
-                                                         Styled HTML Downloads
-                                                       (JS data URI, no S3)
+---
+
+## 8. Streamlit App (6 Tabs)
+
+**Object:** `SEMANTIC.MARKETING_COPILOT_APP` (warehouse runtime, `MARKETING_WH`) — **File:** `streamlit/streamlit_app.py` — **Dependencies:** plotly (`environment.yml`).
+
+### 8.1 Shared helpers
+| Helper | Purpose |
+|---|---|
+| `call_named_agent` / `call_agent_with_auto_continue` | `SNOWFLAKE.CORTEX.DATA_AGENT_RUN` with $$-quoted payloads; continues up to 3 times when a response looks cut off |
+| `parse_agent_response` | Extracts clean text from any agent response shape; drops thinking and tool blocks |
+| `render_agent_markdown` | Renders `## ` sections as expanders |
+| `build_html_document` + `js_download_button` | Styled NovaSpark HTML reports downloaded via base64 data URIs (SiS routes `st.download_button` through S3, which breaks) |
+| `load_creative_intelligence` | Cached call to `GET_CREATIVE_INTELLIGENCE` |
+| `@st.cache_data(ttl=300)` | 5-minute cache on all queries |
+
+**Sidebar:** client, product (filtered by client), campaign objective, budget, "Analyze and Recommend".
+
+### 8.2 Tabs
+| Tab | Engine | What it does |
+|---|---|---|
+| 1. Client Intelligence | SQL | KPI cards (campaigns, avg ROAS, spend, revenue, conversions, sentiment); ROAS by channel, monthly revenue, top 5 campaigns by ROI, budget by campaign type |
+| 2. Campaign Recommendation | MARKETING_COPILOT | Recommendation from analytics + brand + market search; download, approve, regenerate |
+| 3. What-If Analysis | Python projection | Channel-allocation sliders; projected revenue/conversions from historical ROAS, CPC, conversion rate; comparison chart; HTML download |
+| 4. Generate Pitch | MARKETING_COPILOT | 7-section client pitch, unlocked only after approval in Tab 2; HTML download |
+| 5. Event Intelligence | INTERNET_INTELLIGENCE_AGENT then STRATEGY_SYNTHESIS_AGENT | Pick an event (FIFA World Cup 2026 and Black Friday 2026 have loaded data), competitors, markets, budget; research report, Google Trends chart, news sentiment, competitor media presence; then 9-section strategy; HTML download |
+| 6. Creative Studio | Procedures + intelligence layer | Brief form pre-filled with brand palette/tone; **Cortex Intelligence panel** (top channels, primary segment, brand guardrails, market timing); generates storyboard cards, design system, poster prompt, audio script; ZIP download |
+
+---
+
+## 9. CoCo Skills
+
+**Directory:** `.snowflake/cortex/skills/` — invoked from Cortex Code in this project.
+
+| Skill | Output |
+|---|---|
+| client-intelligence | Full client briefing: profile, portfolio, performance, sentiment, brand guidelines |
+| campaign-analysis | Channel / type / segment breakdown, top and bottom campaigns, seasonality |
+| pitch-generator | 7-section pitch with projected KPIs |
+| what-if-analysis | Side-by-side scenario comparison |
+| event-intelligence | Live data pull for an event, loaded into Snowflake |
+| competitor-analysis | Brand vs competitors across news, web and benchmarks (needs an event-intelligence run) |
+| event-strategy | 9-section event strategy from internal + live data |
+
+---
+
+## 10. Build and Deployment Guide
+
+### 10.1 Prerequisites
+- A Snowflake account and a role that can create databases, warehouses, agents, MCP servers and security integrations (ACCOUNTADMIN on a trial). Cortex Agents, Cortex Search and `claude-sonnet-4-6` must be available in the region (verified on AWS ap-south-1).
+- Python 3.10+ with `snowflake-connector-python`. For the event pipeline also: `pytrends`, `requests`, `eventregistry`. For data generation: `faker`, `numpy`, `pandas`.
+- A connection in `~/.snowflake/connections.toml`. Password or key-pair auth avoids browser pop-ups during long scripts.
+
+### 10.2 One-command build
+```bash
+cp .env.example .env                      # set SNOWFLAKE_CONNECTION, EVENT_REGISTRY_API_KEY, GEMINI_API_KEY
+python data/generators/generate_all.py    # only if data/samples/*.csv are missing
+python scripts/deploy_all.py              # builds everything and runs the 8 validation tests
+python src/intelligence/run_pipeline.py   # loads live event intelligence (2 events)
 ```
 
----
+`scripts/deploy_all.py` runs these steps in dependency order:
 
-## 4. Snowflake Objects Inventory
+| Step | What | Files |
+|---|---|---|
+| 1 | Database, 4 schemas, warehouse, 3 stages, RAW + event tables | `sql/ddl/01_setup.sql`, `02_tables.sql`, `03_event_intelligence_tables.sql` |
+| 2 | PUT 11 CSVs, COPY INTO RAW tables | `data/samples/*.csv`, `sql/dml/01_load_data.sql` |
+| 3 | 14 dynamic tables | `sql/dynamic_tables/01_analytics_layer.sql`, `02_event_analytics.sql` |
+| 4 | 3 Cortex Search services | `sql/ddl/07_cortex_search.sql` |
+| 5 | Semantic view | `semantic_models/campaign_analytics.yaml` |
+| 6 | 5 stored procedures | `sql/ddl/05_mcp_procedures.sql` |
+| 7 | 3 Cortex Agents | `agents/*.yaml` |
+| 8 | MCP server, OAuth integration, MCP_USER_ROLE | `sql/ddl/06_mcp_server.sql` |
+| 9 | Streamlit app | `streamlit/streamlit_app.py`, `environment.yml` |
+| 10 | Validation | `tests/test_validation.sql` |
 
-| Object Type | Count | Names | Schema |
-|------------|-------|-------|--------|
-| Database | 1 | MARKETING_COPILOT | - |
-| Schemas | 4 | RAW, STAGING, ANALYTICS, SEMANTIC | - |
-| Warehouse | 1 | MARKETING_WH (XS, auto-suspend 60s) | - |
-| Stages | 3 | MARKETING_STAGE, STREAMLIT_STAGE, SEMANTIC_STAGE | RAW, SEMANTIC, SEMANTIC |
-| RAW Tables | 16 | 11 base + 5 event intelligence | RAW |
-| Dynamic Tables | 14 | 10 base + 4 event analytics | ANALYTICS |
-| Semantic View | 1 | CAMPAIGN_ANALYTICS (7 tables, 11 metrics, 10 VQRs) | SEMANTIC |
-| Cortex Search | 3 | BRAND_SEARCH, MARKET_SEARCH, EVENT_NEWS_SEARCH | SEMANTIC |
-| Cortex Agents | 3 | MARKETING_COPILOT, INTERNET_INTELLIGENCE_AGENT, STRATEGY_SYNTHESIS_AGENT | SEMANTIC |
-| Streamlit | 1 | MARKETING_COPILOT_APP | SEMANTIC |
-| **Total Objects** | **47** | | |
+Flags:
+- `--skip-data` keeps the existing RAW tables and rebuilds everything else.
+- `--app-only` only re-uploads and recreates the Streamlit app.
 
----
+The script exits non-zero if any validation test fails. Last full run on CLVULGZ-ZJ61620: all steps OK, 8/8 tests PASS.
 
-## 5. Bugs Fixed and Technical Decisions
+Re-run behaviour: a full build recreates and reloads the 11 base RAW tables. The 4 event tables use `CREATE TABLE IF NOT EXISTS`, so intelligence runs survive rebuilds.
 
-Throughout development, we encountered and resolved significant issues:
+### 10.3 Not run by the build
+`sql/ddl/04_external_access.sql` creates network rules, secrets and External Access Integrations so the pullers could run inside Snowflake. Trial accounts reject External Access Integrations. On a paid account, replace the `<GEMINI_API_KEY>` / `<EVENT_REGISTRY_API_KEY>` placeholders at run time and never commit real keys.
 
-| # | Issue | Root Cause | Fix |
-|---|-------|-----------|-----|
-| 1 | SQL injection in agent calls | Product names like "CW-VitaBoost" broke single-quoted SQL | Switched to $$dollar-quoting$$ with .replace("$$", "$ $") sanitization |
-| 2 | st.rerun() not available | SiS warehouse runtime uses older Streamlit | Replaced all with st.experimental_rerun() |
-| 3 | Agent empty responses (391920) | Missing execution_environment on Analyst tool | Added execution_environment: {type: warehouse, warehouse: MARKETING_WH} |
-| 4 | Responses cut short mid-generation | Agent budget too low (60s/32K tokens) | Increased all 3 agents to 300s/128K tokens + auto-continue (3 retries) |
-| 5 | ARRAY_CONSTRUCT in VALUES clause | Snowflake doesn't allow it | Changed INSERT...VALUES to INSERT...SELECT |
-| 6 | Semantic view verified_at field | Must be int64 epoch seconds, not date string | Changed to 1724889600 |
-| 7 | S3 presigned URL errors on downloads | SiS routes st.download_button through S3 which expires | Replaced with JS data URI downloads (base64 in browser) |
-| 8 | Nested expanders crash | render_agent_markdown creates expanders; can't nest inside another | Used parse_agent_response + st.markdown inside outer expander |
-| 9 | Session state key collision | st.session_state["ei_competitors"] collided with widget key="ei_competitors" | Renamed data storage keys to ei_comp_data |
-| 10 | Agent spec "unrecognized field type" | type field in columns_and_descriptions not valid in CREATE AGENT | Removed type fields from tool_resources |
-| 11 | News API key mismatch | UUID-format key was for Event Registry, not NewsAPI | Rewrote news_puller to use Event Registry (primary) + Google News RSS (fallback) |
-| 12 | Google Trends 429 rate limit | Expected in automated environments | Added retry logic (wait 10s, retry once) |
+### 10.4 Updating the app only
+```bash
+python scripts/deploy_all.py --app-only
+```
+Equivalent SQL: `PUT` the app file to `@MARKETING_COPILOT.SEMANTIC.STREAMLIT_STAGE` and `CREATE OR REPLACE STREAMLIT … ROOT_LOCATION='@…STREAMLIT_STAGE' MAIN_FILE='streamlit_app.py' QUERY_WAREHOUSE=MARKETING_WH`. `ALTER STREAMLIT … ADD LIVE VERSION` is not needed.
 
 ---
 
-## 6. Validation and Quality
+## 11. Configuration and Secrets
 
-8 automated assertions in `tests/test_validation.sql`, all passing:
+No API keys are stored in the repository. `src/env_keys.py` reads them from environment variables, falling back to a gitignored `.env` at the repo root. `.env.example` lists every variable.
+
+| Variable | Used by | Required |
+|---|---|---|
+| SNOWFLAKE_CONNECTION | `scripts/deploy_all.py`, `src/intelligence/*` | Recommended (defaults to `clvulgz-zj61620` for the pipeline) |
+| EVENT_REGISTRY_API_KEY | news puller | For the event pipeline |
+| NEWS_API_KEY | news puller | Optional |
+| GEMINI_API_KEY | `scripts/generate_creative.py`, `scripts/test_*.py` | For local poster generation |
+
+Keys committed before this change are still in git history; they must be rotated.
+
+`backend/` (from the coworker repo) is a separate settings module for a FastAPI-style backend. It reads `SNOWFLAKE_*`, `APP_*`, `JWT_*` and `GEMINI_API_KEY` via `python-dotenv`. The Streamlit app doesn't use it, and neither do the `animations-lottie/` assets.
+
+---
+
+## 12. Validation
+
+`tests/test_validation.sql` (run automatically by the build):
 
 | Test | Assertion | Result |
-|------|----------|--------|
-| T1 | No NULL client_ids in any fact table | PASS |
-| T2 | All ROAS values greater than 0 | PASS |
-| T3 | All spend values greater than 0 | PASS |
-| T4 | Campaign end_date after start_date | PASS |
-| T5 | Sentiment scores within -1.0 to 1.0 | PASS |
-| T6 | Allocation percentages sum to 100 per campaign | PASS |
-| T7 | Cortex Search BRAND_SEARCH returns results | PASS |
-| T8 | Semantic View CAMPAIGN_ANALYTICS is queryable | PASS |
+|---|---|---|
+| T1 | No NULL client_ids in fact tables | PASS |
+| T2 | All ROAS values > 0 | PASS |
+| T3 | All spend values > 0 | PASS |
+| T4 | end_date > start_date for all campaigns | PASS |
+| T5 | sentiment_score in [-1, 1] | PASS |
+| T6 | Segment allocation sums to 100% per campaign | PASS |
+| T7 | BRAND_SEARCH returns results | PASS |
+| T8 | CAMPAIGN_ANALYTICS semantic view is queryable | PASS |
+
+Additional checks performed after the build:
+- MARKETING_COPILOT answered "best ROAS channel for UrbanThread" with "YouTube, ~2.64x (confidence HIGH)", matching `GET_CREATIVE_INTELLIGENCE`.
+- `GET_CREATIVE_INTELLIGENCE` and the 9-argument `BUILD_POSTER_PROMPT` were tested for UrbanThread, TechVista and LuminaRetail; the 8-argument call still works.
+- The corrected Tab 5 queries return 200 trend rows, 39 news rows and 3 competitors for FIFA World Cup 2026.
+- The app UI itself has not been tested by an automated browser run; open it in Snowsight to confirm layout.
 
 ---
 
-## 7. Project File Structure
+## 13. Snowflake Objects Inventory
+
+| Type | Count | Names |
+|---|---|---|
+| Database | 1 | MARKETING_COPILOT |
+| Schemas | 4 | RAW, STAGING (reserved, empty), ANALYTICS, SEMANTIC |
+| Warehouse | 1 | MARKETING_WH (XSMALL, auto-suspend 60 s) |
+| Stages | 3 | RAW.MARKETING_STAGE, SEMANTIC.SEMANTIC_STAGE, SEMANTIC.STREAMLIT_STAGE |
+| Tables | 16 | 11 base RAW + 4 event RAW + ANALYTICS.EVENT_STRATEGY_OUTPUT |
+| Dynamic tables | 14 | 10 analytics + 4 event analytics |
+| Semantic view | 1 | CAMPAIGN_ANALYTICS |
+| Cortex Search services | 3 | BRAND_SEARCH, MARKET_SEARCH, EVENT_NEWS_SEARCH |
+| Cortex Agents | 3 | MARKETING_COPILOT, INTERNET_INTELLIGENCE_AGENT, STRATEGY_SYNTHESIS_AGENT |
+| Stored procedures | 5 | GET_CREATIVE_INTELLIGENCE, BUILD_POSTER_PROMPT, GENERATE_STORYBOARD, BUILD_DESIGN_SYSTEM, BUILD_AUDIO_SCRIPT |
+| MCP server | 1 | NOVASPARK_MCP (12 tools) |
+| Security integration | 1 | NOVASPARK_MCP_OAUTH |
+| Role | 1 | MCP_USER_ROLE |
+| Streamlit app | 1 | MARKETING_COPILOT_APP |
+
+---
+
+## 14. Repository Structure
 
 ```
 SnowflakeHackathon/
-  README.md
-  .gitignore
-  data/
-    generators/generate_all.py                 # Synthetic data generator (864 lines)
-    samples/*.csv                              # 11 generated CSV files (gitignored)
-  sql/
-    ddl/01_setup.sql                           # Database, schemas, warehouse
-    ddl/02_tables.sql                          # 11 RAW table definitions
-    ddl/03_event_intelligence_tables.sql       # 5 event intelligence tables (NEW)
-    dml/01_load_data.sql                       # COPY INTO statements
-    dml/load_data.py                           # Python upload script
-    dynamic_tables/01_analytics_layer.sql      # 10 dynamic table definitions
-    dynamic_tables/02_event_analytics.sql      # 4 event dynamic tables (NEW)
-  semantic_models/
-    campaign_analytics.yaml                    # Cortex Analyst semantic view YAML
-  agents/
-    marketing_copilot_agent.yaml               # Marketing Co-Pilot agent (300s/128K)
-    internet_intelligence_agent.yaml           # Internet research agent (NEW)
-    strategy_synthesis_agent.yaml              # Strategy builder agent (NEW)
-  src/intelligence/                            # Event intelligence pipeline (NEW)
-    intelligence_orchestrator.py               # Orchestrates all 3 pullers
-    snowflake_loader.py                        # Loads results to Snowflake
-    google_trends_puller.py                    # Google Trends data
-    news_puller.py                             # Event Registry + Google News RSS
-    web_intelligence_puller.py                 # Cortex Complete web research
-    config.py                                  # API keys
-  streamlit/
-    streamlit_app.py                           # 5-tab dashboard (~900 lines)
-    environment.yml                            # SiS dependencies (plotly)
-    upload_streamlit.py                        # Upload helper
-  .snowflake/cortex/skills/
-    client-intelligence/SKILL.md               # Client briefing skill
-    campaign-analysis/SKILL.md                 # Campaign deep-dive skill
-    pitch-generator/SKILL.md                   # Pitch document skill
-    what-if-analysis/SKILL.md                  # Scenario comparison skill
-    event-intelligence/SKILL.md                # Event research skill (NEW)
-    competitor-analysis/SKILL.md               # Competitor analysis skill (NEW)
-    event-strategy/SKILL.md                    # Event strategy skill (NEW)
-  tests/
-    test_validation.sql                        # 8 data quality assertions
-  docs/
-    requirements/business-requirements.md
-    architecture/solution-architecture.md
-    marketing_copilot_complete_documentation.md # This document
+├── README.md
+├── .env.example                      # all environment variables (copy to .env)
+├── .gitignore                        # ignores .env, data/samples/*.csv, connections.toml
+├── agents/                           # CREATE AGENT specifications
+│   ├── marketing_copilot_agent.yaml
+│   ├── internet_intelligence_agent.yaml
+│   └── strategy_synthesis_agent.yaml
+├── semantic_models/
+│   ├── campaign_analytics.yaml       # semantic view definition
+│   ├── campaign_analytics_proto.json
+│   └── upload_yaml.py
+├── sql/
+│   ├── ddl/01_setup.sql              # database, schemas, warehouse, stages
+│   ├── ddl/02_tables.sql             # 11 RAW tables
+│   ├── ddl/03_event_intelligence_tables.sql
+│   ├── ddl/04_external_access.sql    # paid accounts only; not run by the build
+│   ├── ddl/05_mcp_procedures.sql     # 5 creative + intelligence procedures
+│   ├── ddl/06_mcp_server.sql         # MCP server, OAuth, MCP_USER_ROLE
+│   ├── ddl/07_cortex_search.sql      # 3 Cortex Search services
+│   ├── dml/01_load_data.sql          # COPY INTO
+│   ├── dml/load_data.py
+│   └── dynamic_tables/01_analytics_layer.sql, 02_event_analytics.sql
+├── data/
+│   ├── generators/generate_all.py
+│   └── samples/*.csv                 # generated (gitignored)
+├── src/
+│   ├── env_keys.py                   # env / .env key loader
+│   ├── intelligence/                 # event intelligence pipeline (section 5)
+│   └── creative/creative_studio.py   # local creative generation (Gemini)
+├── scripts/
+│   ├── deploy_all.py                 # one-command build
+│   ├── generate_creative.py          # local poster/storyboard generation
+│   └── check_models.py, test_gemini_*.py, test_latest_models.py   # Gemini diagnostics
+├── streamlit/
+│   ├── streamlit_app.py              # 6-tab app
+│   ├── environment.yml
+│   └── upload_streamlit.py
+├── tests/
+│   ├── test_validation.sql           # 8 assertions
+│   └── test_event_intelligence.py
+├── output/creative/                  # sample creative output (JSON + ZIP)
+├── backend/                          # coworker settings module (not used by the app)
+├── animations-lottie/                # coworker Lottie assets (not used by the app)
+├── .streamlit/config.toml
+├── .snowflake/cortex/skills/         # 7 CoCo skills
+├── .snowflake/cortex/plans/          # design plans
+└── docs/
+    ├── marketing_copilot_complete_documentation.md   # this document
+    ├── architecture/solution-architecture.md
+    └── requirements/business-requirements.md
 ```
 
 ---
 
-## 8. Demo Walkthrough
+## 15. Known Limitations
 
-**Scenario A -- Client Intelligence:**
-Select "LuminaRetail" in the sidebar. Tab 1 instantly shows 50 campaigns, 2.36x avg ROAS, $5.36M total spend, and 0.22 avg sentiment. The ROAS-by-channel chart reveals YouTube and Instagram as top performers. The monthly trend shows seasonal peaks around holidays.
-
-**Scenario B -- Campaign Recommendation:**
-Select "UrbanThread", product "UT-EcoThread", objective "Brand Awareness", budget $300,000. Click "Analyze and Recommend". The agent queries UrbanThread's historical data, retrieves fashion brand guidelines, finds relevant market events, and produces a structured recommendation with channel allocation, projected ROAS, and conversions. Download as a styled HTML document with NovaSpark branding.
-
-**Scenario C -- What-If Analysis:**
-On Tab 3, shift 15% from TV to TikTok using the sliders. The dashboard instantly shows projected revenue increases with additional conversions, and displays a recommendation box indicating whether the proposed scenario is recommended.
-
-**Scenario D -- Pitch Generation:**
-After approving the recommendation, go to Tab 4 and click "Generate Full Pitch". The agent produces a 7-section pitch document with Executive Summary, audience analysis, channel strategy, creative direction, and projected impact. Download as styled HTML.
-
-**Scenario E -- Event Intelligence (NEW):**
-On Tab 5, select "Super Bowl 2025", enter competitors "Nike, Adidas, Pepsi", markets "US, UK". Click "Run Event Intelligence". The Internet Intelligence Agent researches the event using live web search and stored news articles, displaying progress in real-time. Results show Google Trends charts, news sentiment breakdown, and competitor mention analysis. Then click "Generate Event Strategy" -- the Strategy Synthesis Agent combines internal campaign ROAS data with the live intelligence to produce a 9-section strategy with channel allocation, creative direction, timeline, and competitive positioning. Download the complete strategy as a styled HTML document.
+| Limitation | Impact | Workaround |
+|---|---|---|
+| Trial accounts can't create External Access Integrations | Pullers and Gemini can't run inside Snowflake | Run `src/intelligence/run_pipeline.py` and `scripts/generate_creative.py` locally |
+| No outbound HTTP from Streamlit in Snowflake (warehouse runtime) | Tab 6 can't render real posters | Copy the enriched prompt into AI Studio, or generate locally |
+| Gemini free tier has image quota 0 | Local poster generation returns 429 | Enable billing on the Google Cloud project behind the key |
+| Google Trends window is the last 3 months | For past events the "peak" is historical, so no launch date is recommended | Re-run the pipeline closer to an event, or widen `timeframe` in `intelligence_orchestrator.py` |
+| Market events dataset covers 2025 only | No "upcoming" market events are shown | Regenerate `market_events.csv` with future dates |
+| Google Trends rate-limits rapid repeat pulls | A run can come back with 0 trend rows | Wait 1–2 minutes, re-run that event only (`run_pipeline.py FIFA`) |
+| Tab 5 events other than FIFA World Cup 2026 / Black Friday 2026 have no stored data | Charts are empty for those events; agents still research live | Add the event to `RUNS` in `run_pipeline.py` and run it |
 
 ---
 
-## 9. Tech Stack Summary
+## 16. Issues Fixed and Technical Decisions
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Data Platform | Snowflake | All storage, compute, and AI services |
-| AI Orchestration | Cortex Agents (x3) | Multi-tool AI orchestrators |
-| Structured Analytics | Cortex Analyst (Semantic View) | Natural language to SQL |
-| Unstructured Search | Cortex Search Service (x3) | Brand guidelines, market events, and news retrieval |
-| Live Intelligence | web_search tool + Python pullers | Real-time internet research |
-| Dashboard | Streamlit in Snowflake | 5-tab marketing copilot UI |
-| Data Generation | Python (Faker, NumPy, Pandas) | 114K+ rows of synthetic data |
-| Skills | CoCo CLI Skills (x7) | Specialized marketing workflows |
-| Visualization | Plotly | Dark-themed interactive charts |
-| Data Pipeline | Dynamic Tables (x14) | Auto-refreshing analytics layer |
-| Downloads | JavaScript data URI (base64) | Styled HTML exports, S3-free |
-
----
-
-## 10. What Makes This Project Unique
-
-1. **3-Agent Architecture** -- Three specialized Cortex Agents collaborate: one for internal data analysis, one for live internet research, and one for strategy synthesis. This mirrors how real agencies work (research team, analytics team, strategy team).
-
-2. **Live + Historical Fusion** -- The Event Intelligence pipeline combines live Google Trends, news articles, and web research with historical campaign performance data from Snowflake, producing strategies grounded in both real-time market conditions and proven performance metrics.
-
-3. **Human-in-the-Loop Design** -- The recommendation-to-pitch workflow requires explicit approval before generating client-facing documents. This ensures human oversight of AI-generated content before it reaches clients.
-
-4. **Auto-Continue for Long Outputs** -- All agent calls automatically retry up to 3 times if responses are cut short, with intelligent continuation prompts that prevent section repetition. Combined with 300s/128K token budgets, this ensures complete output for complex documents.
-
-5. **S3-Free Downloads** -- JavaScript data URI downloads bypass Snowflake's S3 presigned URL pipeline entirely, generating styled HTML documents with full NovaSpark branding that open in any browser.
-
-6. **114K+ Rows of Realistic Data** -- Synthetic data uses proper statistical distributions (beta for CTR, lognormal for ROAS) with self-consistent metrics (clicks = impressions x CTR, revenue = spend x ROAS), making the analytics genuinely useful for demonstrating the platform.
-
-7. **7 CoCo Skills** -- Each skill is a structured workflow that CoCo Desktop users can invoke directly, extending the platform beyond the Streamlit UI.
+| # | Issue | Root cause | Fix |
+|---|---|---|---|
+| 1 | Prompts with quotes broke agent SQL | Single-quoted SQL literals | $$-quoting with `$$` → `$ $` sanitising |
+| 2 | `st.rerun()` missing | Older Streamlit in SiS warehouse runtime | `st.experimental_rerun()` |
+| 3 | Empty agent responses | Analyst tool lacked execution environment | `execution_environment: warehouse MARKETING_WH` |
+| 4 | Responses cut off | Low agent budget | 300 s / 128K tokens + auto-continue (3 rounds) |
+| 5 | `ARRAY_CONSTRUCT` in VALUES rejected | Snowflake restriction | INSERT … SELECT |
+| 6 | Semantic view `verified_at` rejected | Must be epoch seconds | 1724889600 |
+| 7 | Download links failed (S3 / XML errors) | SiS routes `st.download_button` through expiring S3 URLs | Base64 data-URI downloads of styled HTML |
+| 8 | Nested expander crash | `render_agent_markdown` inside another expander | `parse_agent_response` + `st.markdown` |
+| 9 | Widget key collision | Data stored under a widget's key | Separate `ei_*_data` keys |
+| 10 | "unrecognized field type" on CREATE AGENT | `type` inside `columns_and_descriptions` | Removed; agent YAMLs now match deployed specs exactly |
+| 11 | `st.container(border=True)` TypeError | Not supported in SiS runtime | Removed `border` |
+| 12 | Web intelligence always empty | `CORTEX.COMPLETE` with a messages array requires an options argument; response read from the wrong field | Added `{max_tokens: 2048}`; read `choices[0].messages` |
+| 13 | Pipeline hard-wired to old account | Connection name hardcoded | `SNOWFLAKE_CONNECTION` setting |
+| 14 | Tab 5 trends/news/competitor sections always empty | Queries selected columns that don't exist in the event dynamic tables; errors were swallowed | Aliased real columns; competitor chart excludes event-level rows; loaded events added to the dropdown |
+| 15 | Generic poster prompts | Prompt used only free-text brief fields | `GET_CREATIVE_INTELLIGENCE` + enriched `BUILD_POSTER_PROMPT` |
+| 16 | Past dates presented as launch / upcoming | 3-month trend window and 2025-only events | `peak_in_past` and `upcoming` flags |
+| 17 | API keys committed to git | Hardcoded in scripts, config and SQL | `src/env_keys.py` + `.env`; placeholders in SQL; keys to be rotated |
+| 18 | Project not rebuildable from the repo | Search services, stages, semantic view and agents were created by hand | `sql/ddl/07_cortex_search.sql`, stages in `01_setup.sql`, `scripts/deploy_all.py` |
 
 ---
 
-Built with Snowflake Cortex, CoCo CLI, and Streamlit in Snowflake.
-Generated with Cortex Code (https://docs.snowflake.com/en/user-guide/cortex-code/cortex-code)
+## 17. Demo Walkthrough
+
+1. **Client Intelligence:** select LuminaRetail. Tab 1 shows campaigns, ROAS, spend, revenue and sentiment with channel and trend charts.
+2. **Recommendation:** select UrbanThread, a product, "Brand Awareness" and $300,000, then click Analyze and Recommend. The agent combines UrbanThread's channel history, brand guidelines and market events. Approve the recommendation.
+3. **What-If:** in Tab 3, move budget from TV to TikTok and compare projected revenue and conversions.
+4. **Pitch:** in Tab 4, generate the 7-section pitch and download it as HTML.
+5. **Event Intelligence:** in Tab 5, pick FIFA World Cup 2026 with competitors "Nike, Adidas, Puma". You get the research report, Google Trends chart, news sentiment and competitor media presence. Then generate the 9-section strategy.
+6. **Creative Studio:** in Tab 6, with client UrbanThread and event "FIFA World Cup 2026", the intelligence panel shows YouTube as the top channel (2.64x), "Athleisure Fans" as the primary segment, the brand guardrails and the World Cup trend peak. Generate assets, copy the enriched poster prompt, and download the ZIP.
+7. **MCP:** connect Claude or Cursor to `NOVASPARK_MCP`, call `get_creative_intelligence` for a client, then `build_poster_prompt` with the result as `intel_json`.
+
+---
+
+Built with Snowflake Cortex, Cortex Code, and Streamlit in Snowflake.

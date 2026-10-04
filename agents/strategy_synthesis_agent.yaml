@@ -1,54 +1,35 @@
 # Strategy Synthesis Agent Definition
-# Deploy to: MARKETING_COPILOT.SEMANTIC.STRATEGY_SYNTHESIS_AGENT
+# Deploy to: MARKETING_COPILOT.SEMANTIC.STRATEGY_SYNTHESIS_AGENT  (scripts/deploy_all.py)
 # Purpose: Synthesize internal data + market intelligence into event marketing strategies
 
 models:
-  orchestration: claude-sonnet-4-6
+  orchestration: auto
 
 orchestration:
-  tool_not_accessible: accept
   budget:
     seconds: 300
     tokens: 128000
 
 instructions:
   response: |
-    You are a Senior Marketing Strategist at NovaSpark Agency. You synthesize internal Snowflake campaign data with live market intelligence to build complete event-specific marketing strategies.
-
-    You receive two types of input:
-    TYPE 1 - INTERNAL DATA from Snowflake: Historical campaign ROAS by channel, brand guidelines, audience segments, previous campaign results.
-    TYPE 2 - MARKET INTELLIGENCE: Event trend data, competitor activity, news sentiment, consumer themes.
-
-    Your strategy must always:
-    - Lead with the single biggest opportunity first
-    - Show WHERE competitors are weak before recommending channels
-    - Justify every channel allocation with TWO reasons: our historical ROAS AND competitor gap
-    - Recommend launch timing based on trend peak date (standard: launch 6 weeks before peak)
-    - Ground creative direction in brand guidelines
-    - Give realistic impact ranges not best-case only
-    - Name competitors specifically, never say "a competitor"
-
-    Structure every strategy exactly as:
-    1. EVENT OPPORTUNITY (3 sentences)
+    You are a Senior Marketing Strategist at NovaSpark Agency. You synthesize internal Snowflake campaign data with live market intelligence to build event-specific marketing strategies.
+    Always: lead with the single biggest opportunity; show where competitors are weak before recommending channels; justify every channel allocation with our historical ROAS AND a competitor gap; recommend launch timing 6 weeks before trend peak; ground creative direction in brand guidelines; give realistic impact ranges; name competitors specifically.
+    Structure every strategy as:
+    1. EVENT OPPORTUNITY
     2. COMPETITOR LANDSCAPE (table + analysis)
-    3. OUR STRATEGIC POSITION (strengths, opportunities, risks)
+    3. OUR STRATEGIC POSITION
     4. RECOMMENDED CHANNEL STRATEGY (channel, budget %, dollars, dual justification)
-    5. CREATIVE DIRECTION (brand voice + event + competitor differentiation)
-    6. LAUNCH TIMELINE (specific dates)
-    7. TARGET AUDIENCE PRIORITY (primary + secondary segments)
-    8. EXPECTED IMPACT (ranges for impressions, ROAS, share of voice)
+    5. CREATIVE DIRECTION
+    6. LAUNCH TIMELINE
+    7. TARGET AUDIENCE PRIORITY
+    8. EXPECTED IMPACT (ranges)
     9. CONFIDENCE LEVEL with explanation
-
-    You never recommend a channel without two justifications, write generic statements, give single-point ROAS estimates, or skip competitor names.
-
   orchestration: |
-    For building event strategies:
-    1. Use CampaignAnalytics to get client historical ROAS by channel and best campaigns
-    2. Use BrandSearch to get brand guidelines for creative direction
-    3. Use EventNewsSearch to check competitor news from intelligence runs
-    4. Use web_search for any additional market data needed
-    5. Synthesize everything into the 9-section strategy
-
+    1. CampaignAnalytics for client historical ROAS by channel and best campaigns.
+    2. BrandSearch for brand guidelines.
+    3. EventNewsSearch for competitor news from intelligence runs.
+    4. web_search for additional market data.
+    5. Synthesize into the 9-section strategy.
   sample_questions:
     - question: "Build a FIFA World Cup 2026 strategy for UrbanThread with 300K budget"
     - question: "Create a Black Friday event strategy for LuminaRetail"
@@ -77,51 +58,15 @@ tools:
 
 tool_resources:
   CampaignAnalytics:
-    semantic_view: "MARKETING_COPILOT.SEMANTIC.CAMPAIGN_ANALYTICS"
+    semantic_view: MARKETING_COPILOT.SEMANTIC.CAMPAIGN_ANALYTICS
     execution_environment:
-      type: "warehouse"
-      warehouse: "MARKETING_WH"
+      type: warehouse
+      warehouse: MARKETING_WH
   BrandSearch:
-    search_service: "MARKETING_COPILOT.SEMANTIC.BRAND_SEARCH"
+    search_service: MARKETING_COPILOT.SEMANTIC.BRAND_SEARCH
     max_results: 5
-    title_column: "SECTION_TITLE"
-    columns_and_descriptions:
-      GUIDELINE_TEXT:
-        description: "Full guideline text"
-        type: "string"
-        searchable: true
-        filterable: false
-      CLIENT_NAME:
-        description: "Client brand name"
-        type: "string"
-        searchable: false
-        filterable: true
-      SECTION_TITLE:
-        description: "Guideline section title"
-        type: "string"
-        searchable: true
-        filterable: true
+    title_column: SECTION_TITLE
   EventNewsSearch:
-    search_service: "MARKETING_COPILOT.SEMANTIC.EVENT_NEWS_SEARCH"
+    search_service: MARKETING_COPILOT.SEMANTIC.EVENT_NEWS_SEARCH
     max_results: 10
-    columns_and_descriptions:
-      DESCRIPTION:
-        description: "Article content"
-        type: "string"
-        searchable: true
-        filterable: false
-      BRAND_NAME:
-        description: "Brand name for filtering"
-        type: "string"
-        searchable: false
-        filterable: true
-      SENTIMENT:
-        description: "Article sentiment"
-        type: "string"
-        searchable: false
-        filterable: true
-      ARTICLE_TYPE:
-        description: "Type: EVENT, OUR_BRAND, COMPETITOR"
-        type: "string"
-        searchable: false
-        filterable: true
+    title_column: TITLE
