@@ -543,16 +543,17 @@ def load_net_lean_takeaway(stratum_type, market, objective, brand_label):
 
 @st.cache_data(ttl=300)
 def load_best_attributes(brand_label, market):
-    """NET_HELPED values for brand x market; falls back to the brand across all markets when that cell is thin."""
+    """NET_HELPED values (vs their reference) for brand x market; falls back to the brand across all markets."""
     for scope in (market, "ALL"):
         df = run_query(f"""
-            SELECT attribute_family, attribute_value, adj_lift_pct FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
+            SELECT attribute_family, attribute_value, reference_value, adj_lift_pct FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
             WHERE stratum_type = 'MARKET_X_BRAND' AND market = '{scope}' AND brand = '{brand_label}'
               AND net_lean_class = 'NET_HELPED'
             ORDER BY adj_lift_pct DESC LIMIT 3
         """)
         if not df.empty:
-            return [f"{r.ATTRIBUTE_FAMILY.replace('_', ' ')} = {r.ATTRIBUTE_VALUE}" for r in df.itertuples()], scope
+            return [f"{r.ATTRIBUTE_FAMILY.replace('_', ' ')} = {r.ATTRIBUTE_VALUE} (vs {r.REFERENCE_VALUE}, "
+                    f"{float(r.ADJ_LIFT_PCT):+.0f}% CTR)" for r in df.itertuples()], scope
     return [], None
 
 
@@ -1161,7 +1162,7 @@ with tab6:
         cs_direction = st.text_area(
             "Creative Direction",
             value=st.session_state.get("recommendation_creative", "Clean modern visuals with lifestyle imagery showing product in everyday premium context")
-                  + (f" Lean into: {'; '.join(ci_best)}." if ci_best else ""),
+                  + (f" Lean into (adjusted CTR lift vs the stated reference value, synthetic data): {'; '.join(ci_best)}." if ci_best else ""),
             height=68, key=f"cs_direction_{ci_brand}_{ci_market}"
         )
         cs_event = st.text_input(
@@ -1782,7 +1783,8 @@ with tab7:
             st.markdown(f"**Takeaway:** {tk['TAKEAWAY'].iloc[0]}")
 
         nl = nl.copy()
-        nl["LABEL"] = nl["ATTRIBUTE_FAMILY"].str.replace("_", " ") + " = " + nl["ATTRIBUTE_VALUE"]
+        nl["LABEL"] = (nl["ATTRIBUTE_FAMILY"].str.replace("_", " ") + ": " + nl["ATTRIBUTE_VALUE"]
+                       + " vs " + nl["REFERENCE_VALUE"])
         enough = nl[nl["NET_LEAN_CLASS"] != "INSUFFICIENT_DATA"].copy()
         thin = nl[nl["NET_LEAN_CLASS"] == "INSUFFICIENT_DATA"]
 
@@ -1810,6 +1812,8 @@ with tab7:
             f"<span style='display:inline-block;width:11px;height:11px;background:{c};border:1px solid #475569;"
             f"margin-right:5px;vertical-align:middle;'></span>{d}</span>"
             for c, d in CI_CLASS_INFO.values()), unsafe_allow_html=True)
+        st.caption("Lifts are versus the stated reference value. With about 1,000 cells, roughly 1 in 20 cells with "
+                   "no real effect will still be flagged; treat single borderline cells as hypotheses.")
 
         if enough.empty:
             st.info("Every attribute value in this stratum has fewer than 30 ads: not enough data.")
@@ -1847,11 +1851,11 @@ with tab7:
             for fam_name in CI_FAMILIES:
                 g = enough[enough["ATTRIBUTE_FAMILY"] == fam_name]
                 if g.empty:
-                    fam_rows.append({"Family": fam_name, "Strongest helper": "not enough data", "Strongest hurter": ""})
+                    fam_rows.append({"Family": fam_name, "Reference": "", "Strongest helper": "not enough data", "Strongest hurter": ""})
                     continue
                 top, low = g.loc[g["ADJ_LIFT_PCT"].idxmax()], g.loc[g["ADJ_LIFT_PCT"].idxmin()]
                 fam_rows.append({
-                    "Family": fam_name,
+                    "Family": fam_name, "Reference": top["REFERENCE_VALUE"],
                     "Strongest helper": f"{top['ATTRIBUTE_VALUE']} ({top['ADJ_LIFT_PCT']:+.1f}%, {top['NET_LEAN_CLASS']}, n={int(top['N_ADS_WITH'])})",
                     "Strongest hurter": f"{low['ATTRIBUTE_VALUE']} ({low['ADJ_LIFT_PCT']:+.1f}%, {low['NET_LEAN_CLASS']}, n={int(low['N_ADS_WITH'])})"})
             show_df(pd.DataFrame(fam_rows))
@@ -1863,10 +1867,10 @@ with tab7:
         fam = st.selectbox("Attribute family", list(CI_FAMILIES), key="pdv_family")
         fam_df = nl[nl["ATTRIBUTE_FAMILY"] == fam].sort_values("ADJ_LIFT_PCT", ascending=False, na_position="last")
         sub_rows = [{
-            "Value": r.ATTRIBUTE_VALUE,
+            "Value": r.ATTRIBUTE_VALUE, "Reference": r.REFERENCE_VALUE,
             "Adjusted lift": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.ADJ_LIFT_PCT:+.1f}%",
             "95% interval": "" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.CI_LOW_PCT:+.1f}% to {r.CI_HIGH_PCT:+.1f}%",
-            "Ads with": int(r.N_ADS_WITH), "Ads without": int(r.N_ADS_WITHOUT),
+            "Ads with": int(r.N_ADS_WITH), "Ads with reference": int(r.N_ADS_REFERENCE),
             "Class": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else r.NET_LEAN_CLASS,
             "Brand-level lifts": "" if r.BRAND_LIFTS_JSON in (None, "{}") else r.BRAND_LIFTS_JSON,
         } for r in fam_df.itertuples()]

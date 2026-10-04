@@ -2,8 +2,9 @@
 Local only: false-positive check for NET_LEAN, written to CREATIVE.NULL_EFFECT_CHECK.
 
 For every NET_LEAN stratum we rebuild the noise-free planted CTR signal per ad (generator's own effect
-functions, via scripts/effect_recovery.py) and run the SAME adjusted-contrast estimator on it. An attribute
-value is "null" in a stratum when its planted contrast is below 0.03 log-odds (about 3%) in absolute value,
+functions, via scripts/effect_recovery.py) and run the SAME adjusted-contrast estimator on it, with the same
+per-stratum reference values as NET_LEAN (value vs reference). An attribute
+value is "null" in a stratum when its planted contrast vs the reference is below 0.03 log-odds (about 3%) in absolute value,
 i.e. the answer key plants no CTR effect for it there. For null values with enough data
 (class != INSUFFICIENT_DATA) we count how often NET_LEAN still says NET_HELPED or NET_HURT.
 

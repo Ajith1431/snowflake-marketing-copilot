@@ -44,6 +44,17 @@ SELECT 'C5: NET_LEAN class rules hold' AS test_name,
            'PASS', 'FAIL') AS result, '' AS detail
 FROM NET_LEAN;
 
+-- C12: reference coding: every row names a reference, no value is its own reference, binary families have one row
+SELECT 'C12: NET_LEAN reference coding consistent' AS test_name,
+       IFF(COUNT_IF(reference_value IS NULL OR reference_value = attribute_value) = 0
+           AND (SELECT COUNT(*) FROM (SELECT stratum_type, market, objective, brand, attribute_family FROM NET_LEAN
+                WHERE attribute_family IN ('has_person', 'has_logo_first_3s')
+                GROUP BY ALL HAVING COUNT(*) <> 1)) = 0
+           AND COUNT_IF(NOT reference_is_fallback AND attribute_family = 'hook_type' AND reference_value <> 'promo_led') = 0,
+           'PASS', 'FAIL') AS result,
+       COUNT_IF(reference_is_fallback)::VARCHAR || ' rows use a fallback reference' AS detail
+FROM NET_LEAN;
+
 -- C6: MODEL_METRICS has rows for baseline, ridge, hgb at both levels, and coverage rows
 SELECT 'C6: MODEL_METRICS populated' AS test_name,
        IFF(COUNT_IF(model IN ('baseline', 'ridge', 'hgb')) = 6 AND COUNT_IF(p10_p90_coverage IS NOT NULL) >= 2,

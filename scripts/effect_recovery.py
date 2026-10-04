@@ -2,8 +2,10 @@
 Step 5 (local only): compare estimated effects with the answer key and write CREATIVE.EFFECT_RECOVERY.
 
 estimated = adjusted log-odds contrast inside the effect's stratum (same ridge estimator as NET_LEAN:
-            all 8 attribute families + log weekly spend + brand + placement, "with v vs other values").
-planted   = the SAME estimator applied to the noise-free planted signal, rebuilt per ad from the
+            all 8 attribute families + log weekly spend + brand + placement + market + objective,
+            value vs the family's reference value, common.REFERENCE / most common if < 30 ads).
+            When the effect's value IS the reference (e.g. promo_led), the most common other value is used.
+planted   = the SAME estimator and reference applied to the noise-free planted signal, rebuilt per ad from the
             generator's effect functions, so both numbers are on the same contrast scale.
             planted_raw_log_odds is the size as written in tests/fixtures/ground_truth_effects.json.
 direction_match: same sign (if |planted| < 0.03, match means |estimated| <= 0.10).
@@ -27,7 +29,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "src" / "creative_ml"))
 from env_keys import get_secret  # noqa: E402
-from common import FAMILIES, adjusted_contrasts, logit_rate  # noqa: E402
+from common import FAMILIES, adjusted_contrasts, logit_rate, resolve_refs  # noqa: E402
 
 GT = json.loads((ROOT / "tests" / "fixtures" / "ground_truth_effects.json").read_text())
 spec = importlib.util.spec_from_file_location("gen", ROOT / "data" / "generators" / "generate_creative.py")
@@ -158,9 +160,12 @@ def main():
             y_col, t_col = target[metric]
             sub = ads[mask & ads[y_col].notna()]
             fams = FAMILIES + (["aspect_ratio"] if fam == "aspect_ratio" else [])
-            est = adjusted_contrasts(sub, sub[y_col], families=fams).get((fam, val), np.nan)
-            pl = adjusted_contrasts(sub, truth.loc[sub.index, t_col], families=fams).get((fam, val), np.nan)
-            rows.append((eid, metric, raw, pl, est, int((sub[fam] == val).sum()), len(sub)))
+            refs = resolve_refs(sub, fams)
+            if refs[fam] == val:
+                refs[fam] = sub.loc[sub[fam] != val, fam].value_counts().index[0]
+            est = adjusted_contrasts(sub, sub[y_col], families=fams, refs=refs).get((fam, val), np.nan)
+            pl = adjusted_contrasts(sub, truth.loc[sub.index, t_col], families=fams, refs=refs).get((fam, val), np.nan)
+            rows.append((eid, metric, refs[fam], raw, pl, est, int((sub[fam] == val).sum()), len(sub)))
 
         # frequency > 6: within-ad slope (ad fixed effects) on ad-week log-odds CTR
         wk = weeks.copy()
@@ -168,10 +173,10 @@ def main():
         wk["x"] = np.maximum(0.0, wk.frequency - 6.0)
         d = wk[["y", "x"]] - wk.groupby("ad_id")[["y", "x"]].transform("mean")
         slope = float((d.x * d.y).sum() / (d.x ** 2).sum())
-        rows.append(("frequency > 6 (per unit)", "ctr", -0.15, -0.15, slope,
+        rows.append(("frequency > 6 (per unit)", "ctr", "", -0.15, -0.15, slope,
                      int((wk.groupby("ad_id").x.max() > 0).sum()), wk.ad_id.nunique()))
 
-        out = pd.DataFrame(rows, columns=["EFFECT_ID", "METRIC", "PLANTED_RAW_LOG_ODDS", "PLANTED",
+        out = pd.DataFrame(rows, columns=["EFFECT_ID", "METRIC", "REFERENCE_VALUE", "PLANTED_RAW_LOG_ODDS", "PLANTED",
                                           "ESTIMATED", "N_ADS_WITH", "N_ADS_IN_STRATUM"])
         near_zero = out.PLANTED.abs() < 0.03
         out["DIRECTION_MATCH"] = np.where(near_zero, out.ESTIMATED.abs() <= 0.10,
@@ -183,16 +188,16 @@ def main():
             out[c] = out[c].round(3)
 
         cur.execute(f"""CREATE OR REPLACE TABLE {S}.EFFECT_RECOVERY (
-            EFFECT_ID VARCHAR, METRIC VARCHAR, PLANTED_RAW_LOG_ODDS FLOAT, PLANTED FLOAT, ESTIMATED FLOAT,
+            EFFECT_ID VARCHAR, METRIC VARCHAR, REFERENCE_VALUE VARCHAR, PLANTED_RAW_LOG_ODDS FLOAT, PLANTED FLOAT, ESTIMATED FLOAT,
             N_ADS_WITH INT, N_ADS_IN_STRATUM INT, DIRECTION_MATCH BOOLEAN, SIZE_MATCH BOOLEAN, MATCH VARCHAR, LOW_N_FLAG VARCHAR)
             COMMENT = 'Answer-key comparison. Owner only: do not grant to agent or MCP roles.'""")
-        cur.executemany(f"INSERT INTO {S}.EFFECT_RECOVERY VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+        cur.executemany(f"INSERT INTO {S}.EFFECT_RECOVERY VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                         [tuple(None if (isinstance(v, float) and np.isnan(v)) else (bool(v) if isinstance(v, np.bool_) else
                          (int(v) if isinstance(v, np.integer) else (float(v) if isinstance(v, np.floating) else v))) for v in r)
                          for r in out.itertuples(index=False)])
 
         pd.set_option("display.width", 250, "display.max_rows", 100)
-        print(out[["EFFECT_ID", "METRIC", "PLANTED_RAW_LOG_ODDS", "PLANTED", "ESTIMATED", "N_ADS_WITH",
+        print(out[["EFFECT_ID", "METRIC", "REFERENCE_VALUE", "PLANTED_RAW_LOG_ODDS", "PLANTED", "ESTIMATED", "N_ADS_WITH",
                    "MATCH", "SIZE_MATCH", "LOW_N_FLAG"]].to_string(index=False))
         big = out[out.LOW_N_FLAG == ""]
         print(f"\nRecovery (direction): {out.DIRECTION_MATCH.sum()}/{len(out)} = {out.DIRECTION_MATCH.mean() * 100:.0f}%"
