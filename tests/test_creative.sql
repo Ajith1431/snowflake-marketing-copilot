@@ -72,3 +72,16 @@ SELECT 'C9: EFFECT_RECOVERY has no grants beyond ownership' AS test_name,
        IFF(COUNT_IF("privilege" <> 'OWNERSHIP') = 0, 'PASS', 'FAIL') AS result,
        COUNT(*)::VARCHAR || ' grant rows' AS detail
 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+-- C10: false-positive check exists and has a total row with a valid share
+SELECT 'C10: NULL_EFFECT_CHECK total row present, share in [0,1]' AS test_name,
+       IFF(COUNT(*) = 1 AND MIN(false_positive_share) BETWEEN 0 AND 1 AND MIN(n_strata_tested) > 0, 'PASS', 'FAIL') AS result,
+       'rate=' || MIN(false_positive_share)::VARCHAR AS detail
+FROM NULL_EFFECT_CHECK WHERE attribute_family = 'ALL';
+
+-- C11: false-positive check (derived from the answer key) is not readable by agent / MCP roles
+SHOW GRANTS ON TABLE NULL_EFFECT_CHECK;
+SELECT 'C11: NULL_EFFECT_CHECK has no grants beyond ownership' AS test_name,
+       IFF(COUNT_IF("privilege" <> 'OWNERSHIP') = 0, 'PASS', 'FAIL') AS result,
+       COUNT(*)::VARCHAR || ' grant rows' AS detail
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));

@@ -5,7 +5,8 @@ inside Snowflake Python procedures and locally).
 Adjusted lift of an attribute value v (family F) inside a stratum:
   1. y = log-odds of ad-level CTR (sum clicks / sum impressions per ad).
   2. Ridge regression of y on one-hot dummies for ALL 8 attribute families (every level kept; the
-     ridge penalty makes it identifiable) plus controls: log weekly spend, brand, placement.
+     ridge penalty makes it identifiable) plus controls: log weekly spend, brand, placement, market,
+     objective (a categorical control is dropped when the stratum has only one level of it).
   3. contrast(v) = beta_v - share-weighted mean of beta_u for the other levels u of F in the stratum.
      This is "with v vs without v" holding everything else fixed. lift% = (exp(contrast) - 1) * 100.
   4. 95% interval: percentile bootstrap over ads.
@@ -94,7 +95,7 @@ def contrasts(df, beta, names, families):
     return out
 
 
-def adjusted_contrasts(df, y, families=FAMILIES, controls_cat=("brand", "placement"),
+def adjusted_contrasts(df, y, families=FAMILIES, controls_cat=("brand", "placement", "market", "objective"),
                        controls_num=("log_spend_wk",), alpha=RIDGE_ALPHA):
     X, names = _design(df, list(families), list(controls_cat), list(controls_num))
     beta = ridge_fit(X, np.asarray(y, float), alpha)

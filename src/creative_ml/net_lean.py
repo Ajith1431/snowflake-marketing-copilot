@@ -45,7 +45,7 @@ def brand_lifts(sub, fam, val):
         s = sub[sub.brand == b]
         n_w = int((s[fam] == val).sum())
         if n_w >= MIN_BRAND_CELL and len(s) - n_w >= MIN_BRAND_CELL:
-            c = adjusted_contrasts(s, s["y"], controls_cat=("placement",)).get((fam, val))
+            c = adjusted_contrasts(s, s["y"], controls_cat=("placement", "market", "objective")).get((fam, val))
             if c is not None:
                 out[b] = round(float(to_lift_pct(c)), 1)
     return out

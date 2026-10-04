@@ -562,6 +562,16 @@ def load_model_metrics():
 
 
 @st.cache_data(ttl=300)
+def load_null_effect_rate():
+    try:
+        df = run_query("SELECT n_strata_tested, n_false_positive, false_positive_share "
+                       "FROM MARKETING_COPILOT.CREATIVE.NULL_EFFECT_CHECK WHERE attribute_family = 'ALL'")
+    except Exception:
+        return None
+    return None if df.empty else df.iloc[0]
+
+
+@st.cache_data(ttl=300)
 def load_feature_effects():
     return run_query("SELECT * FROM MARKETING_COPILOT.CREATIVE.FEATURE_EFFECTS ORDER BY model, rank")
 
@@ -706,7 +716,10 @@ with st.sidebar:
 # ============================
 # MAIN AREA
 # ============================
-st.title(f"📊 {selected_client} Marketing Dashboard")
+st.title("📊 Marketing Co-Pilot")
+st.caption(f"Sidebar client: {selected_client} (used by Client Intelligence, Campaign Recommendation, Generate Pitch, "
+           f"Event Intelligence and Creative Studio). Predictor and Performance Drivers use the synthetic creative "
+           f"dataset and their own brand pickers.")
 
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📊 Client Intelligence",
@@ -860,7 +873,7 @@ with tab2:
 # TAB 3: Predictor (scenario estimates from CREATIVE.SCORE_AD)
 # ============================
 with tab3:
-    st.subheader("Creative Predictor: compare two scenarios")
+    st.subheader("Creative Predictor: compare two creative scenarios")
     st.warning(f"⚠️ {CI_BANNER}")
     st.caption("Pick brand label, market, objective, placement, creative attributes and weekly budget for scenario A, "
                "then change any of them for scenario B. Each scenario is scored by CREATIVE.SCORE_AD "
@@ -961,36 +974,58 @@ with tab3:
         m2.metric("Scenario B: predicted CTR", f"{rb['predicted_ctr'] * 100:.2f}%", delta=f"{lift:+.1f}% vs A")
         m2.caption(f"p10-p90 range: {rb['p10'] * 100:.2f}% to {rb['p90'] * 100:.2f}%")
         m3.metric("Lift of B vs A (point estimate)", f"{lift:+.1f}%")
-        m3.caption(f"Range: {lift_lo:+.1f}% to {lift_hi:+.1f}% (B's p10-p90 against A's p90-p10).")
-        m3.caption("Range covers individual ad-weeks, so it is intentionally wide. Use the expected difference as the headline.")
         if abs(lift) < 5:
             st.warning(f"⚠️ Expected difference is only {lift:+.1f}% (A vs B): too small to distinguish from noise.")
-        elif overlap:
-            st.info(f"Ranges for individual ad-weeks overlap, so any single ad can go either way. "
-                    f"Expected difference: {lift:+.1f}% (A vs B).")
         else:
-            st.success(f"Expected difference: {lift:+.1f}% (A vs B), and the individual ad-week ranges do not overlap.")
+            st.success(f"Expected difference: {lift:+.1f}% (A vs B).")
 
-        fig_pred = go.Figure()
-        for name, r, color in [("A", ra, PRIMARY), ("B", rb, ACCENT)]:
-            fig_pred.add_trace(go.Scatter(
-                x=[r["predicted_ctr"] * 100], y=[f"Scenario {name}"], mode="markers", marker=dict(size=14, color=color),
-                error_x=dict(type="data", symmetric=False, array=[(r["p90"] - r["predicted_ctr"]) * 100],
-                             arrayminus=[(r["predicted_ctr"] - r["p10"]) * 100], color=color),
-                name=f"Scenario {name}"))
-        fig_pred.update_layout(template=PLOTLY_TEMPLATE, height=220, margin=dict(t=20, b=40), showlegend=False,
-                               xaxis_title="Predicted CTR % (dot) with p10-p90 range")
-        st.plotly_chart(fig_pred, use_container_width=True)
+        # Swap decomposition: revert one changed field of B to A's value and re-score
+        swaps = []
+        for field in changed:
+            reverted = {**sb, "attributes": dict(sb["attributes"])}
+            if field in CI_FAMILIES:
+                reverted["attributes"][field] = sa["attributes"][field]
+                a_val, b_val = sa["attributes"][field], sb["attributes"][field]
+            else:
+                reverted[field] = sa[field]
+                a_val, b_val = sa[field], sb[field]
+            try:
+                r_rev = score_ad(json.dumps(reverted, sort_keys=True))
+            except Exception as exc:
+                st.error(f"Scoring failed for swap {field}: {exc}")
+                continue
+            delta_pp = (rb["predicted_ctr"] - r_rev["predicted_ctr"]) * 100
+            swaps.append({"Changed field": field.replace("_", " "), "A → B": f"{a_val} → {b_val}",
+                          "B with only this reverted": f"{r_rev['predicted_ctr'] * 100:.2f}%",
+                          "CTR change attributable (pp)": f"{delta_pp:+.2f}",
+                          "As % of A's CTR": f"{delta_pp / (ra['predicted_ctr'] * 100) * 100:+.1f}%" if ra["predicted_ctr"] else ""})
+        if swaps:
+            st.markdown("**What each change contributes** (swap test: B scored with only that field set back to A)")
+            show_df(pd.DataFrame(swaps))
+            st.caption(f"Total change B vs A: {(rb['predicted_ctr'] - ra['predicted_ctr']) * 100:+.2f} pp. The swap "
+                       "contributions need not add up to the total, because the gradient boosting model has "
+                       "interactions between fields.")
+        for name, r in [("A", ra), ("B", rb)]:
+            if r.get("warnings"):
+                st.caption(f"Notes for scenario {name}: " + "; ".join(r["warnings"]))
 
-        d1, d2 = st.columns(2)
-        for col, name, r in [(d1, "A", ra), (d2, "B", rb)]:
-            with col:
-                st.markdown(f"**Top drivers: scenario {name}** (vs an average ad, from the Ridge model)")
-                show_df(pd.DataFrame([{"Attribute": d["attribute"], "Value": d["value"],
-                                            "Approx. CTR effect": f"{d['approx_ctr_effect_pct']:+.1f}%"}
-                                           for d in r["top_drivers"]]))
-                if r.get("warnings"):
-                    st.caption("Notes: " + "; ".join(r["warnings"]))
+        with st.expander("Show range for individual ad-weeks", expanded=False):
+            st.caption(f"Lift range: {lift_lo:+.1f}% to {lift_hi:+.1f}% (B's p10-p90 against A's p90-p10). It covers "
+                       "individual ad-weeks, so it is intentionally wide; use the expected difference as the headline.")
+            if overlap:
+                st.caption("The individual ad-week ranges overlap, so any single ad can go either way.")
+            else:
+                st.caption("The individual ad-week ranges do not overlap.")
+            fig_pred = go.Figure()
+            for name, r, color in [("A", ra, PRIMARY), ("B", rb, ACCENT)]:
+                fig_pred.add_trace(go.Scatter(
+                    x=[r["predicted_ctr"] * 100], y=[f"Scenario {name}"], mode="markers", marker=dict(size=14, color=color),
+                    error_x=dict(type="data", symmetric=False, array=[(r["p90"] - r["predicted_ctr"]) * 100],
+                                 arrayminus=[(r["predicted_ctr"] - r["p10"]) * 100], color=color),
+                    name=f"Scenario {name}"))
+            fig_pred.update_layout(template=PLOTLY_TEMPLATE, height=220, margin=dict(t=20, b=40), showlegend=False,
+                                   xaxis_title="Predicted CTR % (dot) with p10-p90 range")
+            st.plotly_chart(fig_pred, use_container_width=True)
         st.caption(f"Scenario estimate. {ra['disclaimer']}")
 
         pred_report = (
@@ -1707,7 +1742,7 @@ with tab5:
 # TAB 7: Performance Drivers (CREATIVE.NET_LEAN + model card)
 # ============================
 with tab7:
-    st.subheader("Performance Drivers: which creative attributes move CTR")
+    st.subheader("Performance Drivers: which creative attributes move CTR (synthetic creative dataset)")
     st.warning(f"⚠️ {CI_BANNER}")
 
     CI_CLASS_INFO = {
@@ -1739,7 +1774,7 @@ with tab7:
     else:
         n_ads = int(nl["N_ADS"].iloc[0])
         st.caption(f"Stratum: {nl['STRATUM'].iloc[0]}  ·  {n_ads} ads  ·  adjusted CTR lift controls for log spend, "
-                   f"brand, placement and the other attribute families; 95% bootstrap interval over ads.")
+                   f"brand, placement, market, objective (when not fixed by the filter) and the other attribute families; 95% bootstrap interval over ads.")
         if n_ads < 60:
             st.info(f"Only {n_ads} ads in this cell, so most values will show 'not enough data'. "
                     f"Widen the drill-down (set market or objective to ALL) for more evidence.")
@@ -1779,26 +1814,33 @@ with tab7:
         if enough.empty:
             st.info("Every attribute value in this stratum has fewer than 30 ads: not enough data.")
         else:
+            for c in ("ADJ_LIFT_PCT", "CI_LOW_PCT", "CI_HIGH_PCT"):
+                enough[c] = pd.to_numeric(enough[c], errors="coerce").astype(float)
             fam_order = {f: i for i, f in enumerate(CI_FAMILIES)}
             enough["FAM_ORDER"] = enough["ATTRIBUTE_FAMILY"].map(fam_order)
+            # plotly draws horizontal bars bottom-up: reverse so the first family is on top, highest lift first
             enough = enough.sort_values(["FAM_ORDER", "ADJ_LIFT_PCT"], ascending=[False, True])
-            enough["YLABEL"] = [
-                f"{r.LABEL}<br><span style='font-size:10px;color:#94A3B8'>n={int(r.N_ADS_WITH)} ads · "
-                f"95% CI {r.CI_LOW_PCT:+.1f}% to {r.CI_HIGH_PCT:+.1f}%</span>" for r in enough.itertuples()]
+            enough["YLABEL"] = [f"{r.LABEL} (n={int(r.N_ADS_WITH)})" for r in enough.itertuples()]
+            x_max = float(max(enough["CI_HIGH_PCT"].abs().max(), enough["CI_LOW_PCT"].abs().max(),
+                              enough["ADJ_LIFT_PCT"].abs().max(), 5.0)) * 1.15
             fig_nl = go.Figure(go.Bar(
-                x=enough["ADJ_LIFT_PCT"], y=enough["YLABEL"], orientation="h",
+                x=enough["ADJ_LIFT_PCT"].tolist(), y=enough["YLABEL"].tolist(), orientation="h", base=0,
                 marker_color=[CI_CLASS_INFO.get(c, ("#64748B", ""))[0] for c in enough["NET_LEAN_CLASS"]],
                 error_x=dict(type="data", symmetric=False,
-                             array=(enough["CI_HIGH_PCT"] - enough["ADJ_LIFT_PCT"]).fillna(0),
-                             arrayminus=(enough["ADJ_LIFT_PCT"] - enough["CI_LOW_PCT"]).fillna(0), color="#CBD5E1"),
-                text=[f"n={int(n)}" for n in enough["N_ADS_WITH"]], textposition="outside",
+                             array=(enough["CI_HIGH_PCT"] - enough["ADJ_LIFT_PCT"]).fillna(0).tolist(),
+                             arrayminus=(enough["ADJ_LIFT_PCT"] - enough["CI_LOW_PCT"]).fillna(0).tolist(),
+                             color="#CBD5E1", thickness=1.5, width=4),
+                text=[f"{v:+.1f}%" for v in enough["ADJ_LIFT_PCT"]], textposition="none",
                 customdata=[[r.LABEL, CI_CLASS_INFO.get(r.NET_LEAN_CLASS, ("", r.NET_LEAN_CLASS))[1],
                              int(r.N_ADS_WITH), r.CI_LOW_PCT, r.CI_HIGH_PCT] for r in enough.itertuples()],
                 hovertemplate="%{customdata[0]}<br>adjusted lift %{x:+.1f}%<br>95% CI %{customdata[3]:+.1f}% to "
                               "%{customdata[4]:+.1f}%<br>%{customdata[2]} ads<br>%{customdata[1]}<extra></extra>"))
             fig_nl.add_vline(x=0, line_color="#64748B")
-            fig_nl.update_layout(template=PLOTLY_TEMPLATE, height=max(320, 40 * len(enough) + 80),
-                                 margin=dict(t=20, b=40, l=10, r=40), xaxis_title="Adjusted CTR lift % (with 95% interval)")
+            fig_nl.update_layout(template=PLOTLY_TEMPLATE, height=max(320, 28 * len(enough) + 80),
+                                 margin=dict(t=20, b=40, l=10, r=40),
+                                 xaxis=dict(type="linear", range=[-x_max, x_max], zeroline=True, ticksuffix="%",
+                                            title="Adjusted CTR lift % (bar) with 95% interval (whisker); left = hurts, right = helps"),
+                                 yaxis=dict(type="category", categoryorder="array", categoryarray=enough["YLABEL"].tolist()))
             st.plotly_chart(fig_nl, use_container_width=True)
 
             fam_rows = []
@@ -1820,14 +1862,18 @@ with tab7:
         st.markdown("#### Sub-attribute breakdown by family")
         fam = st.selectbox("Attribute family", list(CI_FAMILIES), key="pdv_family")
         fam_df = nl[nl["ATTRIBUTE_FAMILY"] == fam].sort_values("ADJ_LIFT_PCT", ascending=False, na_position="last")
-        show_df(pd.DataFrame([{
+        sub_rows = [{
             "Value": r.ATTRIBUTE_VALUE,
             "Adjusted lift": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.ADJ_LIFT_PCT:+.1f}%",
             "95% interval": "" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.CI_LOW_PCT:+.1f}% to {r.CI_HIGH_PCT:+.1f}%",
             "Ads with": int(r.N_ADS_WITH), "Ads without": int(r.N_ADS_WITHOUT),
             "Class": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else r.NET_LEAN_CLASS,
             "Brand-level lifts": "" if r.BRAND_LIFTS_JSON in (None, "{}") else r.BRAND_LIFTS_JSON,
-        } for r in fam_df.itertuples()]))
+        } for r in fam_df.itertuples()]
+        sub_df = pd.DataFrame(sub_rows)
+        if pd_brand != "ALL brands" and "Brand-level lifts" in sub_df:
+            sub_df = sub_df.drop(columns=["Brand-level lifts"])
+        show_df(sub_df)
 
     with st.expander("📇 Model card: CTR predictor", expanded=False):
         mm = load_model_metrics()
@@ -1867,8 +1913,15 @@ with tab7:
                 "- Small samples: ~40 ads per market × objective cell; many attribute values have < 30 ads and are "
                 "reported as not enough data.\n"
                 "- Wide intervals on small cells; the Predictor's p10-p90 is calibrated overall, not per cell.\n"
-                "- Driver explanations come from the Ridge model (contribution vs an average ad), while the point "
-                "estimate comes from gradient boosting.\n"
+                "- The Predictor's per-change contributions are swap tests on the gradient boosting model (re-score B "
+                "with one field reverted), so they include interactions and need not sum to the total.\n"
                 "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.\n"
                 "- No multiple-comparison correction was applied across the ~1,000 net-lean cells; borderline results "
                 "are hypotheses (for example IN shows one borderline NET_HURT where no effect was planted).")
+            ne = load_null_effect_rate()
+            if ne is not None:
+                st.markdown(
+                    f"- **False-positive check:** of {int(ne['N_STRATA_TESTED'])} attribute values with no planted CTR "
+                    f"effect (stratum by stratum, enough data), {int(ne['N_FALSE_POSITIVE'])} "
+                    f"({float(ne['FALSE_POSITIVE_SHARE']) * 100:.1f}%) were classified NET_HELPED or NET_HURT. "
+                    f"No multiple-comparison correction is applied.")
