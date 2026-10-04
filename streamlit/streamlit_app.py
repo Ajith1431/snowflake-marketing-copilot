@@ -893,18 +893,26 @@ with tab3:
             {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "feed", "budget": 2000,
              "attributes": {"headline_tone": "urgent"}},
             {"attributes": {"headline_tone": "conversational"}}),
-        "(b) Nike · UK · LINK_CLICKS: stories + urgent + product-led vs feed + conversational + person on camera": (
-            {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "stories", "budget": 2000,
+        "(b) Creative-only bundle (placement held constant): Nike · UK · LINK_CLICKS · feed, "
+        "urgent + product-led vs conversational + person on camera": (
+            {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "feed", "budget": 2000,
              "attributes": {"headline_tone": "urgent", "hook_type": "product_led"}},
-            {"placement": "feed", "attributes": {"headline_tone": "conversational", "hook_type": "person_on_camera"}}),
+            {"attributes": {"headline_tone": "conversational", "hook_type": "person_on_camera"}}),
         "(c) Pepsi · UAE · AWARENESS: no logo in first 3s vs logo in first 3s": (
             {"brand": "Pepsi", "market": "UAE", "objective": "AWARENESS", "placement": "feed", "budget": 2000,
              "attributes": {"has_logo_first_3s": "N"}},
             {"attributes": {"has_logo_first_3s": "Y"}}),
+        "(d) Placement + creative bundle: Nike · UK · LINK_CLICKS, stories + urgent + product-led "
+        "vs feed + conversational + person on camera": (
+            {"brand": "Nike", "market": "UK", "objective": "LINK_CLICKS", "placement": "stories", "budget": 2000,
+             "attributes": {"headline_tone": "urgent", "hook_type": "product_led"}},
+            {"placement": "feed", "attributes": {"headline_tone": "conversational", "hook_type": "person_on_camera"}}),
     }
     preset_names = list(PRED_PRESETS)
     preset = st.selectbox("Preset scenario pair (edit any field afterwards)", preset_names, index=1, key="pred_preset")
     preset_a, preset_b_changes = PRED_PRESETS[preset]
+    if preset.startswith("(d)"):
+        st.caption("Most of this lift comes from placement (stories → feed), not from the creative changes.")
 
     col_a, col_b = st.columns(2)
     with col_a:
@@ -946,6 +954,7 @@ with tab3:
         m2.caption(f"p10-p90 range: {rb['p10'] * 100:.2f}% to {rb['p90'] * 100:.2f}%")
         m3.metric("Lift of B vs A (point estimate)", f"{lift:+.1f}%")
         m3.caption(f"Range: {lift_lo:+.1f}% to {lift_hi:+.1f}% (B's p10-p90 against A's p90-p10).")
+        m3.caption("Range covers individual ad-weeks, so it is intentionally wide. Use the expected difference as the headline.")
         if abs(lift) < 5:
             st.warning(f"⚠️ Expected difference is only {lift:+.1f}% (A vs B): too small to distinguish from noise.")
         elif overlap:
