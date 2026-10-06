@@ -9,7 +9,7 @@ for model in models_to_try:
     print(f"\nTrying {model}...")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
     payload = {
-        "contents": [{"parts": [{"text": "Create a marketing poster image for a fitness tracker called FitTrack. Modern, clean, commercial style."}]}],
+        "contents": [{"parts": [{"text": "Create a marketing poster image for Samsung Wearables, a smartwatch. Modern, clean, commercial style."}]}],
         "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]}
     }
     r = requests.post(url, json=payload, timeout=120)

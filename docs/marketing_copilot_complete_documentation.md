@@ -104,7 +104,7 @@ The generator produces 12 fictional clients; `sql/dml/02_reduce_clients.sql` (ru
 | Pepsi | Food & Beverage | FlavorCo (C009) |
 | Samsung | Technology | TechVista (C002) |
 
-Product names keep the generator's prefixes (UT-, FC-, TV-). Brand names are labels on synthetic data.
+Each brand is then trimmed to three products with no prefixes (surplus generated products collapse onto the nearest kept product_id): Nike: Running Collection, Training Apparel, Lifestyle Sneakers; Pepsi: Zero Sugar Cola, Sparkling Citrus, Energy Drink; Samsung: Flagship Smartphone, Smart TV, Wearables. Brand names are labels on synthetic data.
 
 Distributions are realistic and self-consistent: CTR 0.5–5% (beta), ROAS 1.2–7.0 (lognormal), conversion rate 1–8% (beta); clicks = impressions × CTR, conversions = clicks × conversion rate, revenue = spend × ROAS. Channel spend scales by channel type (TV $2K–10K/day, social $100–2K/day, email $50–500/day).
 
@@ -114,7 +114,7 @@ Distributions are realistic and self-consistent: CTR 0.5–5% (beta), ROAS 1.2�
 | Table | Rows | Source | Description |
 |---|---|---|---|
 | RAW_CLIENTS | 3 | CSV | Client brands |
-| RAW_PRODUCTS | 14 | CSV | 3–5 products per client |
+| RAW_PRODUCTS | 9 | CSV | 3 products per client |
 | RAW_CHANNELS | 10 | CSV | Instagram, YouTube, Google Search, Facebook, LinkedIn, TikTok, Email, Programmatic Display, TV, Out-of-Home |
 | RAW_AUDIENCE_SEGMENTS | 17 | CSV | 5–8 segments per client, interests as JSON |
 | RAW_CUSTOMER_PROFILES | 2,522 | CSV | Customer demographics |

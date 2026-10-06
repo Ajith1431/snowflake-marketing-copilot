@@ -728,7 +728,12 @@ with st.sidebar:
 
     products_df = load_products(client_id)
     product_names = products_df["PRODUCT_NAME"].tolist()
-    selected_product = st.selectbox("Select Product", product_names, index=0) if product_names else "N/A"
+    default_product = {"Nike": "Running Collection", "Pepsi": "Zero Sugar Cola", "Samsung": "Flagship Smartphone"}.get(selected_client)
+    selected_product = st.selectbox(
+        "Select Product", product_names,
+        index=product_names.index(default_product) if default_product in product_names else 0,
+        key=f"sidebar_product_{selected_client}") if product_names else "N/A"
+    st.caption("Product frames the recommendation, pitch and creative brief; performance drivers (Tabs 3 and 7) are brand-level.")
 
     objective = st.selectbox("Campaign Objective", [
         "Brand Awareness", "Lead Generation", "Sales Conversion", "Customer Retention"

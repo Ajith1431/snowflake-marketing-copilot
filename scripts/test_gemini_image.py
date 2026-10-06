@@ -4,7 +4,7 @@ from env_keys import get_secret
 key = get_secret("GEMINI_API_KEY")
 url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key={key}"
 payload = {
-    "contents": [{"parts": [{"text": "Generate a professional marketing poster image for a fitness tracker product called FitTrack. Clean modern commercial advertising style. Portrait orientation."}]}],
+    "contents": [{"parts": [{"text": "Generate a professional marketing poster image for Samsung Wearables, a smartwatch. Clean modern commercial advertising style. Portrait orientation."}]}],
     "generationConfig": {"responseModalities": ["IMAGE", "TEXT"]}
 }
 r = requests.post(url, json=payload, timeout=120)

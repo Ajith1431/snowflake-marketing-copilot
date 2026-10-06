@@ -3,10 +3,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.creative.creative_studio import generate_creative_assets, build_assets_zip
 from src.env_keys import get_secret
 
-print("Generating creative assets for Nike UT-ActiveWear...")
+print("Generating creative assets for Nike Training Apparel...")
 assets = generate_creative_assets(
     client_name="Nike",
-    product_name="UT-ActiveWear",
+    product_name="Training Apparel",
     campaign_objective="Brand Awareness",
     target_audience="Adults 18-34, active lifestyle",
     brand_colours="#0068FF, #00D4AA, #FF6B35",
