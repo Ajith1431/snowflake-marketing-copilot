@@ -85,7 +85,7 @@ NovaSpark is a marketing intelligence platform at the client-brand, campaign, ch
 ```
 
 ### Design principles
-- **Everything lives in Snowflake.** Data, transformations, AI services, app and MCP endpoint are all Snowflake objects; the only off-platform pieces are the local Python pipeline (because trial accounts can't create External Access Integrations) and optional local Gemini image generation.
+- **Everything lives in Snowflake.** Data, transformations, AI services, app and MCP endpoint are all Snowflake objects; the only off-platform pieces are the local Python pipeline (because trial accounts can't create External Access Integrations) and no image generation (Creative Studio stops at the poster prompt).
 - **One source of truth for creative and strategy.** Agents and Creative Studio read the same dynamic tables, so a poster prompt and a channel recommendation can't disagree about which channel performs best.
 - **Human in the loop.** A recommendation must be approved (Tab 2) before a client pitch can be generated (Tab 4).
 
@@ -221,7 +221,7 @@ After a run, the 4 event dynamic tables refresh within a minute and `EVENT_NEWS_
 
 ## 6. Creative Studio and the Cortex Intelligence Layer
 
-**Files:** `sql/ddl/05_mcp_procedures.sql`, Tab 6 in `streamlit/streamlit_app.py`, local variant `src/creative/creative_studio.py`.
+**Files:** `sql/ddl/05_mcp_procedures.sql`, Tab 6 in `streamlit/streamlit_app.py`.
 
 ### 6.1 Stored procedures (Python 3.11)
 
@@ -251,8 +251,7 @@ Example (Nike, FIFA World Cup 2026; figures from the original 12-client build):
 > …Event: FIFA World Cup 2026. Cast and styling for the highest-converting segment 'Athleisure Fans' (22-39, Balanced, Medium income; interests: yoga, running, comfortable). Compose primarily for YouTube (best channel, avg ROAS 2.64x): bold focal point, legible at small sizes, clear space for a call to action. Brand dos: Optimize for mobile; … Avoid: Use stock photos; … Ride proven 'World Cup 2026' search demand (peaked 2026-07-19)…
 
 ### 6.3 Image generation
-- **In Snowflake:** Streamlit in Snowflake (warehouse runtime) has no outbound HTTP, so Tab 6 shows poster placeholders plus the enriched prompt to paste into Google AI Studio.
-- **Locally:** `python scripts/generate_creative.py` calls `gemini-2.5-flash-image:generateContent` and writes PNGs, JSON and a ZIP to `output/creative/`. This needs a Gemini key on a billing-enabled Google Cloud project; on the free tier image models return 429 (quota limit 0).
+Poster images are not generated in the app. Creative Studio produces the intelligence-enriched poster prompt; paste it into an external image tool to create the images. The ZIP download contains the design system, the poster, video and audio prompts and the storyboard; it contains no images.
 
 ---
 
@@ -333,7 +332,7 @@ Get the OAuth client ID and secret with `SELECT SYSTEM$SHOW_OAUTH_CLIENT_SECRETS
 
 ### 10.2 One-command build
 ```bash
-cp .env.example .env                      # set SNOWFLAKE_CONNECTION, EVENT_REGISTRY_API_KEY, GEMINI_API_KEY
+cp .env.example .env                      # set SNOWFLAKE_CONNECTION, EVENT_REGISTRY_API_KEY
 python data/generators/generate_all.py    # only if data/samples/*.csv are missing
 python scripts/deploy_all.py              # builds everything and runs the 8 validation tests
 python src/intelligence/run_pipeline.py   # loads live event intelligence (2 events)
@@ -363,7 +362,7 @@ The script exits non-zero if any validation test fails. Last full run on CLVULGZ
 Re-run behaviour: a full build recreates and reloads the 11 base RAW tables. The 4 event tables use `CREATE TABLE IF NOT EXISTS`, so intelligence runs survive rebuilds.
 
 ### 10.3 Not run by the build
-`sql/ddl/04_external_access.sql` creates network rules, secrets and External Access Integrations so the pullers could run inside Snowflake. Trial accounts reject External Access Integrations. On a paid account, replace the `<GEMINI_API_KEY>` / `<EVENT_REGISTRY_API_KEY>` placeholders at run time and never commit real keys.
+`sql/ddl/04_external_access.sql` creates network rules, secrets and External Access Integrations so the pullers could run inside Snowflake. Trial accounts reject External Access Integrations. On a paid account, replace the `<EVENT_REGISTRY_API_KEY>` placeholder at run time and never commit real keys.
 
 ### 10.4 Updating the app only
 ```bash
@@ -382,11 +381,10 @@ No API keys are stored in the repository. `src/env_keys.py` reads them from envi
 | SNOWFLAKE_CONNECTION | `scripts/deploy_all.py`, `src/intelligence/*` | Recommended (defaults to `clvulgz-zj61620` for the pipeline) |
 | EVENT_REGISTRY_API_KEY | news puller | For the event pipeline |
 | NEWS_API_KEY | news puller | Optional |
-| GEMINI_API_KEY | `scripts/generate_creative.py`, `scripts/test_*.py` | For local poster generation |
 
 Keys committed before this change are still in git history; they must be rotated.
 
-`backend/` (from the coworker repo) is a separate settings module for a FastAPI-style backend. It reads `SNOWFLAKE_*`, `APP_*`, `JWT_*` and `GEMINI_API_KEY` via `python-dotenv`. The Streamlit app doesn't use it, and neither do the `animations-lottie/` assets.
+`backend/` (from the coworker repo) is a separate settings module for a FastAPI-style backend. It reads `SNOWFLAKE_*`, `APP_*`, and `JWT_*` via `python-dotenv`. The Streamlit app doesn't use it, and neither do the `animations-lottie/` assets.
 
 ---
 
@@ -466,11 +464,8 @@ SnowflakeHackathon/
 ├── src/
 │   ├── env_keys.py                   # env / .env key loader
 │   ├── intelligence/                 # event intelligence pipeline (section 5)
-│   └── creative/creative_studio.py   # local creative generation (Gemini)
 ├── scripts/
 │   ├── deploy_all.py                 # one-command build
-│   ├── generate_creative.py          # local poster/storyboard generation
-│   └── check_models.py, test_gemini_*.py, test_latest_models.py   # Gemini diagnostics
 ├── streamlit/
 │   ├── streamlit_app.py              # 6-tab app
 │   ├── environment.yml
@@ -496,9 +491,8 @@ SnowflakeHackathon/
 
 | Limitation | Impact | Workaround |
 |---|---|---|
-| Trial accounts can't create External Access Integrations | Pullers and Gemini can't run inside Snowflake | Run `src/intelligence/run_pipeline.py` and `scripts/generate_creative.py` locally |
-| No outbound HTTP from Streamlit in Snowflake (warehouse runtime) | Tab 6 can't render real posters | Copy the enriched prompt into AI Studio, or generate locally |
-| Gemini free tier has image quota 0 | Local poster generation returns 429 | Enable billing on the Google Cloud project behind the key |
+| Trial accounts can't create External Access Integrations | Pullers can't run inside Snowflake | Run `src/intelligence/run_pipeline.py` locally |
+| No image generation in the app | Tab 6 produces the poster prompt, not the images | Poster images are not generated in the app. Creative Studio produces the intelligence-enriched poster prompt; paste it into an external image tool to create the images. |
 | Google Trends window is the last 3 months | For past events the "peak" is historical, so no launch date is recommended | Re-run the pipeline closer to an event, or widen `timeframe` in `intelligence_orchestrator.py` |
 | Market events dataset covers 2025 only | No "upcoming" market events are shown | Regenerate `market_events.csv` with future dates |
 | Google Trends rate-limits rapid repeat pulls | A run can come back with 0 trend rows | Wait 1–2 minutes, re-run that event only (`run_pipeline.py FIFA`) |
@@ -538,7 +532,7 @@ SnowflakeHackathon/
 3. **What-If:** in Tab 3, move budget from TV to TikTok and compare projected revenue and conversions.
 4. **Pitch:** in Tab 4, generate the 7-section pitch and download it as HTML.
 5. **Event Intelligence:** in Tab 5, pick FIFA World Cup 2026 with client Nike and competitors "Adidas, Puma". You get the research report, Google Trends chart, news sentiment and competitor media presence. Then generate the 9-section strategy.
-6. **Creative Studio:** in Tab 6, with client Nike and event "FIFA World Cup 2026", the intelligence panel shows YouTube as the top channel (2.64x), "Athleisure Fans" as the primary segment, the brand guardrails and the World Cup trend peak. Generate assets, copy the enriched poster prompt, and download the ZIP.
+6. **Creative Studio:** in Tab 6, with client Nike and event "FIFA World Cup 2026", the intelligence panel shows YouTube as the top channel (2.64x), "Athleisure Fans" as the primary segment, the brand guardrails and the World Cup trend peak. Click Generate Creative Assets, copy the enriched poster prompt into an external image tool, and download the ZIP.
 7. **MCP:** connect Claude or Cursor to `NOVASPARK_MCP`, call `get_creative_intelligence` for a client, then `build_poster_prompt` with the result as `intel_json`.
 
 ---

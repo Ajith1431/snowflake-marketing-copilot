@@ -12,11 +12,6 @@ USE WAREHOUSE MARKETING_WH;
 -- 1. Network Rules (egress to external APIs)
 -- ============================================
 
-CREATE OR REPLACE NETWORK RULE gemini_api_rule
-  MODE = EGRESS
-  TYPE = HOST_PORT
-  VALUE_LIST = ('generativelanguage.googleapis.com:443');
-
 CREATE OR REPLACE NETWORK RULE event_registry_rule
   MODE = EGRESS
   TYPE = HOST_PORT
@@ -37,10 +32,6 @@ CREATE OR REPLACE NETWORK RULE google_trends_rule
 -- ============================================
 
 -- Replace the placeholders with your keys when running this file; never commit real keys.
-CREATE OR REPLACE SECRET gemini_api_key
-  TYPE = GENERIC_STRING
-  SECRET_STRING = '<GEMINI_API_KEY>';
-
 CREATE OR REPLACE SECRET event_registry_api_key
   TYPE = GENERIC_STRING
   SECRET_STRING = '<EVENT_REGISTRY_API_KEY>';
@@ -48,11 +39,6 @@ CREATE OR REPLACE SECRET event_registry_api_key
 -- ============================================
 -- 3. External Access Integrations
 -- ============================================
-
-CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION gemini_access
-  ALLOWED_NETWORK_RULES = (gemini_api_rule)
-  ALLOWED_AUTHENTICATION_SECRETS = (gemini_api_key)
-  ENABLED = TRUE;
 
 CREATE OR REPLACE EXTERNAL ACCESS INTEGRATION news_access
   ALLOWED_NETWORK_RULES = (event_registry_rule, google_news_rule)

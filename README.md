@@ -32,7 +32,7 @@ AI-powered marketing intelligence platform for agency teams. It analyzes campaig
 ## Quick start (build everything)
 
 ```bash
-cp .env.example .env                      # set SNOWFLAKE_CONNECTION, EVENT_REGISTRY_API_KEY, GEMINI_API_KEY
+cp .env.example .env                      # set SNOWFLAKE_CONNECTION, EVENT_REGISTRY_API_KEY
 pip install snowflake-connector-python pytrends requests eventregistry faker numpy pandas
 python data/generators/generate_all.py    # only if data/samples/*.csv are missing
 python scripts/deploy_all.py              # DDL, data, dynamic tables, search, semantic view,
@@ -93,8 +93,8 @@ No API keys are committed. `src/env_keys.py` reads them from environment variabl
 
 ## Known limitations
 
-- **Pipelines run locally.** Event intelligence and Gemini image generation run locally, because trial accounts have no External Access Integrations and Streamlit in Snowflake has no outbound HTTP.
-- **Gemini billing.** Local poster images need a Gemini key on a billing-enabled Google Cloud project.
+- **Pipelines run locally.** Event intelligence runs locally, because trial accounts have no External Access Integrations and Streamlit in Snowflake has no outbound HTTP.
+- **No image generation.** Poster images are not generated in the app. Creative Studio produces the intelligence-enriched poster prompt; paste it into an external image tool to create the images.
 - **Trend window.** Google Trends covers the last 3 months, so peaks for past events are shown as historical, with no launch date.
 - **Market events.** The dataset covers 2025 only, so no upcoming events appear.
 

@@ -253,14 +253,9 @@ def _build_video_prompt(client_name, product_name, campaign_objective, creative_
         f"Style: Premium brand film, smooth camera, vibrant colours. No text. No logos."
     )
 
-def _generate_posters_gemini(prompt, api_key, count=3):
-    if not api_key:
-        return {"success": False, "demo_mode": True, "posters_b64": [], "error": "No API key provided"}
-    try:
-        return {"success": False, "demo_mode": True, "posters_b64": [],
-                "error": "Poster generation requires Gemini API access. In Streamlit-in-Snowflake, outbound HTTP is not available on trial accounts. Use the poster prompt with Gemini AI Studio directly."}
-    except Exception as exc:
-        return {"success": False, "demo_mode": True, "posters_b64": [], "error": str(exc)}
+POSTER_PROMPT_NOTE = ("Poster images are not generated in the app. Creative Studio produces the intelligence-enriched "
+                      "poster prompt; paste it into an external image tool to create the images.")
+
 
 def _build_storyboard_scenes():
     return [
@@ -282,7 +277,7 @@ def _build_design_system(client_name, brand_colours, tone_keywords):
     }
 
 def generate_creative_assets(client_name, product_name, campaign_objective, target_audience,
-    brand_colours, tone_keywords, creative_direction, gemini_api_key, event_name=None, intel=None):
+    brand_colours, tone_keywords, creative_direction, event_name=None, intel=None):
     errors = {}
     results = {"intelligence": intel or {}}
     intel_json = json.dumps(intel) if intel else ""
@@ -319,13 +314,7 @@ def generate_creative_assets(client_name, product_name, campaign_objective, targ
     except Exception:
         poster_prompt = _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name, intel)
 
-    # Gemini poster generation (still direct HTTP since EAI not available on trial)
-    poster_result = _generate_posters_gemini(poster_prompt, gemini_api_key, count=3)
-    results["posters_b64"] = poster_result.get("posters_b64", [])
     results["poster_prompt"] = poster_prompt
-    results["poster_demo_mode"] = poster_result.get("demo_mode", False)
-    if poster_result.get("error"):
-        errors["posters"] = poster_result["error"]
 
     # Storyboard via stored procedure
     try:
@@ -344,7 +333,8 @@ def generate_creative_assets(client_name, product_name, campaign_objective, targ
         results["hero_scenes"] = _build_storyboard_scenes()
         results["video_prompt"] = _build_video_prompt(client_name, product_name, campaign_objective, creative_direction, event_name)
 
-    results["video_message"] = "Video storyboard generated via Snowflake MCP procedure. Veo 2 access requires allowlist -- showing scene breakdown instead."
+    results["video_message"] = ("Video is not generated in the app either: the storyboard and video prompt below are "
+                                "for an external video tool.")
 
     # Audio script via stored procedure
     try:
@@ -370,9 +360,6 @@ def generate_creative_assets(client_name, product_name, campaign_objective, targ
 def build_assets_zip(assets):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
-        for i, p in enumerate(assets.get("posters_b64", [])[:3]):
-            if p:
-                zf.writestr(f"poster_{i+1}.png", base64.b64decode(p))
         ds = assets.get("design_system", {})
         if ds:
             zf.writestr("design_system.json", json.dumps(ds, indent=2))
@@ -1152,7 +1139,9 @@ with tab4:
 # ============================
 with tab6:
     st.subheader("Creative Studio")
-    st.caption("Generate campaign posters, video storyboards, and design systems powered by Gemini.")
+    st.caption("Build the creative brief, intelligence-enriched poster prompt, video storyboard, design system and "
+               "voiceover script from this client's Snowflake data.")
+    st.info(POSTER_PROMPT_NOTE)
 
     # -- Cortex intelligence layer: grounds the creative brief in this client's data --
     cs_client = selected_client
@@ -1200,22 +1189,16 @@ with tab6:
             value=cs_event_default,
             key="cs_event"
         )
-        cs_gemini_key = st.text_input(
-            "Gemini API Key",
-            type="password",
-            help="Get free at aistudio.google.com",
-            key="cs_gemini_key"
-        )
 
     with cs_col2:
         st.info(
             "**How Creative Studio Works**\n\n"
             "1. **Cortex Strategy -> Creative Brief**\n"
             "   Auto-filled from your campaign recommendation\n\n"
-            "2. **Cortex Intelligence + Gemini 2.5 Flash Image -> 3 Marketing Posters**\n"
-            "   Portrait format, commercial quality\n\n"
-            "3. **Veo 2 -> Video Storyboard**\n"
-            "   5-second brand film concept\n\n"
+            "2. **Cortex Intelligence -> Poster Prompt**\n"
+            "   Paste into an external image tool to create the posters\n\n"
+            "3. **Cortex Procedures -> Video Storyboard**\n"
+            "   5-second brand film concept and video prompt\n\n"
             "4. **Download all as ZIP**"
         )
         components.html("""
@@ -1231,7 +1214,7 @@ with tab6:
     # -- Section 1b: Cortex Intelligence Panel --
     st.markdown("#### 🧠 Cortex Intelligence Feeding This Brief")
     if not cs_intel:
-        st.warning("Could not load creative intelligence (procedure GET_CREATIVE_INTELLIGENCE). Posters will use the brief fields only.")
+        st.warning("Could not load creative intelligence (procedure GET_CREATIVE_INTELLIGENCE). The poster prompt will use the brief fields only.")
     else:
         esc = html_lib.escape
         chans = cs_intel.get("top_channels") or []
@@ -1282,7 +1265,7 @@ with tab6:
     generate_creative = st.button("✨ Generate Creative Assets", type="primary", use_container_width=True, key="cs_generate")
 
     if generate_creative:
-        with st.spinner("Generating your campaign creative with Gemini..."):
+        with st.spinner("Building the creative brief with Cortex..."):
             assets = generate_creative_assets(
                 client_name=cs_client,
                 product_name=cs_product,
@@ -1291,7 +1274,6 @@ with tab6:
                 brand_colours=cs_colours,
                 tone_keywords=cs_tone,
                 creative_direction=cs_direction,
-                gemini_api_key=cs_gemini_key,
                 event_name=cs_event if cs_event else None,
                 intel=load_creative_intelligence(cs_client, cs_event or "")
             )
@@ -1306,7 +1288,6 @@ with tab6:
         assets = st.session_state["creative_assets"]
         ds = assets.get("design_system") or {}
         palette = ds.get("palette") or []
-        posters = assets.get("posters_b64") or []
         hero_scenes = assets.get("hero_scenes") or []
         audio_script = assets.get("audio_script") or {}
 
@@ -1387,43 +1368,10 @@ with tab6:
 
         st.divider()
 
-        # ROW 3: Key Visuals / Posters
-        st.markdown("#### 🖼️ Key Visuals / Campaign Posters")
-
-        if posters and any(p for p in posters):
-            img_cols = st.columns(3)
-            labels = ["Hero Shot", "Lifestyle", "Product Close-Up"]
-            for i in range(min(3, len(posters))):
-                with img_cols[i]:
-                    if posters[i]:
-                        img_bytes = base64.b64decode(posters[i])
-                        st.image(img_bytes, caption=labels[i], use_column_width=True)
-        else:
-            poster_prompt_text = assets.get("poster_prompt", "No prompt generated")
-            components.html(f"""
-            <div style="background:#0D1117;border:1px solid #1E293B;border-radius:12px;padding:24px;margin-bottom:12px;">
-                <div style="display:flex;gap:16px;margin-bottom:16px;">
-                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
-                        <div style="color:#64748B;font-size:12px;">Hero Shot</div>
-                    </div>
-                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
-                        <div style="color:#64748B;font-size:12px;">Lifestyle</div>
-                    </div>
-                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
-                        <div style="color:#64748B;font-size:12px;">Product Close-Up</div>
-                    </div>
-                </div>
-                <div style="background:#111827;border-radius:8px;padding:12px;">
-                    <div style="color:#0068FF;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:6px;">INTELLIGENCE-ENRICHED POSTER PROMPT (copy to aistudio.google.com)</div>
-                    <div style="color:#94A3B8;font-size:12px;line-height:1.6;">{poster_prompt_text}</div>
-                </div>
-            </div>
-            """, height=310)
-
-            st.caption("Poster generation requires Gemini API access via External Access Integration (not available on trial accounts). Copy the prompt above into [Google AI Studio](https://aistudio.google.com) to generate images.")
+        # ROW 3: Poster prompt (images are made outside the app)
+        st.markdown("#### 🖼️ Poster Prompt (intelligence-enriched)")
+        st.code(assets.get("poster_prompt", "No prompt generated"), language=None)
+        st.caption(POSTER_PROMPT_NOTE)
 
         st.divider()
 
@@ -1465,7 +1413,7 @@ with tab6:
         <div style="background:#0D1117;border:1px solid #1E293B;border-left:4px solid #0068FF;border-radius:12px;padding:24px;margin-top:20px;">
             <div style="color:#E2E8F0;font-size:15px;font-weight:700;margin-bottom:8px;">🔮 Our Recommendation to Snowflake</div>
             <div style="color:#94A3B8;font-size:13px;line-height:1.7;">
-                This feature required external Gemini APIs for image and video generation. Every other part of NovaSpark Co-Pilot runs natively on Snowflake Cortex.
+                Image and video generation are not part of this app; every other part of NovaSpark Co-Pilot runs natively on Snowflake Cortex.
                 We recommend Snowflake build <strong style="color:#0068FF;">Cortex Image</strong> (powered by Imagen) and <strong style="color:#0068FF;">Cortex Video</strong> (powered by Veo)
                 to make the complete creative workflow 100% Snowflake-native — from raw campaign data to client-ready visual assets, without leaving the platform.
             </div>

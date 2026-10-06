@@ -18,5 +18,4 @@ Environment (copy .env.example -> .env):
     SNOWFLAKE_DATABASE=CampaignIntelligenceAI
     APP_USERNAME=admin
     APP_PASSWORD=admin
-    GEMINI_API_KEY=...          # optional — only for creative asset generation
 """
