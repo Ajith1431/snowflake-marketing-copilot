@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import snowflake.connector  # noqa: E402
 
-from copilot_core import (CHANNEL_RATES_SQL, build_html_document, compute_channel_plan, pitch_prompt,  # noqa: E402
+from copilot_core import (CHANNEL_RATES_SQL, UPCOMING_EVENTS_SQL, build_html_document, compute_channel_plan, pitch_prompt,  # noqa: E402
                           plan_markdown, recommendation_prompt, strategy_prompt, today_iso)
 from env_keys import get_secret  # noqa: E402
 
@@ -92,15 +92,16 @@ def main():
         print(f"\n=== Tab 4 KPI table (approved plan passed to the agent) ===\n{plan_markdown(tab4_plan)}")
         print("Tab 2 and Tab 4 tables identical:", plan_markdown(tab2_plan) == plan_markdown(tab4_plan))
 
+        upcoming = query(cur, UPCOMING_EVENTS_SQL)
         meta = {"Client": CLIENT, "Product": PRODUCT, "Objective": OBJECTIVE, "Budget": f"${BUDGET:,}", "Date": today_iso()}
         docs = {}
         if not skip_agents:
             rec = call_agent(cur, "MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT",
-                             recommendation_prompt(CLIENT, PRODUCT, OBJECTIVE, BUDGET, tab2_plan))
+                             recommendation_prompt(CLIENT, PRODUCT, OBJECTIVE, BUDGET, tab2_plan, upcoming=upcoming))
             docs["1_Nike_Running_Collection_recommendation.html"] = build_html_document(
                 "Campaign Recommendation", f"{CLIENT} — {PRODUCT}", meta, rec)
             pitch = call_agent(cur, "MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT",
-                               pitch_prompt(CLIENT, PRODUCT, OBJECTIVE, BUDGET, tab4_plan))
+                               pitch_prompt(CLIENT, PRODUCT, OBJECTIVE, BUDGET, tab4_plan, upcoming=upcoming))
             docs["2_Nike_Running_Collection_pitch.html"] = build_html_document(
                 "Campaign Pitch", f"{CLIENT} — {PRODUCT}", meta, pitch)
             strat = call_agent(cur, "MARKETING_COPILOT.SEMANTIC.STRATEGY_SYNTHESIS_AGENT",

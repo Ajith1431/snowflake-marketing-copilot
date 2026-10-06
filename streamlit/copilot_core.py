@@ -273,8 +273,24 @@ def _plan_block(plan):
             f"{plan['metric']}; KPIs = allocated budget x pooled historical per-dollar rate):\n{plan_markdown(plan)}")
 
 
-def recommendation_prompt(client, product, objective, budget, plan, today=None):
-    return (f"{DATE_RULES.format(today=today or today_iso())}\n\n"
+UPCOMING_EVENTS_SQL = """
+SELECT event_name, start_date::VARCHAR AS start_date, end_date::VARCHAR AS end_date
+FROM MARKETING_COPILOT.ANALYTICS.DIM_MARKET_EVENT WHERE start_date > CURRENT_DATE() ORDER BY start_date LIMIT 12
+"""
+
+
+def _upcoming_block(upcoming):
+    if upcoming is None:
+        return ""
+    if not upcoming:
+        return "\n\nThere are no upcoming market events in the data; do not describe any market event as upcoming."
+    items = "; ".join(f"{e['event_name']} ({e['start_date']})" for e in upcoming)
+    return (f"\n\nUpcoming market events (start date after today): {items}. These are the only events you may call "
+            f"upcoming; any other event found by search is past and may only be cited as history.")
+
+
+def recommendation_prompt(client, product, objective, budget, plan, today=None, upcoming=None):
+    return (f"{DATE_RULES.format(today=today or today_iso())}{_upcoming_block(upcoming)}\n\n"
             f"Create a detailed campaign recommendation for {client} for their product '{product}'. "
             f"Campaign objective: {objective}. Budget: ${budget:,}.\n\n{_plan_block(plan)}\n\n{FIXED_PLAN_RULES}\n\n"
             f"Include: the channel plan table above, target audience segments, the expected KPIs from the table, "
@@ -283,8 +299,8 @@ def recommendation_prompt(client, product, objective, budget, plan, today=None):
             f"Do not end with offers of further help.")
 
 
-def pitch_prompt(client, product, objective, budget, plan, today=None):
-    return (f"{DATE_RULES.format(today=today or today_iso())}\n\n"
+def pitch_prompt(client, product, objective, budget, plan, today=None, upcoming=None):
+    return (f"{DATE_RULES.format(today=today or today_iso())}{_upcoming_block(upcoming)}\n\n"
             f"Generate a complete client-ready campaign pitch document for {client}, product: {product}, "
             f"objective: {objective}, budget: ${budget:,}. This pitch follows the approved recommendation.\n\n"
             f"{_plan_block(plan)}\n\n{FIXED_PLAN_RULES}\n\n"

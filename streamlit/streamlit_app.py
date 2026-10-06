@@ -12,9 +12,9 @@ from datetime import datetime
 from snowflake.snowpark.context import get_active_session
 import streamlit.components.v1 as components
 
-from copilot_core import (CHANNEL_RATES_SQL, EVENT_CATALOG, build_html_document, clean_agent_markdown,
-                          compute_channel_plan, event_status, intel_prompt, pitch_prompt, plan_rows,
-                          recommendation_prompt, strategy_prompt)
+from copilot_core import (CHANNEL_RATES_SQL, EVENT_CATALOG, UPCOMING_EVENTS_SQL, build_html_document,
+                          clean_agent_markdown, compute_channel_plan, event_status, intel_prompt, pitch_prompt,
+                          plan_rows, recommendation_prompt, strategy_prompt)
 
 # -- Page config --
 st.set_page_config(page_title="NovaSpark Marketing Co-Pilot", page_icon="📊", layout="wide")
@@ -380,6 +380,13 @@ def load_channel_rates(client_id):
 
 
 @st.cache_data(ttl=300)
+def load_upcoming_events():
+    df = run_query(UPCOMING_EVENTS_SQL)
+    df.columns = [c.lower() for c in df.columns]
+    return df.to_dict("records")
+
+
+@st.cache_data(ttl=300)
 def load_creative_intelligence(client_name, event_name=""):
     """Top channels, primary segment, brand guardrails and market timing from GET_CREATIVE_INTELLIGENCE."""
     try:
@@ -728,7 +735,8 @@ with tab2:
     tab2_plan = compute_channel_plan(load_channel_rates(client_id), budget, objective)
     if analyze_btn:
         with st.spinner("Analyzing campaign data and generating recommendation..."):
-            prompt = recommendation_prompt(selected_client, selected_product, objective, budget, tab2_plan)
+            prompt = recommendation_prompt(selected_client, selected_product, objective, budget, tab2_plan,
+                                           upcoming=load_upcoming_events())
             response = call_agent_with_auto_continue(
                 'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
                 prompt,
@@ -986,7 +994,8 @@ with tab4:
         if "pitch_content" not in st.session_state:
             if st.button("📝 Generate Full Pitch", type="primary"):
                 with st.spinner("Generating pitch document (auto-continues if needed)..."):
-                    prompt = pitch_prompt(p_client, p_product, p_objective, p_budget, approved["plan"])
+                    prompt = pitch_prompt(p_client, p_product, p_objective, p_budget, approved["plan"],
+                                          upcoming=load_upcoming_events())
                     pitch = call_agent_with_auto_continue(
                         'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
                         prompt,
