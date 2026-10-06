@@ -212,8 +212,8 @@ Loaded runs:
 
 | Client / event | Competitors | Confidence | Trends | News | Web queries |
 |---|---|---|---|---|---|
-| Nike / FIFA World Cup 2026 | Adidas, Puma | MEDIUM | 0 (Google Trends HTTP 429) | 39 | 7 |
-| Samsung / Black Friday 2026 | Apple, Xiaomi | MEDIUM | 0 (Google Trends HTTP 429) | 31 | 7 |
+| Nike / FIFA World Cup 2026 | Adidas, Puma | HIGH | 465 | 39 | 7 |
+| Samsung / Black Friday 2026 | Apple, Xiaomi | HIGH | 372 | 31 | 7 |
 
 After a run, the 4 event dynamic tables refresh within a minute and `EVENT_NEWS_SEARCH` within an hour (or immediately with `ALTER CORTEX SEARCH SERVICE … REFRESH`).
 
