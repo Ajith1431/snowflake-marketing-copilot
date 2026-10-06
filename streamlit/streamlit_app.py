@@ -573,6 +573,14 @@ def load_null_effect_rate():
 
 
 @st.cache_data(ttl=300)
+def load_model_effect_check():
+    try:
+        return run_query("SELECT * FROM MARKETING_COPILOT.CREATIVE.MODEL_EFFECT_CHECK")
+    except Exception:
+        return pd.DataFrame()
+
+
+@st.cache_data(ttl=300)
 def load_feature_effects():
     return run_query("SELECT * FROM MARKETING_COPILOT.CREATIVE.FEATURE_EFFECTS ORDER BY model, rank")
 
@@ -1929,3 +1937,15 @@ with tab7:
                     f"effect (stratum by stratum, enough data), {int(ne['N_FALSE_POSITIVE'])} "
                     f"({float(ne['FALSE_POSITIVE_SHARE']) * 100:.1f}%) were classified NET_HELPED or NET_HURT. "
                     f"No multiple-comparison correction is applied.")
+            mec = load_model_effect_check()
+            if not mec.empty:
+                ratios = pd.to_numeric(mec["RATIO_MODEL_TO_PLANTED"], errors="coerce").dropna()
+                shrunk = mec[mec["SHRUNK_MORE_THAN_HALF"].astype(bool)]
+                st.markdown(
+                    f"- **Planted-effect check (model):** scoring a typical ad with one field changed, the predictor's "
+                    f"lift has the planted direction in {int(mec['DIRECTION_MATCH'].astype(bool).sum())}/{len(mec)} "
+                    f"effects, median model/planted ratio {ratios.median():.2f} (planted effects are partly shrunk).\n"
+                    f"- **Known limitation: shrunk or missed interactions.** Effects the model reproduces at less than "
+                    f"half the planted size (or with the wrong sign): "
+                    + "; ".join(f"{r.EFFECT} ({r.STRATUM})" for r in shrunk.itertuples())
+                    + ". Treat Predictor lifts for these as conservative.")

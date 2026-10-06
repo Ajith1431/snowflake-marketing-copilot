@@ -96,3 +96,16 @@ SELECT 'C11: NULL_EFFECT_CHECK has no grants beyond ownership' AS test_name,
        IFF(COUNT_IF("privilege" <> 'OWNERSHIP') = 0, 'PASS', 'FAIL') AS result,
        COUNT(*)::VARCHAR || ' grant rows' AS detail
 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+-- C13: model-level planted-effect check is populated
+SELECT 'C13: MODEL_EFFECT_CHECK populated' AS test_name,
+       IFF(COUNT(*) >= 20 AND COUNT_IF(direction_match IS NULL) = 0, 'PASS', 'FAIL') AS result,
+       COUNT_IF(direction_match)::VARCHAR || '/' || COUNT(*)::VARCHAR || ' direction match' AS detail
+FROM MODEL_EFFECT_CHECK;
+
+-- C14: model-level check (derived from the answer key) is not readable by agent / MCP roles
+SHOW GRANTS ON TABLE MODEL_EFFECT_CHECK;
+SELECT 'C14: MODEL_EFFECT_CHECK has no grants beyond ownership' AS test_name,
+       IFF(COUNT_IF("privilege" <> 'OWNERSHIP') = 0, 'PASS', 'FAIL') AS result,
+       COUNT(*)::VARCHAR || ' grant rows' AS detail
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
