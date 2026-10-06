@@ -1859,13 +1859,23 @@ with tab7:
             for fam_name in CI_FAMILIES:
                 g = enough[enough["ATTRIBUTE_FAMILY"] == fam_name]
                 if g.empty:
-                    fam_rows.append({"Family": fam_name, "Reference": "", "Strongest helper": "not enough data", "Strongest hurter": ""})
+                    fam_rows.append({"Family": fam_name, "Reference": "", "Strongest helper": "not enough data", "Strongest hurter": "-"})
+                    continue
+                if len(CI_FAMILIES[fam_name]) == 2:
+                    r1 = g.iloc[0]
+                    fam_rows.append({
+                        "Family": fam_name, "Reference": r1["REFERENCE_VALUE"],
+                        "Strongest helper": f"{r1['ATTRIBUTE_VALUE']} vs {r1['REFERENCE_VALUE']}: {r1['ADJ_LIFT_PCT']:+.1f}% "
+                                            f"({r1['NET_LEAN_CLASS']}, n={int(r1['N_ADS_WITH'])})",
+                        "Strongest hurter": ""})
                     continue
                 top, low = g.loc[g["ADJ_LIFT_PCT"].idxmax()], g.loc[g["ADJ_LIFT_PCT"].idxmin()]
                 fam_rows.append({
                     "Family": fam_name, "Reference": top["REFERENCE_VALUE"],
-                    "Strongest helper": f"{top['ATTRIBUTE_VALUE']} ({top['ADJ_LIFT_PCT']:+.1f}%, {top['NET_LEAN_CLASS']}, n={int(top['N_ADS_WITH'])})",
-                    "Strongest hurter": f"{low['ATTRIBUTE_VALUE']} ({low['ADJ_LIFT_PCT']:+.1f}%, {low['NET_LEAN_CLASS']}, n={int(low['N_ADS_WITH'])})"})
+                    "Strongest helper": (f"{top['ATTRIBUTE_VALUE']} ({top['ADJ_LIFT_PCT']:+.1f}%, {top['NET_LEAN_CLASS']}, "
+                                         f"n={int(top['N_ADS_WITH'])})" if top["ADJ_LIFT_PCT"] > 0 else "-"),
+                    "Strongest hurter": (f"{low['ATTRIBUTE_VALUE']} ({low['ADJ_LIFT_PCT']:+.1f}%, {low['NET_LEAN_CLASS']}, "
+                                         f"n={int(low['N_ADS_WITH'])})" if low["ADJ_LIFT_PCT"] < 0 else "-")})
             show_df(pd.DataFrame(fam_rows))
         if not thin.empty:
             st.caption("Not enough data (< 30 ads with the value): "
@@ -1904,21 +1914,47 @@ with tab7:
                 f"- **Training period:** {m0['TRAIN_START']} to {m0['TRAIN_END']} ({int(m0['N_TRAIN_ROWS'])} ad-weeks).\n"
                 f"- **Holdout period:** {m0['HOLDOUT_START']} to {m0['HOLDOUT_END']} ({int(m0['N_HOLDOUT_ROWS'])} ad-weeks, "
                 f"last 10 weeks, never used for training or calibration).")
-            show = mm[["MODEL", "LEVEL", "N_HOLDOUT", "MAE_CTR_PP", "MAPE_PCT", "R2", "MSE_SKILL_VS_BASELINE",
-                       "P10_P90_COVERAGE"]].rename(columns={
-                "MAE_CTR_PP": "MAE (CTR pp)", "MAPE_PCT": "MAPE %", "MSE_SKILL_VS_BASELINE": "Skill vs baseline",
-                "P10_P90_COVERAGE": "p10-p90 coverage"})
+            def _fmt(v, spec, scale=1.0, suffix=""):
+                v = pd.to_numeric(pd.Series([v]), errors="coerce").iloc[0]
+                return "" if pd.isna(v) else f"{float(v) * scale:{spec}}{suffix}"
+
+            show = pd.DataFrame([{
+                "Model": {"hgb": "Gradient boosting", "ridge": "Ridge", "baseline": "Baseline (brand × placement mean)",
+                          "hgb_quantile_p10_p90_conformal": "p10-p90 range (conformal, used)",
+                          "hgb_quantile_p10_p90_raw": "p10-p90 range (raw quantiles)"}
+                         .get(str(r.MODEL), str(r.MODEL)),
+                "Level": str(r.LEVEL).replace("_", "-"),
+                "Holdout rows": _fmt(r.N_HOLDOUT, ",.0f"),
+                "MAE (CTR pp)": _fmt(r.MAE_CTR_PP, ".3f"),
+                "MAPE": _fmt(r.MAPE_PCT, ".1f", suffix="%"),
+                "R²": _fmt(r.R2, ".3f"),
+                "MSE skill vs baseline": _fmt(r.MSE_SKILL_VS_BASELINE, ".3f"),
+                "p10-p90 coverage": _fmt(r.P10_P90_COVERAGE, ".0f", scale=100, suffix="%"),
+            } for r in mm.itertuples()])
             show_df(show)
             st.caption("Ad level = holdout weeks aggregated per ad before scoring. Coverage target is ~80%. "
                        "Gradient boosting beats Ridge only modestly (ad-week R² gap ~0.04); most of the signal is "
                        "captured by a linear model, and the remaining edge plausibly comes from brand-specific interactions.")
             if not fe.empty:
-                top = fe[fe["RANK"] <= 8].copy()
-                fig_fe = px.bar(top, x="IMPORTANCE_R2_DROP", y="FEATURE", color="MODEL", barmode="group",
-                                orientation="h", template=PLOTLY_TEMPLATE, color_discrete_sequence=[PRIMARY, ACCENT])
-                fig_fe.update_layout(height=420, margin=dict(t=20, b=40), yaxis=dict(categoryorder="total ascending"),
-                                     xaxis_title="Permutation importance (drop in holdout R² on log-odds CTR)")
+                fe = fe.copy()
+                fe["IMPORTANCE_R2_DROP"] = pd.to_numeric(fe["IMPORTANCE_R2_DROP"], errors="coerce").astype(float)
+                point = str(m0["CHOSEN_POINT_MODEL"])
+                order = (fe[fe["MODEL"] == point].sort_values("IMPORTANCE_R2_DROP", ascending=False)["FEATURE"]
+                         .head(10).tolist())
+                fig_fe = go.Figure()
+                for mname, color in [(point, PRIMARY)] + [(m, ACCENT) for m in fe["MODEL"].unique() if m != point]:
+                    sub = fe[(fe["MODEL"] == mname)].set_index("FEATURE").reindex(order)
+                    fig_fe.add_trace(go.Bar(
+                        x=sub["IMPORTANCE_R2_DROP"].tolist(), y=order, orientation="h", marker_color=color,
+                        name={"hgb": "Gradient boosting", "ridge": "Ridge"}.get(mname, mname),
+                        text=["" if pd.isna(v) else f"{v:.3f}" for v in sub["IMPORTANCE_R2_DROP"]], textposition="outside"))
+                fig_fe.update_layout(template=PLOTLY_TEMPLATE, barmode="group", height=460, margin=dict(t=20, b=40, r=60),
+                                     yaxis=dict(type="category", categoryorder="array", categoryarray=order[::-1]),
+                                     xaxis=dict(type="linear", tickformat=".2f",
+                                                title="Permutation importance (drop in holdout R² on log-odds CTR)"))
                 st.plotly_chart(fig_fe, use_container_width=True)
+                st.caption("Top 10 features of the point model, sorted by its importance; the other model is shown for "
+                           "the same features.")
             st.markdown(
                 "**Known limitations**\n"
                 "- Synthetic data with planted effects; brand names are labels only. Not a forecast of real campaigns.\n"
@@ -1927,9 +1963,7 @@ with tab7:
                 "- Wide intervals on small cells; the Predictor's p10-p90 is calibrated overall, not per cell.\n"
                 "- The Predictor's per-change contributions are swap tests on the gradient boosting model (re-score B "
                 "with one field reverted), so they include interactions and need not sum to the total.\n"
-                "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.\n"
-                "- No multiple-comparison correction was applied across the ~1,000 net-lean cells; borderline results "
-                "are hypotheses (for example IN shows one borderline NET_HURT where no effect was planted).")
+                "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.")
             ne = load_null_effect_rate()
             if ne is not None:
                 st.markdown(
@@ -1941,11 +1975,21 @@ with tab7:
             if not mec.empty:
                 ratios = pd.to_numeric(mec["RATIO_MODEL_TO_PLANTED"], errors="coerce").dropna()
                 shrunk = mec[mec["SHRUNK_MORE_THAN_HALF"].astype(bool)]
-                st.markdown(
+                under = shrunk[shrunk["DIRECTION_MATCH"].astype(bool)]
+                unreliable = shrunk[~shrunk["DIRECTION_MATCH"].astype(bool)]
+                lines = [
                     f"- **Planted-effect check (model):** scoring a typical ad with one field changed, the predictor's "
                     f"lift has the planted direction in {int(mec['DIRECTION_MATCH'].astype(bool).sum())}/{len(mec)} "
-                    f"effects, median model/planted ratio {ratios.median():.2f} (planted effects are partly shrunk).\n"
-                    f"- **Known limitation: shrunk or missed interactions.** Effects the model reproduces at less than "
-                    f"half the planted size (or with the wrong sign): "
-                    + "; ".join(f"{r.EFFECT} ({r.STRATUM})" for r in shrunk.itertuples())
-                    + ". Treat Predictor lifts for these as conservative.")
+                    f"effects, median model/planted ratio {ratios.median():.2f} (planted effects are partly shrunk)."]
+                if not under.empty:
+                    lines.append("- **Interactions the model under-learns** (right direction, less than half the planted "
+                                 "size): " + "; ".join(f"{r.EFFECT} ({r.STRATUM}, ratio {float(r.RATIO_MODEL_TO_PLANTED):.2f})"
+                                                       for r in under.itertuples())
+                                 + ". Predictor lifts here are conservative.")
+                if not unreliable.empty:
+                    lines.append("- **Small planted contrasts where the model's sign is not reliable:** "
+                                 + "; ".join(f"{r.EFFECT} ({r.STRATUM}, planted {float(r.PLANTED_LIFT_PCT):+.1f}%, "
+                                             f"model {float(r.MODEL_LIFT_PCT):+.1f}%)" for r in unreliable.itertuples())
+                                 + ". These differences are within a few percent, so treat the Predictor's direction "
+                                   "for them as noise.")
+                st.markdown("\n".join(lines))
