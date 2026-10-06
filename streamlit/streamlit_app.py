@@ -12,6 +12,10 @@ from datetime import datetime
 from snowflake.snowpark.context import get_active_session
 import streamlit.components.v1 as components
 
+from copilot_core import (CHANNEL_RATES_SQL, EVENT_CATALOG, UPCOMING_EVENTS_SQL, build_html_document,
+                          clean_agent_markdown, compute_channel_plan, event_status, intel_prompt, pitch_prompt,
+                          plan_rows, recommendation_prompt, strategy_prompt)
+
 # -- Page config --
 st.set_page_config(page_title="NovaSpark Marketing Co-Pilot", page_icon="📊", layout="wide")
 
@@ -71,113 +75,6 @@ def parse_agent_response(raw_response):
         return str(raw_response)
     except Exception as e:
         return f"Unable to parse response: {str(e)}"
-
-
-def build_html_document(title, subtitle, metadata, content, confidence=None):
-    conf_colours = {
-        "HIGH": ("#00D4AA", "#003D30"),
-        "MEDIUM": ("#FFD700", "#3D3000"),
-        "LOW": ("#FF6B35", "#3D1500"),
-    }
-    conf_bg, conf_text = conf_colours.get(confidence, ("#6B7280", "#1F2937"))
-    conf_badge = (
-        f'<span style="background:{conf_bg};color:{conf_text};padding:4px 12px;'
-        f'border-radius:20px;font-size:12px;font-weight:bold;letter-spacing:1px;">'
-        f'{confidence}</span>'
-    ) if confidence else ""
-
-    meta_pills = "".join([
-        f'<span style="background:#1E293B;color:#94A3B8;padding:4px 12px;'
-        f'border-radius:20px;font-size:12px;margin-right:8px;">'
-        f'<b style="color:#E2E8F0">{k}:</b> {v}</span>'
-        for k, v in metadata.items()
-    ])
-
-    html_content = content
-    html_content = re.sub(
-        r'^### (.+)$',
-        r'<h3 style="color:#00D4AA;margin-top:24px;margin-bottom:8px;font-size:16px;">\1</h3>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'^## (.+)$',
-        r'<h2 style="color:#0068FF;margin-top:32px;margin-bottom:12px;font-size:20px;'
-        r'border-bottom:2px solid #0068FF;padding-bottom:8px;">\1</h2>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'^# (.+)$',
-        r'<h1 style="color:#FFFFFF;font-size:24px;">\1</h1>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'\*\*(.+?)\*\*',
-        r'<strong style="color:#E2E8F0">\1</strong>',
-        html_content)
-    html_content = re.sub(
-        r'^[-*] (.+)$',
-        r'<li style="margin-bottom:6px;color:#CBD5E1;">\1</li>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'(<li[^>]*>.*?</li>\n?)+',
-        lambda m: f'<ul style="padding-left:20px;margin:12px 0;">{m.group()}</ul>',
-        html_content, flags=re.DOTALL)
-    html_content = html_content.replace(
-        '---', '<hr style="border:none;border-top:1px solid #1E293B;margin:24px 0;">')
-
-    lines = html_content.split('\n')
-    processed = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped and not stripped.startswith('<'):
-            processed.append(
-                f'<p style="color:#CBD5E1;line-height:1.7;margin-bottom:12px;">{stripped}</p>')
-        else:
-            processed.append(line)
-    html_content = '\n'.join(processed)
-
-    generated_date = datetime.now().strftime('%B %d, %Y at %H:%M')
-
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title}</title>
-<style>
-*{{box-sizing:border-box;margin:0;padding:0;}}
-body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0A0E27;color:#CBD5E1;min-height:100vh;padding:40px 20px;}}
-.container{{max-width:900px;margin:0 auto;}}
-.header{{background:linear-gradient(135deg,#0D1117 0%,#1a1f3a 100%);border:1px solid #1E293B;border-top:4px solid #0068FF;border-radius:12px;padding:40px;margin-bottom:32px;}}
-.agency-tag{{color:#0068FF;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}}
-.doc-title{{font-size:32px;font-weight:800;color:#FFFFFF;line-height:1.2;margin-bottom:8px;}}
-.doc-subtitle{{font-size:16px;color:#64748B;margin-bottom:24px;}}
-.meta-row{{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}}
-.content-card{{background:#0D1117;border:1px solid #1E293B;border-radius:12px;padding:40px;margin-bottom:24px;}}
-table{{width:100%;border-collapse:collapse;margin:16px 0;}}
-th{{background:#0068FF;color:white;padding:10px 14px;text-align:left;font-size:13px;font-weight:600;}}
-td{{padding:10px 14px;border-bottom:1px solid #1E293B;color:#CBD5E1;font-size:14px;}}
-tr:nth-child(even) td{{background:#0D1117;}}
-tr:nth-child(odd) td{{background:#111827;}}
-.footer{{text-align:center;padding:32px;color:#374151;font-size:12px;border-top:1px solid #1E293B;margin-top:40px;}}
-.footer span{{color:#0068FF;font-weight:600;}}
-@media print{{body{{background:white;color:black;}}.content-card{{border:1px solid #ddd;}}}}
-</style>
-</head>
-<body>
-<div class="container">
-<div class="header">
-<div class="agency-tag">NovaSpark Agency</div>
-<div class="doc-title">{title}</div>
-<div class="doc-subtitle">{subtitle}</div>
-<div class="meta-row">{meta_pills}{conf_badge}</div>
-</div>
-<div class="content-card">
-{html_content}
-</div>
-<div class="footer">
-Generated by <span>NovaSpark Co-Pilot</span> · Powered by <span>Snowflake Cortex</span> · {generated_date}
-</div>
-</div>
-</body>
-</html>"""
 
 
 def show_df(df):
@@ -253,14 +150,9 @@ def _build_video_prompt(client_name, product_name, campaign_objective, creative_
         f"Style: Premium brand film, smooth camera, vibrant colours. No text. No logos."
     )
 
-def _generate_posters_gemini(prompt, api_key, count=3):
-    if not api_key:
-        return {"success": False, "demo_mode": True, "posters_b64": [], "error": "No API key provided"}
-    try:
-        return {"success": False, "demo_mode": True, "posters_b64": [],
-                "error": "Poster generation requires Gemini API access. In Streamlit-in-Snowflake, outbound HTTP is not available on trial accounts. Use the poster prompt with Gemini AI Studio directly."}
-    except Exception as exc:
-        return {"success": False, "demo_mode": True, "posters_b64": [], "error": str(exc)}
+POSTER_PROMPT_NOTE = ("Poster images are not generated in the app. Creative Studio produces the intelligence-enriched "
+                      "poster prompt; paste it into an external image tool to create the images.")
+
 
 def _build_storyboard_scenes():
     return [
@@ -282,7 +174,7 @@ def _build_design_system(client_name, brand_colours, tone_keywords):
     }
 
 def generate_creative_assets(client_name, product_name, campaign_objective, target_audience,
-    brand_colours, tone_keywords, creative_direction, gemini_api_key, event_name=None, intel=None):
+    brand_colours, tone_keywords, creative_direction, event_name=None, intel=None):
     errors = {}
     results = {"intelligence": intel or {}}
     intel_json = json.dumps(intel) if intel else ""
@@ -319,13 +211,7 @@ def generate_creative_assets(client_name, product_name, campaign_objective, targ
     except Exception:
         poster_prompt = _build_poster_prompt(client_name, product_name, campaign_objective, target_audience, brand_colours, tone_keywords, creative_direction, event_name, intel)
 
-    # Gemini poster generation (still direct HTTP since EAI not available on trial)
-    poster_result = _generate_posters_gemini(poster_prompt, gemini_api_key, count=3)
-    results["posters_b64"] = poster_result.get("posters_b64", [])
     results["poster_prompt"] = poster_prompt
-    results["poster_demo_mode"] = poster_result.get("demo_mode", False)
-    if poster_result.get("error"):
-        errors["posters"] = poster_result["error"]
 
     # Storyboard via stored procedure
     try:
@@ -344,7 +230,8 @@ def generate_creative_assets(client_name, product_name, campaign_objective, targ
         results["hero_scenes"] = _build_storyboard_scenes()
         results["video_prompt"] = _build_video_prompt(client_name, product_name, campaign_objective, creative_direction, event_name)
 
-    results["video_message"] = "Video storyboard generated via Snowflake MCP procedure. Veo 2 access requires allowlist -- showing scene breakdown instead."
+    results["video_message"] = ("Video is not generated in the app either: the storyboard and video prompt below are "
+                                "for an external video tool.")
 
     # Audio script via stored procedure
     try:
@@ -370,9 +257,6 @@ def generate_creative_assets(client_name, product_name, campaign_objective, targ
 def build_assets_zip(assets):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
-        for i, p in enumerate(assets.get("posters_b64", [])[:3]):
-            if p:
-                zf.writestr(f"poster_{i+1}.png", base64.b64decode(p))
         ds = assets.get("design_system", {})
         if ds:
             zf.writestr("design_system.json", json.dumps(ds, indent=2))
@@ -489,6 +373,20 @@ def load_channel_history(client_id):
 
 
 @st.cache_data(ttl=300)
+def load_channel_rates(client_id):
+    df = run_query(CHANNEL_RATES_SQL.format(client_id=str(client_id).replace("'", "''")))
+    df.columns = [c.lower() for c in df.columns]
+    return df.to_dict("records")
+
+
+@st.cache_data(ttl=300)
+def load_upcoming_events():
+    df = run_query(UPCOMING_EVENTS_SQL)
+    df.columns = [c.lower() for c in df.columns]
+    return df.to_dict("records")
+
+
+@st.cache_data(ttl=300)
 def load_creative_intelligence(client_name, event_name=""):
     """Top channels, primary segment, brand guardrails and market timing from GET_CREATIVE_INTELLIGENCE."""
     try:
@@ -533,6 +431,23 @@ def load_net_lean(stratum_type, market, objective, brand_label):
 
 
 @st.cache_data(ttl=300)
+def load_ad_counts():
+    return run_query("SELECT brand, market, objective, COUNT(*) AS n FROM MARKETING_COPILOT.CREATIVE.DIM_AD GROUP BY 1, 2, 3")
+
+
+@st.cache_data(ttl=300)
+def load_market_strip():
+    """Strongest NET_HELPED value per market, all brands, all objectives."""
+    return run_query("""
+        SELECT market, attribute_family, attribute_value, reference_value, adj_lift_pct, n_ads
+        FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
+        WHERE stratum_type = 'MARKET_X_OBJECTIVE' AND objective = 'ALL' AND brand = 'ALL' AND market <> 'ALL'
+          AND net_lean_class = 'NET_HELPED'
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY market ORDER BY adj_lift_pct DESC) = 1
+    """)
+
+
+@st.cache_data(ttl=300)
 def load_net_lean_takeaway(stratum_type, market, objective, brand_label):
     return run_query(f"""
         SELECT * FROM MARKETING_COPILOT.CREATIVE.NET_LEAN_TAKEAWAY
@@ -543,22 +458,41 @@ def load_net_lean_takeaway(stratum_type, market, objective, brand_label):
 
 @st.cache_data(ttl=300)
 def load_best_attributes(brand_label, market):
-    """NET_HELPED values for brand x market; falls back to the brand across all markets when that cell is thin."""
+    """NET_HELPED values (vs their reference) for brand x market; falls back to the brand across all markets."""
     for scope in (market, "ALL"):
         df = run_query(f"""
-            SELECT attribute_family, attribute_value, adj_lift_pct FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
+            SELECT attribute_family, attribute_value, reference_value, adj_lift_pct FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
             WHERE stratum_type = 'MARKET_X_BRAND' AND market = '{scope}' AND brand = '{brand_label}'
               AND net_lean_class = 'NET_HELPED'
             ORDER BY adj_lift_pct DESC LIMIT 3
         """)
         if not df.empty:
-            return [f"{r.ATTRIBUTE_FAMILY.replace('_', ' ')} = {r.ATTRIBUTE_VALUE}" for r in df.itertuples()], scope
+            return [f"{r.ATTRIBUTE_FAMILY.replace('_', ' ')} = {r.ATTRIBUTE_VALUE} (vs {r.REFERENCE_VALUE}, "
+                    f"{float(r.ADJ_LIFT_PCT):+.0f}% CTR)" for r in df.itertuples()], scope
     return [], None
 
 
 @st.cache_data(ttl=300)
 def load_model_metrics():
     return run_query("SELECT * FROM MARKETING_COPILOT.CREATIVE.MODEL_METRICS ORDER BY level DESC, model")
+
+
+@st.cache_data(ttl=300)
+def load_null_effect_rate():
+    try:
+        df = run_query("SELECT n_strata_tested, n_false_positive, false_positive_share "
+                       "FROM MARKETING_COPILOT.CREATIVE.NULL_EFFECT_CHECK WHERE attribute_family = 'ALL'")
+    except Exception:
+        return None
+    return None if df.empty else df.iloc[0]
+
+
+@st.cache_data(ttl=300)
+def load_model_effect_check():
+    try:
+        return run_query("SELECT * FROM MARKETING_COPILOT.CREATIVE.MODEL_EFFECT_CHECK")
+    except Exception:
+        return pd.DataFrame()
 
 
 @st.cache_data(ttl=300)
@@ -659,6 +593,7 @@ def render_agent_markdown(raw):
         with st.expander("Technical details"):
             st.code(str(raw))
         return
+    text = clean_agent_markdown(text)
 
     sections = text.split("\n## ")
     if len(sections) > 1:
@@ -692,7 +627,12 @@ with st.sidebar:
 
     products_df = load_products(client_id)
     product_names = products_df["PRODUCT_NAME"].tolist()
-    selected_product = st.selectbox("Select Product", product_names, index=0) if product_names else "N/A"
+    default_product = {"Nike": "Running Collection", "Pepsi": "Zero Sugar Cola", "Samsung": "Flagship Smartphone"}.get(selected_client)
+    selected_product = st.selectbox(
+        "Select Product", product_names,
+        index=product_names.index(default_product) if default_product in product_names else 0,
+        key=f"sidebar_product_{selected_client}") if product_names else "N/A"
+    st.caption("Product frames the recommendation, pitch and creative brief; performance drivers (Tabs 3 and 7) are brand-level.")
 
     objective = st.selectbox("Campaign Objective", [
         "Brand Awareness", "Lead Generation", "Sales Conversion", "Customer Retention"
@@ -706,7 +646,10 @@ with st.sidebar:
 # ============================
 # MAIN AREA
 # ============================
-st.title(f"📊 {selected_client} Marketing Dashboard")
+st.title("📊 Marketing Co-Pilot")
+st.caption(f"Sidebar client: {selected_client} (used by Client Intelligence, Campaign Recommendation, Generate Pitch, "
+           f"Event Intelligence and Creative Studio). Predictor and Performance Drivers use the synthetic creative "
+           f"dataset and their own brand pickers.")
 
 tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
     "📊 Client Intelligence",
@@ -789,18 +732,11 @@ with tab1:
 # TAB 2: Campaign Recommendation
 # ============================
 with tab2:
+    tab2_plan = compute_channel_plan(load_channel_rates(client_id), budget, objective)
     if analyze_btn:
         with st.spinner("Analyzing campaign data and generating recommendation..."):
-            prompt = (
-                f"Create a detailed campaign recommendation for {selected_client} "
-                f"for their product '{selected_product}'. "
-                f"Campaign objective: {objective}. "
-                f"Budget: ${budget:,}. "
-                f"Include: recommended channels with budget allocation percentages, "
-                f"target audience segments, expected KPIs (ROAS, impressions, conversions), "
-                f"and strategy rationale. Ground everything in historical performance data. "
-                f"Use markdown headers (## Section Title) to structure each section."
-            )
+            prompt = recommendation_prompt(selected_client, selected_product, objective, budget, tab2_plan,
+                                           upcoming=load_upcoming_events())
             response = call_agent_with_auto_continue(
                 'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
                 prompt,
@@ -811,13 +747,21 @@ with tab2:
                 )
             )
             st.session_state["recommendation"] = response
+            st.session_state["recommendation_plan"] = {"client": selected_client, "product": selected_product,
+                                                        "objective": objective, "budget": budget, "plan": tab2_plan}
             st.session_state["recommendation_approved"] = False
 
     if "recommendation" in st.session_state:
         rec = st.session_state["recommendation"]
+        rec_ctx = st.session_state.get("recommendation_plan") or {"plan": tab2_plan}
 
         st.markdown(f"## 📋 Campaign Recommendation")
         st.markdown(f"**Client:** {selected_client} | **Product:** {selected_product} | **Objective:** {objective} | **Budget:** ${budget:,}")
+        st.markdown("#### Channel plan and projected KPIs")
+        show_df(pd.DataFrame(plan_rows(rec_ctx["plan"])))
+        st.caption(f"Channels ranked by historical {rec_ctx['plan']['metric']}; budget split in proportion; each KPI = "
+                   "allocated budget x the channel's pooled historical per-dollar rate (so clicks x CPC = budget). "
+                   "Historical averages from synthetic data, no significance testing.")
         st.divider()
 
         render_agent_markdown(rec)
@@ -846,6 +790,7 @@ with tab2:
         with approve_col:
             if st.button("✅ Approve Recommendation", type="primary", use_container_width=True):
                 st.session_state["recommendation_approved"] = True
+                st.session_state["approved_plan"] = rec_ctx
                 st.success("Recommendation approved! Go to **Generate Pitch** tab.")
         with regen_col:
             if st.button("🔄 Regenerate", use_container_width=True):
@@ -860,7 +805,7 @@ with tab2:
 # TAB 3: Predictor (scenario estimates from CREATIVE.SCORE_AD)
 # ============================
 with tab3:
-    st.subheader("Creative Predictor: compare two scenarios")
+    st.subheader("Creative Predictor: compare two creative scenarios")
     st.warning(f"⚠️ {CI_BANNER}")
     st.caption("Pick brand label, market, objective, placement, creative attributes and weekly budget for scenario A, "
                "then change any of them for scenario B. Each scenario is scored by CREATIVE.SCORE_AD "
@@ -961,36 +906,58 @@ with tab3:
         m2.metric("Scenario B: predicted CTR", f"{rb['predicted_ctr'] * 100:.2f}%", delta=f"{lift:+.1f}% vs A")
         m2.caption(f"p10-p90 range: {rb['p10'] * 100:.2f}% to {rb['p90'] * 100:.2f}%")
         m3.metric("Lift of B vs A (point estimate)", f"{lift:+.1f}%")
-        m3.caption(f"Range: {lift_lo:+.1f}% to {lift_hi:+.1f}% (B's p10-p90 against A's p90-p10).")
-        m3.caption("Range covers individual ad-weeks, so it is intentionally wide. Use the expected difference as the headline.")
         if abs(lift) < 5:
             st.warning(f"⚠️ Expected difference is only {lift:+.1f}% (A vs B): too small to distinguish from noise.")
-        elif overlap:
-            st.info(f"Ranges for individual ad-weeks overlap, so any single ad can go either way. "
-                    f"Expected difference: {lift:+.1f}% (A vs B).")
         else:
-            st.success(f"Expected difference: {lift:+.1f}% (A vs B), and the individual ad-week ranges do not overlap.")
+            st.success(f"Expected difference: {lift:+.1f}% (A vs B).")
 
-        fig_pred = go.Figure()
-        for name, r, color in [("A", ra, PRIMARY), ("B", rb, ACCENT)]:
-            fig_pred.add_trace(go.Scatter(
-                x=[r["predicted_ctr"] * 100], y=[f"Scenario {name}"], mode="markers", marker=dict(size=14, color=color),
-                error_x=dict(type="data", symmetric=False, array=[(r["p90"] - r["predicted_ctr"]) * 100],
-                             arrayminus=[(r["predicted_ctr"] - r["p10"]) * 100], color=color),
-                name=f"Scenario {name}"))
-        fig_pred.update_layout(template=PLOTLY_TEMPLATE, height=220, margin=dict(t=20, b=40), showlegend=False,
-                               xaxis_title="Predicted CTR % (dot) with p10-p90 range")
-        st.plotly_chart(fig_pred, use_container_width=True)
+        # Swap decomposition: revert one changed field of B to A's value and re-score
+        swaps = []
+        for field in changed:
+            reverted = {**sb, "attributes": dict(sb["attributes"])}
+            if field in CI_FAMILIES:
+                reverted["attributes"][field] = sa["attributes"][field]
+                a_val, b_val = sa["attributes"][field], sb["attributes"][field]
+            else:
+                reverted[field] = sa[field]
+                a_val, b_val = sa[field], sb[field]
+            try:
+                r_rev = score_ad(json.dumps(reverted, sort_keys=True))
+            except Exception as exc:
+                st.error(f"Scoring failed for swap {field}: {exc}")
+                continue
+            delta_pp = (rb["predicted_ctr"] - r_rev["predicted_ctr"]) * 100
+            swaps.append({"Changed field": field.replace("_", " "), "A → B": f"{a_val} → {b_val}",
+                          "B with only this reverted": f"{r_rev['predicted_ctr'] * 100:.2f}%",
+                          "CTR change attributable (pp)": f"{delta_pp:+.2f}",
+                          "As % of A's CTR": f"{delta_pp / (ra['predicted_ctr'] * 100) * 100:+.1f}%" if ra["predicted_ctr"] else ""})
+        if swaps:
+            st.markdown("**What each change contributes** (swap test: B scored with only that field set back to A)")
+            show_df(pd.DataFrame(swaps))
+            st.caption(f"Total change B vs A: {(rb['predicted_ctr'] - ra['predicted_ctr']) * 100:+.2f} pp. The swap "
+                       "contributions need not add up to the total, because the gradient boosting model has "
+                       "interactions between fields.")
+        for name, r in [("A", ra), ("B", rb)]:
+            if r.get("warnings"):
+                st.caption(f"Notes for scenario {name}: " + "; ".join(r["warnings"]))
 
-        d1, d2 = st.columns(2)
-        for col, name, r in [(d1, "A", ra), (d2, "B", rb)]:
-            with col:
-                st.markdown(f"**Top drivers: scenario {name}** (vs an average ad, from the Ridge model)")
-                show_df(pd.DataFrame([{"Attribute": d["attribute"], "Value": d["value"],
-                                            "Approx. CTR effect": f"{d['approx_ctr_effect_pct']:+.1f}%"}
-                                           for d in r["top_drivers"]]))
-                if r.get("warnings"):
-                    st.caption("Notes: " + "; ".join(r["warnings"]))
+        with st.expander("Show range for individual ad-weeks", expanded=False):
+            st.caption(f"Lift range: {lift_lo:+.1f}% to {lift_hi:+.1f}% (B's p10-p90 against A's p90-p10). It covers "
+                       "individual ad-weeks, so it is intentionally wide; use the expected difference as the headline.")
+            if overlap:
+                st.caption("The individual ad-week ranges overlap, so any single ad can go either way.")
+            else:
+                st.caption("The individual ad-week ranges do not overlap.")
+            fig_pred = go.Figure()
+            for name, r, color in [("A", ra, PRIMARY), ("B", rb, ACCENT)]:
+                fig_pred.add_trace(go.Scatter(
+                    x=[r["predicted_ctr"] * 100], y=[f"Scenario {name}"], mode="markers", marker=dict(size=14, color=color),
+                    error_x=dict(type="data", symmetric=False, array=[(r["p90"] - r["predicted_ctr"]) * 100],
+                                 arrayminus=[(r["predicted_ctr"] - r["p10"]) * 100], color=color),
+                    name=f"Scenario {name}"))
+            fig_pred.update_layout(template=PLOTLY_TEMPLATE, height=220, margin=dict(t=20, b=40), showlegend=False,
+                                   xaxis_title="Predicted CTR % (dot) with p10-p90 range")
+            st.plotly_chart(fig_pred, use_container_width=True)
         st.caption(f"Scenario estimate. {ra['disclaimer']}")
 
         pred_report = (
@@ -1013,33 +980,28 @@ with tab3:
 # ============================
 with tab4:
     if st.session_state.get("recommendation_approved"):
+        approved = st.session_state.get("approved_plan") or {
+            "client": selected_client, "product": selected_product, "objective": objective, "budget": budget,
+            "plan": compute_channel_plan(load_channel_rates(client_id), budget, objective)}
+        p_client, p_product, p_objective, p_budget = (approved["client"], approved["product"],
+                                                      approved["objective"], approved["budget"])
         st.markdown(f"## 📋 Campaign Pitch")
-        st.markdown(f"**Client:** {selected_client} | **Product:** {selected_product} | **Budget:** ${budget:,} | **Date:** {TODAY}")
+        st.markdown(f"**Client:** {p_client} | **Product:** {p_product} | **Budget:** ${p_budget:,} | **Date:** {TODAY}")
+        st.markdown("#### Approved channel plan and KPIs (from the recommendation, not recomputed)")
+        show_df(pd.DataFrame(plan_rows(approved["plan"])))
         st.divider()
 
         if "pitch_content" not in st.session_state:
             if st.button("📝 Generate Full Pitch", type="primary"):
                 with st.spinner("Generating pitch document (auto-continues if needed)..."):
-                    prompt = (
-                        f"Generate a complete client-ready campaign pitch document for {selected_client}, "
-                        f"product: {selected_product}, objective: {objective}, budget: ${budget:,}. "
-                        f"Include these sections with ## markdown headers: "
-                        f"1. Executive Summary, "
-                        f"2. Client & Product Overview, "
-                        f"3. Campaign Objective & KPIs, "
-                        f"4. Target Audience Analysis, "
-                        f"5. Channel Strategy with budget allocation, "
-                        f"6. Creative Direction (based on brand guidelines), "
-                        f"7. Expected Impact and projected metrics. "
-                        f"End with a Confidence Level (HIGH/MEDIUM/LOW) with explanation. "
-                        f"Make it professional, data-backed, and aligned with the brand voice."
-                    )
+                    prompt = pitch_prompt(p_client, p_product, p_objective, p_budget, approved["plan"],
+                                          upcoming=load_upcoming_events())
                     pitch = call_agent_with_auto_continue(
                         'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
                         prompt,
                         lambda n: (
-                            f"Continue the campaign pitch document you were writing for {selected_client}, "
-                            f"product: {selected_product}. Pick up exactly where you left off. "
+                            f"Continue the campaign pitch document you were writing for {p_client}, "
+                            f"product: {p_product}. Pick up exactly where you left off. "
                             f"Do not repeat sections already written. Complete the remaining sections. "
                             f"This is continuation #{n}."
                         )
@@ -1058,23 +1020,23 @@ with tab4:
 
             pitch_html = build_html_document(
                 title="Campaign Pitch",
-                subtitle=f"{selected_client} — {selected_product}",
-                metadata={"Client": selected_client, "Product": selected_product,
-                          "Objective": objective, "Budget": f"${budget:,}", "Date": TODAY},
+                subtitle=f"{p_client} — {p_product}",
+                metadata={"Client": p_client, "Product": p_product,
+                          "Objective": p_objective, "Budget": f"${p_budget:,}", "Date": TODAY},
                 content=parse_agent_response(pitch)
             )
 
             dl_col, reset_col = st.columns([1, 4])
             with dl_col:
-                safe_product = selected_product.replace(" ", "_").replace("/", "_")
+                safe_product = p_product.replace(" ", "_").replace("/", "_")
                 js_download_button(
                     content=pitch_html,
-                    filename=f"{selected_client}_{safe_product}_pitch.html",
+                    filename=f"{p_client}_{safe_product}_pitch.html",
                     label="⬇️ Download Pitch"
                 )
             with reset_col:
                 if st.button("🔄 Start Over"):
-                    for key in ["recommendation", "recommendation_approved", "pitch_content"]:
+                    for key in ["recommendation", "recommendation_approved", "pitch_content", "recommendation_plan", "approved_plan"]:
                         st.session_state.pop(key, None)
                     st.experimental_rerun()
     else:
@@ -1086,7 +1048,9 @@ with tab4:
 # ============================
 with tab6:
     st.subheader("Creative Studio")
-    st.caption("Generate campaign posters, video storyboards, and design systems powered by Gemini.")
+    st.caption("Build the creative brief, intelligence-enriched poster prompt, video storyboard, design system and "
+               "voiceover script from this client's Snowflake data.")
+    st.info(POSTER_PROMPT_NOTE)
 
     # -- Cortex intelligence layer: grounds the creative brief in this client's data --
     cs_client = selected_client
@@ -1126,7 +1090,7 @@ with tab6:
         cs_direction = st.text_area(
             "Creative Direction",
             value=st.session_state.get("recommendation_creative", "Clean modern visuals with lifestyle imagery showing product in everyday premium context")
-                  + (f" Lean into: {'; '.join(ci_best)}." if ci_best else ""),
+                  + (f" Lean into (adjusted CTR lift vs the stated reference value, synthetic data): {'; '.join(ci_best)}." if ci_best else ""),
             height=68, key=f"cs_direction_{ci_brand}_{ci_market}"
         )
         cs_event = st.text_input(
@@ -1134,22 +1098,16 @@ with tab6:
             value=cs_event_default,
             key="cs_event"
         )
-        cs_gemini_key = st.text_input(
-            "Gemini API Key",
-            type="password",
-            help="Get free at aistudio.google.com",
-            key="cs_gemini_key"
-        )
 
     with cs_col2:
         st.info(
             "**How Creative Studio Works**\n\n"
             "1. **Cortex Strategy -> Creative Brief**\n"
             "   Auto-filled from your campaign recommendation\n\n"
-            "2. **Cortex Intelligence + Gemini 2.5 Flash Image -> 3 Marketing Posters**\n"
-            "   Portrait format, commercial quality\n\n"
-            "3. **Veo 2 -> Video Storyboard**\n"
-            "   5-second brand film concept\n\n"
+            "2. **Cortex Intelligence -> Poster Prompt**\n"
+            "   Paste into an external image tool to create the posters\n\n"
+            "3. **Cortex Procedures -> Video Storyboard**\n"
+            "   5-second brand film concept and video prompt\n\n"
             "4. **Download all as ZIP**"
         )
         components.html("""
@@ -1165,7 +1123,7 @@ with tab6:
     # -- Section 1b: Cortex Intelligence Panel --
     st.markdown("#### 🧠 Cortex Intelligence Feeding This Brief")
     if not cs_intel:
-        st.warning("Could not load creative intelligence (procedure GET_CREATIVE_INTELLIGENCE). Posters will use the brief fields only.")
+        st.warning("Could not load creative intelligence (procedure GET_CREATIVE_INTELLIGENCE). The poster prompt will use the brief fields only.")
     else:
         esc = html_lib.escape
         chans = cs_intel.get("top_channels") or []
@@ -1216,7 +1174,7 @@ with tab6:
     generate_creative = st.button("✨ Generate Creative Assets", type="primary", use_container_width=True, key="cs_generate")
 
     if generate_creative:
-        with st.spinner("Generating your campaign creative with Gemini..."):
+        with st.spinner("Building the creative brief with Cortex..."):
             assets = generate_creative_assets(
                 client_name=cs_client,
                 product_name=cs_product,
@@ -1225,7 +1183,6 @@ with tab6:
                 brand_colours=cs_colours,
                 tone_keywords=cs_tone,
                 creative_direction=cs_direction,
-                gemini_api_key=cs_gemini_key,
                 event_name=cs_event if cs_event else None,
                 intel=load_creative_intelligence(cs_client, cs_event or "")
             )
@@ -1240,7 +1197,6 @@ with tab6:
         assets = st.session_state["creative_assets"]
         ds = assets.get("design_system") or {}
         palette = ds.get("palette") or []
-        posters = assets.get("posters_b64") or []
         hero_scenes = assets.get("hero_scenes") or []
         audio_script = assets.get("audio_script") or {}
 
@@ -1321,43 +1277,10 @@ with tab6:
 
         st.divider()
 
-        # ROW 3: Key Visuals / Posters
-        st.markdown("#### 🖼️ Key Visuals / Campaign Posters")
-
-        if posters and any(p for p in posters):
-            img_cols = st.columns(3)
-            labels = ["Hero Shot", "Lifestyle", "Product Close-Up"]
-            for i in range(min(3, len(posters))):
-                with img_cols[i]:
-                    if posters[i]:
-                        img_bytes = base64.b64decode(posters[i])
-                        st.image(img_bytes, caption=labels[i], use_column_width=True)
-        else:
-            poster_prompt_text = assets.get("poster_prompt", "No prompt generated")
-            components.html(f"""
-            <div style="background:#0D1117;border:1px solid #1E293B;border-radius:12px;padding:24px;margin-bottom:12px;">
-                <div style="display:flex;gap:16px;margin-bottom:16px;">
-                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
-                        <div style="color:#64748B;font-size:12px;">Hero Shot</div>
-                    </div>
-                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
-                        <div style="color:#64748B;font-size:12px;">Lifestyle</div>
-                    </div>
-                    <div style="flex:1;background:#1E293B;height:180px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
-                        <div style="font-size:40px;margin-bottom:8px;">🖼️</div>
-                        <div style="color:#64748B;font-size:12px;">Product Close-Up</div>
-                    </div>
-                </div>
-                <div style="background:#111827;border-radius:8px;padding:12px;">
-                    <div style="color:#0068FF;font-size:11px;font-weight:700;letter-spacing:1px;margin-bottom:6px;">INTELLIGENCE-ENRICHED POSTER PROMPT (copy to aistudio.google.com)</div>
-                    <div style="color:#94A3B8;font-size:12px;line-height:1.6;">{poster_prompt_text}</div>
-                </div>
-            </div>
-            """, height=310)
-
-            st.caption("Poster generation requires Gemini API access via External Access Integration (not available on trial accounts). Copy the prompt above into [Google AI Studio](https://aistudio.google.com) to generate images.")
+        # ROW 3: Poster prompt (images are made outside the app)
+        st.markdown("#### 🖼️ Poster Prompt (intelligence-enriched)")
+        st.code(assets.get("poster_prompt", "No prompt generated"), language=None)
+        st.caption(POSTER_PROMPT_NOTE)
 
         st.divider()
 
@@ -1399,7 +1322,7 @@ with tab6:
         <div style="background:#0D1117;border:1px solid #1E293B;border-left:4px solid #0068FF;border-radius:12px;padding:24px;margin-top:20px;">
             <div style="color:#E2E8F0;font-size:15px;font-weight:700;margin-bottom:8px;">🔮 Our Recommendation to Snowflake</div>
             <div style="color:#94A3B8;font-size:13px;line-height:1.7;">
-                This feature required external Gemini APIs for image and video generation. Every other part of NovaSpark Co-Pilot runs natively on Snowflake Cortex.
+                Image and video generation are not part of this app; every other part of NovaSpark Co-Pilot runs natively on Snowflake Cortex.
                 We recommend Snowflake build <strong style="color:#0068FF;">Cortex Image</strong> (powered by Imagen) and <strong style="color:#0068FF;">Cortex Video</strong> (powered by Veo)
                 to make the complete creative workflow 100% Snowflake-native — from raw campaign data to client-ready visual assets, without leaving the platform.
             </div>
@@ -1418,13 +1341,13 @@ with tab5:
     ei_col1, ei_col2 = st.columns([2, 1])
 
     with ei_col1:
-        event_options = [
-            "FIFA World Cup 2026", "Black Friday 2026",
-            "Super Bowl 2025", "Black Friday 2025", "Holiday Season 2025",
-            "Back to School 2025", "Valentine's Day 2026", "Summer Olympics 2028",
-            "New Year Campaign 2026", "Spring Launch 2025"
-        ]
+        event_options = list(EVENT_CATALOG)
         selected_event = st.selectbox("Select Market Event", event_options, key="ei_event")
+        ev_start, ev_end, ev_note = EVENT_CATALOG[selected_event]
+        st.caption(f"{ev_start}{'' if ev_start == ev_end else ' to ' + ev_end} · {event_status(ev_start, ev_end)}"
+                   + (f" · {ev_note}" if ev_note else "")
+                   + " Stored intelligence runs exist for FIFA World Cup 2026 (retrospective, ended July 19, 2026) "
+                     "and Black Friday 2026 (the live example).")
 
         ei_keywords = st.text_input(
             "Event Keywords (comma-separated)",
@@ -1434,8 +1357,9 @@ with tab5:
 
         competitors_input = st.text_input(
             "Competitors (comma-separated)",
-            value="Nike, Adidas, Apple, Samsung",
-            key="ei_comp_input"
+            value={"Nike": "Adidas, Puma", "Samsung": "Apple, Xiaomi", "Pepsi": "Coca-Cola, Red Bull"}
+                  .get(selected_client, ""),
+            key=f"ei_comp_input_{selected_client}"
         )
 
         markets_input = st.text_input(
@@ -1481,17 +1405,10 @@ with tab5:
         # Step 1: Call Internet Intelligence Agent with auto-continue
         progress.progress(10, text="Calling Internet Intelligence Agent...")
         try:
-            intel_prompt = (
-                f"Research the market event '{selected_event}' for client {selected_client}. "
-                f"Keywords: {', '.join(keywords_list)}. "
-                f"Competitors: {', '.join(competitors_list)}. "
-                f"Target markets: {', '.join(markets_list)}. "
-                f"Gather Google Trends data, recent news articles, and web intelligence about "
-                f"competitive positioning and market opportunities for this event."
-            )
+            intel_prompt_text = intel_prompt(selected_client, selected_event, keywords_list, competitors_list, markets_list)
             intel_response = call_agent_with_auto_continue(
                 'MARKETING_COPILOT.SEMANTIC.INTERNET_INTELLIGENCE_AGENT',
-                intel_prompt,
+                intel_prompt_text,
                 lambda n: (
                     f"Continue your research on '{selected_event}' for {selected_client}. "
                     f"Pick up where you left off. Do not repeat sections. Continuation #{n}."
@@ -1560,7 +1477,7 @@ with tab5:
 
         # Agent response — use st.markdown directly to avoid nested expanders
         with st.expander("🤖 Intelligence Agent Findings", expanded=True):
-            clean = parse_agent_response(st.session_state["ei_intel_response"])
+            clean = clean_agent_markdown(parse_agent_response(st.session_state["ei_intel_response"]))
             st.markdown(clean)
 
         # Trends visualization
@@ -1637,23 +1554,11 @@ with tab5:
             if st.button("🧠 Generate Event Strategy", type="primary", key="ei_strategy_btn"):
                 with st.spinner("Strategy Synthesis Agent is building your event strategy (auto-continues if needed)..."):
                     try:
-                        strategy_prompt = (
-                            f"Create a comprehensive event marketing strategy for {selected_client} "
-                            f"targeting the '{selected_event}' event. "
-                            f"Budget: ${ei_budget:,}. Objective: {ei_objective}. "
-                            f"Competitors: {competitors_input}. Markets: {markets_input}. "
-                            f"Include: 1) Channel allocation with percentages, "
-                            f"2) Creative direction and messaging themes, "
-                            f"3) Timeline with key milestones, "
-                            f"4) Expected impact metrics (reach, engagement, conversions), "
-                            f"5) Competitive positioning strategy. "
-                            f"Use ## markdown headers for each section. "
-                            f"Base recommendations on both historical campaign performance data "
-                            f"and current market intelligence."
-                        )
+                        strategy_prompt_text = strategy_prompt(selected_client, selected_event, ei_budget, ei_objective,
+                                                               competitors_input, markets_input)
                         strategy = call_agent_with_auto_continue(
                             'MARKETING_COPILOT.SEMANTIC.STRATEGY_SYNTHESIS_AGENT',
-                            strategy_prompt,
+                            strategy_prompt_text,
                             lambda n: (
                                 f"Continue the event strategy you were writing for {selected_client} "
                                 f"and '{selected_event}'. Pick up where you left off. "
@@ -1707,7 +1612,7 @@ with tab5:
 # TAB 7: Performance Drivers (CREATIVE.NET_LEAN + model card)
 # ============================
 with tab7:
-    st.subheader("Performance Drivers: which creative attributes move CTR")
+    st.subheader("Performance Drivers: which creative attributes move CTR (synthetic creative dataset)")
     st.warning(f"⚠️ {CI_BANNER}")
 
     CI_CLASS_INFO = {
@@ -1719,18 +1624,43 @@ with tab7:
         "INSUFFICIENT_DATA": ("#1E293B", "not enough data: fewer than 30 ads have this value"),
     }
 
+    if "pdv_market_pending" in st.session_state:
+        st.session_state["pdv_market2"] = st.session_state.pop("pdv_market_pending")
     f1, f2, f3 = st.columns(3)
     pd_brand = f1.selectbox("Brand (label)", CI_BRANDS + ["ALL brands"], index=0, key="pdv_brand2")
     pd_market = f2.selectbox("Drill down: market", ["ALL"] + CI_MARKETS, key="pdv_market2")
     pd_objective = f3.selectbox("Drill down: objective", ["ALL"] + CI_OBJECTIVES, key="pdv_objective2")
 
-    if pd_brand != "ALL brands" and pd_objective == "ALL":
-        stype, s_mkt, s_obj, s_brand = "MARKET_X_BRAND", pd_market, "ALL", pd_brand
-    else:
+    MIN_CELL_ADS = 60
+    counts = load_ad_counts()
+
+    def _n_ads(brand=None, market=None, objective=None):
+        c = counts
+        for col, v in (("BRAND", brand), ("MARKET", market), ("OBJECTIVE", objective)):
+            if v is not None and v != "ALL":
+                c = c[c[col] == v]
+        return int(pd.to_numeric(c["N"]).sum()) if not c.empty else 0
+
+    fallback_note = None
+    if pd_brand == "ALL brands":
         stype, s_mkt, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_market, pd_objective, "ALL"
-        if pd_brand != "ALL brands":
-            st.info(f"Brand × objective cells are not computed (too few ads), so this view shows all brands for "
-                    f"objective = {pd_objective}. Set objective to ALL to see {pd_brand} on its own.")
+    elif pd_objective != "ALL":
+        # brand x objective cells are not computed; always show all brands for that objective
+        stype, s_mkt, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_market, pd_objective, "ALL"
+        m = _n_ads(pd_brand, pd_market, pd_objective)
+        where = pd_objective if pd_market == "ALL" else f"{pd_market} · {pd_objective}"
+        fallback_note = (where, _n_ads(None, pd_market, pd_objective), m)
+    else:
+        m = _n_ads(pd_brand, pd_market)
+        if pd_market != "ALL" and m < MIN_CELL_ADS:
+            stype, s_mkt, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_market, "ALL", "ALL"
+            fallback_note = (pd_market, _n_ads(None, pd_market), m)
+        else:
+            stype, s_mkt, s_obj, s_brand = "MARKET_X_BRAND", pd_market, "ALL", pd_brand
+    if fallback_note:
+        where, n_all, m = fallback_note
+        st.info(f"Showing all brands in {where} ({n_all} ads) because {pd_brand} alone has {m} ads."
+                + ("" if m < MIN_CELL_ADS else " Brand × objective cells are not computed."))
 
     nl = load_net_lean(stype, s_mkt, s_obj, s_brand)
     tk = load_net_lean_takeaway(stype, s_mkt, s_obj, s_brand)
@@ -1739,15 +1669,16 @@ with tab7:
     else:
         n_ads = int(nl["N_ADS"].iloc[0])
         st.caption(f"Stratum: {nl['STRATUM'].iloc[0]}  ·  {n_ads} ads  ·  adjusted CTR lift controls for log spend, "
-                   f"brand, placement and the other attribute families; 95% bootstrap interval over ads.")
-        if n_ads < 60:
+                   f"brand, placement, market, objective (when not fixed by the filter) and the other attribute families; 95% bootstrap interval over ads.")
+        if n_ads < 60 and not fallback_note:
             st.info(f"Only {n_ads} ads in this cell, so most values will show 'not enough data'. "
                     f"Widen the drill-down (set market or objective to ALL) for more evidence.")
         if not tk.empty:
             st.markdown(f"**Takeaway:** {tk['TAKEAWAY'].iloc[0]}")
 
         nl = nl.copy()
-        nl["LABEL"] = nl["ATTRIBUTE_FAMILY"].str.replace("_", " ") + " = " + nl["ATTRIBUTE_VALUE"]
+        nl["LABEL"] = (nl["ATTRIBUTE_FAMILY"].str.replace("_", " ") + ": " + nl["ATTRIBUTE_VALUE"]
+                       + " vs " + nl["REFERENCE_VALUE"])
         enough = nl[nl["NET_LEAN_CLASS"] != "INSUFFICIENT_DATA"].copy()
         thin = nl[nl["NET_LEAN_CLASS"] == "INSUFFICIENT_DATA"]
 
@@ -1769,49 +1700,85 @@ with tab7:
                 st.error(f"**Worst attribute:** {h['LABEL']}\n\n{h['ADJ_LIFT_PCT']:+.1f}% adjusted CTR "
                          f"(95% CI {h['CI_LOW_PCT']:+.1f}% to {h['CI_HIGH_PCT']:+.1f}%, {int(h['N_ADS_WITH'])} ads)")
 
+        st.markdown("#### Markets at a glance (all brands)")
+        strip = load_market_strip()
+        tiles = st.columns(len(CI_MARKETS))
+        for col, mk in zip(tiles, CI_MARKETS):
+            row = strip[strip["MARKET"] == mk] if not strip.empty else strip
+            with col:
+                if row is not None and not row.empty:
+                    r0 = row.iloc[0]
+                    col.markdown(f"**{mk}** ({int(r0['N_ADS'])} ads)  \nHelped by: {r0['ATTRIBUTE_VALUE']} vs "
+                                 f"{r0['REFERENCE_VALUE']} ({float(r0['ADJ_LIFT_PCT']):+.0f}%)")
+                else:
+                    col.markdown(f"**{mk}**  \nNo clear net driver")
+                if col.button("Selected" if pd_market == mk else f"View {mk}", key=f"pdv_tile_{mk}",
+                              disabled=pd_market == mk):
+                    st.session_state["pdv_market_pending"] = mk
+                    st.experimental_rerun()
+
         st.markdown("#### Net lean by attribute family")
         st.markdown(" ".join(
             f"<span style='display:inline-block;margin:2px 10px 2px 0;font-size:12px;'>"
             f"<span style='display:inline-block;width:11px;height:11px;background:{c};border:1px solid #475569;"
             f"margin-right:5px;vertical-align:middle;'></span>{d}</span>"
             for c, d in CI_CLASS_INFO.values()), unsafe_allow_html=True)
+        st.caption("Lifts are versus the stated reference value. With about 1,000 cells, roughly 1 in 20 cells with "
+                   "no real effect will still be flagged; treat single borderline cells as hypotheses.")
 
         if enough.empty:
             st.info("Every attribute value in this stratum has fewer than 30 ads: not enough data.")
         else:
+            for c in ("ADJ_LIFT_PCT", "CI_LOW_PCT", "CI_HIGH_PCT"):
+                enough[c] = pd.to_numeric(enough[c], errors="coerce").astype(float)
             fam_order = {f: i for i, f in enumerate(CI_FAMILIES)}
             enough["FAM_ORDER"] = enough["ATTRIBUTE_FAMILY"].map(fam_order)
+            # plotly draws horizontal bars bottom-up: reverse so the first family is on top, highest lift first
             enough = enough.sort_values(["FAM_ORDER", "ADJ_LIFT_PCT"], ascending=[False, True])
-            enough["YLABEL"] = [
-                f"{r.LABEL}<br><span style='font-size:10px;color:#94A3B8'>n={int(r.N_ADS_WITH)} ads · "
-                f"95% CI {r.CI_LOW_PCT:+.1f}% to {r.CI_HIGH_PCT:+.1f}%</span>" for r in enough.itertuples()]
+            enough["YLABEL"] = [f"{r.LABEL} (n={int(r.N_ADS_WITH)})" for r in enough.itertuples()]
+            x_max = float(max(enough["CI_HIGH_PCT"].abs().max(), enough["CI_LOW_PCT"].abs().max(),
+                              enough["ADJ_LIFT_PCT"].abs().max(), 5.0)) * 1.15
             fig_nl = go.Figure(go.Bar(
-                x=enough["ADJ_LIFT_PCT"], y=enough["YLABEL"], orientation="h",
+                x=enough["ADJ_LIFT_PCT"].tolist(), y=enough["YLABEL"].tolist(), orientation="h", base=0,
                 marker_color=[CI_CLASS_INFO.get(c, ("#64748B", ""))[0] for c in enough["NET_LEAN_CLASS"]],
                 error_x=dict(type="data", symmetric=False,
-                             array=(enough["CI_HIGH_PCT"] - enough["ADJ_LIFT_PCT"]).fillna(0),
-                             arrayminus=(enough["ADJ_LIFT_PCT"] - enough["CI_LOW_PCT"]).fillna(0), color="#CBD5E1"),
-                text=[f"n={int(n)}" for n in enough["N_ADS_WITH"]], textposition="outside",
+                             array=(enough["CI_HIGH_PCT"] - enough["ADJ_LIFT_PCT"]).fillna(0).tolist(),
+                             arrayminus=(enough["ADJ_LIFT_PCT"] - enough["CI_LOW_PCT"]).fillna(0).tolist(),
+                             color="#CBD5E1", thickness=1.5, width=4),
+                text=[f"{v:+.1f}%" for v in enough["ADJ_LIFT_PCT"]], textposition="none",
                 customdata=[[r.LABEL, CI_CLASS_INFO.get(r.NET_LEAN_CLASS, ("", r.NET_LEAN_CLASS))[1],
                              int(r.N_ADS_WITH), r.CI_LOW_PCT, r.CI_HIGH_PCT] for r in enough.itertuples()],
                 hovertemplate="%{customdata[0]}<br>adjusted lift %{x:+.1f}%<br>95% CI %{customdata[3]:+.1f}% to "
                               "%{customdata[4]:+.1f}%<br>%{customdata[2]} ads<br>%{customdata[1]}<extra></extra>"))
             fig_nl.add_vline(x=0, line_color="#64748B")
-            fig_nl.update_layout(template=PLOTLY_TEMPLATE, height=max(320, 40 * len(enough) + 80),
-                                 margin=dict(t=20, b=40, l=10, r=40), xaxis_title="Adjusted CTR lift % (with 95% interval)")
+            fig_nl.update_layout(template=PLOTLY_TEMPLATE, height=max(320, 28 * len(enough) + 80),
+                                 margin=dict(t=20, b=40, l=10, r=40),
+                                 xaxis=dict(type="linear", range=[-x_max, x_max], zeroline=True, ticksuffix="%",
+                                            title="Adjusted CTR lift % (bar) with 95% interval (whisker); left = hurts, right = helps"),
+                                 yaxis=dict(type="category", categoryorder="array", categoryarray=enough["YLABEL"].tolist()))
             st.plotly_chart(fig_nl, use_container_width=True)
 
             fam_rows = []
             for fam_name in CI_FAMILIES:
                 g = enough[enough["ATTRIBUTE_FAMILY"] == fam_name]
                 if g.empty:
-                    fam_rows.append({"Family": fam_name, "Strongest helper": "not enough data", "Strongest hurter": ""})
+                    fam_rows.append({"Family": fam_name, "Reference": "", "Strongest helper": "not enough data", "Strongest hurter": "-"})
+                    continue
+                if len(CI_FAMILIES[fam_name]) == 2:
+                    r1 = g.iloc[0]
+                    fam_rows.append({
+                        "Family": fam_name, "Reference": r1["REFERENCE_VALUE"],
+                        "Strongest helper": f"{r1['ATTRIBUTE_VALUE']} vs {r1['REFERENCE_VALUE']}: {r1['ADJ_LIFT_PCT']:+.1f}% "
+                                            f"({r1['NET_LEAN_CLASS']}, n={int(r1['N_ADS_WITH'])})",
+                        "Strongest hurter": ""})
                     continue
                 top, low = g.loc[g["ADJ_LIFT_PCT"].idxmax()], g.loc[g["ADJ_LIFT_PCT"].idxmin()]
                 fam_rows.append({
-                    "Family": fam_name,
-                    "Strongest helper": f"{top['ATTRIBUTE_VALUE']} ({top['ADJ_LIFT_PCT']:+.1f}%, {top['NET_LEAN_CLASS']}, n={int(top['N_ADS_WITH'])})",
-                    "Strongest hurter": f"{low['ATTRIBUTE_VALUE']} ({low['ADJ_LIFT_PCT']:+.1f}%, {low['NET_LEAN_CLASS']}, n={int(low['N_ADS_WITH'])})"})
+                    "Family": fam_name, "Reference": top["REFERENCE_VALUE"],
+                    "Strongest helper": (f"{top['ATTRIBUTE_VALUE']} ({top['ADJ_LIFT_PCT']:+.1f}%, {top['NET_LEAN_CLASS']}, "
+                                         f"n={int(top['N_ADS_WITH'])})" if top["ADJ_LIFT_PCT"] > 0 else "-"),
+                    "Strongest hurter": (f"{low['ATTRIBUTE_VALUE']} ({low['ADJ_LIFT_PCT']:+.1f}%, {low['NET_LEAN_CLASS']}, "
+                                         f"n={int(low['N_ADS_WITH'])})" if low["ADJ_LIFT_PCT"] < 0 else "-")})
             show_df(pd.DataFrame(fam_rows))
         if not thin.empty:
             st.caption("Not enough data (< 30 ads with the value): "
@@ -1820,14 +1787,18 @@ with tab7:
         st.markdown("#### Sub-attribute breakdown by family")
         fam = st.selectbox("Attribute family", list(CI_FAMILIES), key="pdv_family")
         fam_df = nl[nl["ATTRIBUTE_FAMILY"] == fam].sort_values("ADJ_LIFT_PCT", ascending=False, na_position="last")
-        show_df(pd.DataFrame([{
-            "Value": r.ATTRIBUTE_VALUE,
+        sub_rows = [{
+            "Value": r.ATTRIBUTE_VALUE, "Reference": r.REFERENCE_VALUE,
             "Adjusted lift": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.ADJ_LIFT_PCT:+.1f}%",
             "95% interval": "" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else f"{r.CI_LOW_PCT:+.1f}% to {r.CI_HIGH_PCT:+.1f}%",
-            "Ads with": int(r.N_ADS_WITH), "Ads without": int(r.N_ADS_WITHOUT),
+            "Ads with": int(r.N_ADS_WITH), "Ads with reference": int(r.N_ADS_REFERENCE),
             "Class": "not enough data" if r.NET_LEAN_CLASS == "INSUFFICIENT_DATA" else r.NET_LEAN_CLASS,
             "Brand-level lifts": "" if r.BRAND_LIFTS_JSON in (None, "{}") else r.BRAND_LIFTS_JSON,
-        } for r in fam_df.itertuples()]))
+        } for r in fam_df.itertuples()]
+        sub_df = pd.DataFrame(sub_rows)
+        if pd_brand != "ALL brands" and "Brand-level lifts" in sub_df:
+            sub_df = sub_df.drop(columns=["Brand-level lifts"])
+        show_df(sub_df)
 
     with st.expander("📇 Model card: CTR predictor", expanded=False):
         mm = load_model_metrics()
@@ -1846,29 +1817,82 @@ with tab7:
                 f"- **Training period:** {m0['TRAIN_START']} to {m0['TRAIN_END']} ({int(m0['N_TRAIN_ROWS'])} ad-weeks).\n"
                 f"- **Holdout period:** {m0['HOLDOUT_START']} to {m0['HOLDOUT_END']} ({int(m0['N_HOLDOUT_ROWS'])} ad-weeks, "
                 f"last 10 weeks, never used for training or calibration).")
-            show = mm[["MODEL", "LEVEL", "N_HOLDOUT", "MAE_CTR_PP", "MAPE_PCT", "R2", "MSE_SKILL_VS_BASELINE",
-                       "P10_P90_COVERAGE"]].rename(columns={
-                "MAE_CTR_PP": "MAE (CTR pp)", "MAPE_PCT": "MAPE %", "MSE_SKILL_VS_BASELINE": "Skill vs baseline",
-                "P10_P90_COVERAGE": "p10-p90 coverage"})
+            def _fmt(v, spec, scale=1.0, suffix=""):
+                v = pd.to_numeric(pd.Series([v]), errors="coerce").iloc[0]
+                return "" if pd.isna(v) else f"{float(v) * scale:{spec}}{suffix}"
+
+            show = pd.DataFrame([{
+                "Model": {"hgb": "Gradient boosting", "ridge": "Ridge", "baseline": "Baseline (brand × placement mean)",
+                          "hgb_quantile_p10_p90_conformal": "p10-p90 range (conformal, used)",
+                          "hgb_quantile_p10_p90_raw": "p10-p90 range (raw quantiles)"}
+                         .get(str(r.MODEL), str(r.MODEL)),
+                "Level": str(r.LEVEL).replace("_", "-"),
+                "Holdout rows": _fmt(r.N_HOLDOUT, ",.0f"),
+                "MAE (CTR pp)": _fmt(r.MAE_CTR_PP, ".3f"),
+                "MAPE": _fmt(r.MAPE_PCT, ".1f", suffix="%"),
+                "R²": _fmt(r.R2, ".3f"),
+                "MSE skill vs baseline": _fmt(r.MSE_SKILL_VS_BASELINE, ".3f"),
+                "p10-p90 coverage": _fmt(r.P10_P90_COVERAGE, ".0f", scale=100, suffix="%"),
+            } for r in mm.itertuples()])
             show_df(show)
             st.caption("Ad level = holdout weeks aggregated per ad before scoring. Coverage target is ~80%. "
                        "Gradient boosting beats Ridge only modestly (ad-week R² gap ~0.04); most of the signal is "
                        "captured by a linear model, and the remaining edge plausibly comes from brand-specific interactions.")
             if not fe.empty:
-                top = fe[fe["RANK"] <= 8].copy()
-                fig_fe = px.bar(top, x="IMPORTANCE_R2_DROP", y="FEATURE", color="MODEL", barmode="group",
-                                orientation="h", template=PLOTLY_TEMPLATE, color_discrete_sequence=[PRIMARY, ACCENT])
-                fig_fe.update_layout(height=420, margin=dict(t=20, b=40), yaxis=dict(categoryorder="total ascending"),
-                                     xaxis_title="Permutation importance (drop in holdout R² on log-odds CTR)")
+                fe = fe.copy()
+                fe["IMPORTANCE_R2_DROP"] = pd.to_numeric(fe["IMPORTANCE_R2_DROP"], errors="coerce").astype(float)
+                point = str(m0["CHOSEN_POINT_MODEL"])
+                order = (fe[fe["MODEL"] == point].sort_values("IMPORTANCE_R2_DROP", ascending=False)["FEATURE"]
+                         .head(10).tolist())
+                fig_fe = go.Figure()
+                for mname, color in [(point, PRIMARY)] + [(m, ACCENT) for m in fe["MODEL"].unique() if m != point]:
+                    sub = fe[(fe["MODEL"] == mname)].set_index("FEATURE").reindex(order)
+                    fig_fe.add_trace(go.Bar(
+                        x=sub["IMPORTANCE_R2_DROP"].tolist(), y=order, orientation="h", marker_color=color,
+                        name={"hgb": "Gradient boosting", "ridge": "Ridge"}.get(mname, mname),
+                        text=["" if pd.isna(v) else f"{v:.3f}" for v in sub["IMPORTANCE_R2_DROP"]], textposition="outside"))
+                fig_fe.update_layout(template=PLOTLY_TEMPLATE, barmode="group", height=460, margin=dict(t=20, b=40, r=60),
+                                     yaxis=dict(type="category", categoryorder="array", categoryarray=order[::-1]),
+                                     xaxis=dict(type="linear", tickformat=".2f",
+                                                title="Permutation importance (drop in holdout R² on log-odds CTR)"))
                 st.plotly_chart(fig_fe, use_container_width=True)
+                st.caption("Top 10 features of the point model, sorted by its importance; the other model is shown for "
+                           "the same features.")
             st.markdown(
                 "**Known limitations**\n"
                 "- Synthetic data with planted effects; brand names are labels only. Not a forecast of real campaigns.\n"
                 "- Small samples: ~40 ads per market × objective cell; many attribute values have < 30 ads and are "
                 "reported as not enough data.\n"
                 "- Wide intervals on small cells; the Predictor's p10-p90 is calibrated overall, not per cell.\n"
-                "- Driver explanations come from the Ridge model (contribution vs an average ad), while the point "
-                "estimate comes from gradient boosting.\n"
-                "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.\n"
-                "- No multiple-comparison correction was applied across the ~1,000 net-lean cells; borderline results "
-                "are hypotheses (for example IN shows one borderline NET_HURT where no effect was planted).")
+                "- The Predictor's per-change contributions are swap tests on the gradient boosting model (re-score B "
+                "with one field reverted), so they include interactions and need not sum to the total.\n"
+                "- Frequency is estimated from budget when not supplied, so budget changes also move frequency.")
+            ne = load_null_effect_rate()
+            if ne is not None:
+                st.markdown(
+                    f"- **False-positive check:** of {int(ne['N_STRATA_TESTED'])} attribute values with no planted CTR "
+                    f"effect (stratum by stratum, enough data), {int(ne['N_FALSE_POSITIVE'])} "
+                    f"({float(ne['FALSE_POSITIVE_SHARE']) * 100:.1f}%) were classified NET_HELPED or NET_HURT. "
+                    f"No multiple-comparison correction is applied.")
+            mec = load_model_effect_check()
+            if not mec.empty:
+                ratios = pd.to_numeric(mec["RATIO_MODEL_TO_PLANTED"], errors="coerce").dropna()
+                shrunk = mec[mec["SHRUNK_MORE_THAN_HALF"].astype(bool)]
+                under = shrunk[shrunk["DIRECTION_MATCH"].astype(bool)]
+                unreliable = shrunk[~shrunk["DIRECTION_MATCH"].astype(bool)]
+                lines = [
+                    f"- **Planted-effect check (model):** scoring a typical ad with one field changed, the predictor's "
+                    f"lift has the planted direction in {int(mec['DIRECTION_MATCH'].astype(bool).sum())}/{len(mec)} "
+                    f"effects, median model/planted ratio {ratios.median():.2f} (planted effects are partly shrunk)."]
+                if not under.empty:
+                    lines.append("- **Interactions the model under-learns** (right direction, less than half the planted "
+                                 "size): " + "; ".join(f"{r.EFFECT} ({r.STRATUM}, ratio {float(r.RATIO_MODEL_TO_PLANTED):.2f})"
+                                                       for r in under.itertuples())
+                                 + ". Predictor lifts here are conservative.")
+                if not unreliable.empty:
+                    lines.append("- **Small planted contrasts where the model's sign is not reliable:** "
+                                 + "; ".join(f"{r.EFFECT} ({r.STRATUM}, planted {float(r.PLANTED_LIFT_PCT):+.1f}%, "
+                                             f"model {float(r.MODEL_LIFT_PCT):+.1f}%)" for r in unreliable.itertuples())
+                                 + ". These differences are within a few percent, so treat the Predictor's direction "
+                                   "for them as noise.")
+                st.markdown("\n".join(lines))

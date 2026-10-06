@@ -5,10 +5,12 @@ inside Snowflake Python procedures and locally).
 Adjusted lift of an attribute value v (family F) inside a stratum:
   1. y = log-odds of ad-level CTR (sum clicks / sum impressions per ad).
   2. Ridge regression of y on one-hot dummies for ALL 8 attribute families (every level kept; the
-     ridge penalty makes it identifiable) plus controls: log weekly spend, brand, placement.
-  3. contrast(v) = beta_v - share-weighted mean of beta_u for the other levels u of F in the stratum.
-     This is "with v vs without v" holding everything else fixed. lift% = (exp(contrast) - 1) * 100.
-  4. 95% interval: percentile bootstrap over ads.
+     ridge penalty makes it identifiable) plus controls: log weekly spend, brand, placement, market,
+     objective (a categorical control is dropped when the stratum has only one level of it).
+  3. contrast(v) = beta_v - beta_ref, where ref is the family's stated reference value (REFERENCE). If the
+     reference has fewer than 30 ads in the stratum, the stratum's most common value is used instead.
+     Binary families (Y/N) are reported as a single Y-vs-N row. lift% = (exp(contrast) - 1) * 100.
+  4. 95% interval: percentile bootstrap over ads, with the reference fixed to the full-stratum choice.
 """
 
 import numpy as np
@@ -22,6 +24,9 @@ BRANDS = ["Nike", "Pepsi", "Samsung"]
 RIDGE_ALPHA = 1.0
 LOW_N = 30
 NEGLIGIBLE_PCT = 3.0
+REFERENCE = {"hook_type": "promo_led", "headline_tone": "conversational", "cta_tone": "informational",
+             "background": "studio", "color_temp": "neutral", "word_count_group": "6-10",
+             "has_person": "N", "has_logo_first_3s": "N"}
 
 AD_LEVEL_SQL = """
 SELECT ad_id, ANY_VALUE(brand) brand, ANY_VALUE(market) market, ANY_VALUE(objective) objective,
@@ -77,33 +82,44 @@ def ridge_fit(X, y, alpha=RIDGE_ALPHA):
     return np.linalg.solve(X.T @ X + np.diag(pen), X.T @ y)
 
 
-def contrasts(df, beta, names, families):
-    """{(family, value): contrast} using share-weighted mean of the other levels."""
+def resolve_refs(df, families=FAMILIES, overrides=None):
+    """{family: reference value} for this stratum: stated reference, else the most common value."""
+    refs = {}
+    for fam in families:
+        counts = df[fam].astype(str).value_counts()
+        ref = (overrides or {}).get(fam, REFERENCE.get(fam))
+        if ref is None or counts.get(ref, 0) < LOW_N:
+            ref = counts.index[0] if len(counts) else ref
+        refs[fam] = ref
+    return refs
+
+
+def contrasts(df, beta, names, families, refs):
+    """{(family, value): beta_value - beta_reference} for every non-reference value present."""
     idx = {n: i for i, n in enumerate(names)}
     out = {}
     for fam in families:
-        counts = df[fam].astype(str).value_counts()
-        levels = [lv for lv in counts.index if (fam, lv) in idx]
-        for v in levels:
-            others = [u for u in levels if u != v]
-            if not others:
-                continue
-            w = counts[others].to_numpy(float)
-            other_mean = np.dot(w, [beta[idx[(fam, u)]] for u in others]) / w.sum()
-            out[(fam, v)] = beta[idx[(fam, v)]] - other_mean
+        ref = refs[fam]
+        if (fam, ref) not in idx:
+            continue
+        for v in df[fam].astype(str).unique():
+            if v != ref and (fam, v) in idx:
+                out[(fam, v)] = beta[idx[(fam, v)]] - beta[idx[(fam, ref)]]
     return out
 
 
-def adjusted_contrasts(df, y, families=FAMILIES, controls_cat=("brand", "placement"),
-                       controls_num=("log_spend_wk",), alpha=RIDGE_ALPHA):
+def adjusted_contrasts(df, y, families=FAMILIES, controls_cat=("brand", "placement", "market", "objective"),
+                       controls_num=("log_spend_wk",), alpha=RIDGE_ALPHA, refs=None):
     X, names = _design(df, list(families), list(controls_cat), list(controls_num))
     beta = ridge_fit(X, np.asarray(y, float), alpha)
-    return contrasts(df, beta, names, families)
+    return contrasts(df, beta, names, families, refs or resolve_refs(df, families))
 
 
-def bootstrap_contrasts(df, y_col="y", n_boot=200, seed=7, **kw):
-    """Point contrasts + percentile 95% intervals, resampling ads with replacement."""
+def bootstrap_contrasts(df, y_col="y", n_boot=200, seed=7, refs=None, **kw):
+    """Point contrasts + percentile 95% intervals, resampling ads with replacement (reference held fixed)."""
     rng = np.random.default_rng(seed)
+    refs = refs or resolve_refs(df, kw.get("families", FAMILIES))
+    kw["refs"] = refs
     point = adjusted_contrasts(df, df[y_col], **kw)
     draws = {k: [] for k in point}
     n = len(df)

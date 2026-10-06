@@ -163,11 +163,11 @@ if __name__ == "__main__":
     from config import EVENT_REGISTRY_API_KEY
 
     result = run_full_intelligence(
-        client_name="UrbanThread",
+        client_name="Nike",
         event_name="FIFA World Cup 2026",
         event_keywords=["FIFA 2026", "World Cup 2026", "football shoes",
                         "Nike FIFA", "Adidas World Cup"],
-        competitors=["Nike", "Adidas", "Puma"],
+        competitors=["Adidas", "Puma"],
         markets=["US", "GB"],
         news_api_key=EVENT_REGISTRY_API_KEY,
     )

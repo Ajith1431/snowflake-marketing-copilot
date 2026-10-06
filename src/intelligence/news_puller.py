@@ -202,9 +202,9 @@ if __name__ == "__main__":
     print("News Puller - Test Run")
     print("=" * 60)
     result = get_news(
-        client_brand="UrbanThread",
+        client_brand="Nike",
         event="FIFA World Cup 2026",
-        competitors=["Nike", "Adidas", "Puma"],
+        competitors=["Adidas", "Puma"],
         api_key=EVENT_REGISTRY_API_KEY,
         days_back=30,
     )

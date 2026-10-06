@@ -51,8 +51,8 @@
     "sqlSource": {
       "queries": [
         {
-          "sqlText": "SELECT fc.CAMPAIGN_NAME, AVG(m.ROAS) AS avg_roas, SUM(m.REVENUE_USD) AS total_revenue, SUM(m.SPEND_USD) AS total_spend FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.CLIENT_NAME = 'LuminaRetail' GROUP BY fc.CAMPAIGN_NAME ORDER BY avg_roas DESC LIMIT 10",
-          "correspondingQuestion": "Which campaigns had the highest ROAS for LuminaRetail?"
+          "sqlText": "SELECT fc.CAMPAIGN_NAME, AVG(m.ROAS) AS avg_roas, SUM(m.REVENUE_USD) AS total_revenue, SUM(m.SPEND_USD) AS total_spend FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.CLIENT_NAME = 'Nike' GROUP BY fc.CAMPAIGN_NAME ORDER BY avg_roas DESC LIMIT 10",
+          "correspondingQuestion": "Which campaigns had the highest ROAS for Nike?"
         },
         {
           "sqlText": "SELECT m.CHANNEL_NAME, SUM(m.SPEND_USD) AS total_spend FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m WHERE YEAR(m.DATE) = 2024 GROUP BY m.CHANNEL_NAME ORDER BY total_spend DESC",
@@ -67,12 +67,12 @@
           "correspondingQuestion": "Compare campaign performance across all clients by industry"
         },
         {
-          "sqlText": "SELECT DATE_TRUNC('MONTH', m.DATE) AS month, SUM(m.REVENUE_USD) AS monthly_revenue FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m WHERE m.CLIENT_NAME = 'TechVista' GROUP BY month ORDER BY month",
-          "correspondingQuestion": "What is the monthly revenue trend for TechVista?"
+          "sqlText": "SELECT DATE_TRUNC('MONTH', m.DATE) AS month, SUM(m.REVENUE_USD) AS monthly_revenue FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m WHERE m.CLIENT_NAME = 'Samsung' GROUP BY month ORDER BY month",
+          "correspondingQuestion": "What is the monthly revenue trend for Samsung?"
         },
         {
-          "sqlText": "SELECT m.CHANNEL_NAME, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr, SUM(m.CONVERSIONS) AS total_conversions FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.INDUSTRY = 'Fashion' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC",
-          "correspondingQuestion": "Which channel performs best for fashion clients?"
+          "sqlText": "SELECT m.CHANNEL_NAME, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr, SUM(m.CONVERSIONS) AS total_conversions FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.INDUSTRY = 'Sportswear' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC",
+          "correspondingQuestion": "Which channel performs best for sportswear clients?"
         },
         {
           "sqlText": "SELECT m.CAMPAIGN_TYPE, AVG(m.CTR) AS avg_ctr FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m GROUP BY m.CAMPAIGN_TYPE ORDER BY avg_ctr DESC",

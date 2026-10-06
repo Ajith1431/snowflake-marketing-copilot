@@ -9,7 +9,7 @@ description: "Retrieves and summarizes all available intelligence for a specific
 Produce a comprehensive intelligence briefing for any NovaSpark Agency client by pulling data from all available sources: structured analytics, customer feedback, and brand guidelines.
 
 ## Inputs
-- `client_name` (required): Name of the client brand (e.g., "LuminaRetail", "TechVista")
+- `client_name` (required): Name of the client brand (e.g., "Nike", "Pepsi", "Samsung")
 
 ## Workflow
 

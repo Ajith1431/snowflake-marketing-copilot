@@ -77,3 +77,12 @@ FROM SEMANTIC_VIEW(
     METRICS total_spend
     DIMENSIONS fact_campaign_metrics.client_name
 );
+
+-- Assertion 9: client set is exactly Nike, Pepsi, Samsung and every fact row belongs to one of them
+SELECT 'T9: clients are exactly Nike, Pepsi, Samsung' AS test_name,
+    CASE WHEN (SELECT LISTAGG(client_name, ',') WITHIN GROUP (ORDER BY client_name) FROM ANALYTICS.DIM_CLIENT) = 'Nike,Pepsi,Samsung'
+          AND (SELECT COUNT(*) FROM ANALYTICS.FACT_CAMPAIGN WHERE client_name NOT IN ('Nike', 'Pepsi', 'Samsung')) = 0
+          AND (SELECT COUNT(*) FROM ANALYTICS.FACT_BRAND_GUIDELINES WHERE client_name NOT IN ('Nike', 'Pepsi', 'Samsung')) = 0
+          AND (SELECT COUNT(*) FROM RAW.EVENT_INTELLIGENCE_RUNS WHERE client_name NOT IN ('Nike', 'Pepsi', 'Samsung')) = 0
+    THEN 'PASS' ELSE 'FAIL' END AS result,
+    (SELECT LISTAGG(client_name, ', ') WITHIN GROUP (ORDER BY client_name) FROM ANALYTICS.DIM_CLIENT) AS clients;

@@ -30,9 +30,6 @@ class Settings:
     JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
     JWT_EXPIRE_MINUTES: int = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
 
-    # ------------------------------------------------------------------ Gemini
-    GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
-
     # ------------------------------------------------------------------ Server
     API_PORT: int = int(os.getenv("API_PORT", "8000"))
     API_HOST: str = os.getenv("API_HOST", "127.0.0.1")
