@@ -79,6 +79,7 @@ def deploy_data(conn):
     print(f"  uploaded {len(CSV_TABLES)} CSV files")
     run_file(conn, "sql/dml/01_load_data.sql")
     run_file(conn, "sql/dml/02_reduce_clients.sql")
+    run_file(conn, "sql/dml/03_future_market_events.sql")
 
 
 def deploy_semantic_view(conn):
@@ -99,7 +100,7 @@ def deploy_agents(conn):
 
 def deploy_app(conn):
     step("9. Streamlit app")
-    for f in ["streamlit/streamlit_app.py", "streamlit/environment.yml"]:
+    for f in ["streamlit/streamlit_app.py", "streamlit/copilot_core.py", "streamlit/environment.yml"]:
         put(conn, f, f"@{DB}.SEMANTIC.STREAMLIT_STAGE/", compress=False)
     run(conn, f"""
         CREATE OR REPLACE STREAMLIT {DB}.SEMANTIC.MARKETING_COPILOT_APP

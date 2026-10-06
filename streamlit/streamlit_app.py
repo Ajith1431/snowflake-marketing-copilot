@@ -12,6 +12,10 @@ from datetime import datetime
 from snowflake.snowpark.context import get_active_session
 import streamlit.components.v1 as components
 
+from copilot_core import (CHANNEL_RATES_SQL, EVENT_CATALOG, build_html_document, clean_agent_markdown,
+                          compute_channel_plan, event_status, intel_prompt, pitch_prompt, plan_rows,
+                          recommendation_prompt, strategy_prompt)
+
 # -- Page config --
 st.set_page_config(page_title="NovaSpark Marketing Co-Pilot", page_icon="📊", layout="wide")
 
@@ -71,113 +75,6 @@ def parse_agent_response(raw_response):
         return str(raw_response)
     except Exception as e:
         return f"Unable to parse response: {str(e)}"
-
-
-def build_html_document(title, subtitle, metadata, content, confidence=None):
-    conf_colours = {
-        "HIGH": ("#00D4AA", "#003D30"),
-        "MEDIUM": ("#FFD700", "#3D3000"),
-        "LOW": ("#FF6B35", "#3D1500"),
-    }
-    conf_bg, conf_text = conf_colours.get(confidence, ("#6B7280", "#1F2937"))
-    conf_badge = (
-        f'<span style="background:{conf_bg};color:{conf_text};padding:4px 12px;'
-        f'border-radius:20px;font-size:12px;font-weight:bold;letter-spacing:1px;">'
-        f'{confidence}</span>'
-    ) if confidence else ""
-
-    meta_pills = "".join([
-        f'<span style="background:#1E293B;color:#94A3B8;padding:4px 12px;'
-        f'border-radius:20px;font-size:12px;margin-right:8px;">'
-        f'<b style="color:#E2E8F0">{k}:</b> {v}</span>'
-        for k, v in metadata.items()
-    ])
-
-    html_content = content
-    html_content = re.sub(
-        r'^### (.+)$',
-        r'<h3 style="color:#00D4AA;margin-top:24px;margin-bottom:8px;font-size:16px;">\1</h3>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'^## (.+)$',
-        r'<h2 style="color:#0068FF;margin-top:32px;margin-bottom:12px;font-size:20px;'
-        r'border-bottom:2px solid #0068FF;padding-bottom:8px;">\1</h2>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'^# (.+)$',
-        r'<h1 style="color:#FFFFFF;font-size:24px;">\1</h1>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'\*\*(.+?)\*\*',
-        r'<strong style="color:#E2E8F0">\1</strong>',
-        html_content)
-    html_content = re.sub(
-        r'^[-*] (.+)$',
-        r'<li style="margin-bottom:6px;color:#CBD5E1;">\1</li>',
-        html_content, flags=re.MULTILINE)
-    html_content = re.sub(
-        r'(<li[^>]*>.*?</li>\n?)+',
-        lambda m: f'<ul style="padding-left:20px;margin:12px 0;">{m.group()}</ul>',
-        html_content, flags=re.DOTALL)
-    html_content = html_content.replace(
-        '---', '<hr style="border:none;border-top:1px solid #1E293B;margin:24px 0;">')
-
-    lines = html_content.split('\n')
-    processed = []
-    for line in lines:
-        stripped = line.strip()
-        if stripped and not stripped.startswith('<'):
-            processed.append(
-                f'<p style="color:#CBD5E1;line-height:1.7;margin-bottom:12px;">{stripped}</p>')
-        else:
-            processed.append(line)
-    html_content = '\n'.join(processed)
-
-    generated_date = datetime.now().strftime('%B %d, %Y at %H:%M')
-
-    return f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{title}</title>
-<style>
-*{{box-sizing:border-box;margin:0;padding:0;}}
-body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0A0E27;color:#CBD5E1;min-height:100vh;padding:40px 20px;}}
-.container{{max-width:900px;margin:0 auto;}}
-.header{{background:linear-gradient(135deg,#0D1117 0%,#1a1f3a 100%);border:1px solid #1E293B;border-top:4px solid #0068FF;border-radius:12px;padding:40px;margin-bottom:32px;}}
-.agency-tag{{color:#0068FF;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}}
-.doc-title{{font-size:32px;font-weight:800;color:#FFFFFF;line-height:1.2;margin-bottom:8px;}}
-.doc-subtitle{{font-size:16px;color:#64748B;margin-bottom:24px;}}
-.meta-row{{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}}
-.content-card{{background:#0D1117;border:1px solid #1E293B;border-radius:12px;padding:40px;margin-bottom:24px;}}
-table{{width:100%;border-collapse:collapse;margin:16px 0;}}
-th{{background:#0068FF;color:white;padding:10px 14px;text-align:left;font-size:13px;font-weight:600;}}
-td{{padding:10px 14px;border-bottom:1px solid #1E293B;color:#CBD5E1;font-size:14px;}}
-tr:nth-child(even) td{{background:#0D1117;}}
-tr:nth-child(odd) td{{background:#111827;}}
-.footer{{text-align:center;padding:32px;color:#374151;font-size:12px;border-top:1px solid #1E293B;margin-top:40px;}}
-.footer span{{color:#0068FF;font-weight:600;}}
-@media print{{body{{background:white;color:black;}}.content-card{{border:1px solid #ddd;}}}}
-</style>
-</head>
-<body>
-<div class="container">
-<div class="header">
-<div class="agency-tag">NovaSpark Agency</div>
-<div class="doc-title">{title}</div>
-<div class="doc-subtitle">{subtitle}</div>
-<div class="meta-row">{meta_pills}{conf_badge}</div>
-</div>
-<div class="content-card">
-{html_content}
-</div>
-<div class="footer">
-Generated by <span>NovaSpark Co-Pilot</span> · Powered by <span>Snowflake Cortex</span> · {generated_date}
-</div>
-</div>
-</body>
-</html>"""
 
 
 def show_df(df):
@@ -476,6 +373,13 @@ def load_channel_history(client_id):
 
 
 @st.cache_data(ttl=300)
+def load_channel_rates(client_id):
+    df = run_query(CHANNEL_RATES_SQL.format(client_id=str(client_id).replace("'", "''")))
+    df.columns = [c.lower() for c in df.columns]
+    return df.to_dict("records")
+
+
+@st.cache_data(ttl=300)
 def load_creative_intelligence(client_name, event_name=""):
     """Top channels, primary segment, brand guardrails and market timing from GET_CREATIVE_INTELLIGENCE."""
     try:
@@ -682,6 +586,7 @@ def render_agent_markdown(raw):
         with st.expander("Technical details"):
             st.code(str(raw))
         return
+    text = clean_agent_markdown(text)
 
     sections = text.split("\n## ")
     if len(sections) > 1:
@@ -820,18 +725,10 @@ with tab1:
 # TAB 2: Campaign Recommendation
 # ============================
 with tab2:
+    tab2_plan = compute_channel_plan(load_channel_rates(client_id), budget, objective)
     if analyze_btn:
         with st.spinner("Analyzing campaign data and generating recommendation..."):
-            prompt = (
-                f"Create a detailed campaign recommendation for {selected_client} "
-                f"for their product '{selected_product}'. "
-                f"Campaign objective: {objective}. "
-                f"Budget: ${budget:,}. "
-                f"Include: recommended channels with budget allocation percentages, "
-                f"target audience segments, expected KPIs (ROAS, impressions, conversions), "
-                f"and strategy rationale. Ground everything in historical performance data. "
-                f"Use markdown headers (## Section Title) to structure each section."
-            )
+            prompt = recommendation_prompt(selected_client, selected_product, objective, budget, tab2_plan)
             response = call_agent_with_auto_continue(
                 'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
                 prompt,
@@ -842,13 +739,21 @@ with tab2:
                 )
             )
             st.session_state["recommendation"] = response
+            st.session_state["recommendation_plan"] = {"client": selected_client, "product": selected_product,
+                                                        "objective": objective, "budget": budget, "plan": tab2_plan}
             st.session_state["recommendation_approved"] = False
 
     if "recommendation" in st.session_state:
         rec = st.session_state["recommendation"]
+        rec_ctx = st.session_state.get("recommendation_plan") or {"plan": tab2_plan}
 
         st.markdown(f"## 📋 Campaign Recommendation")
         st.markdown(f"**Client:** {selected_client} | **Product:** {selected_product} | **Objective:** {objective} | **Budget:** ${budget:,}")
+        st.markdown("#### Channel plan and projected KPIs")
+        show_df(pd.DataFrame(plan_rows(rec_ctx["plan"])))
+        st.caption(f"Channels ranked by historical {rec_ctx['plan']['metric']}; budget split in proportion; each KPI = "
+                   "allocated budget x the channel's pooled historical per-dollar rate (so clicks x CPC = budget). "
+                   "Historical averages from synthetic data, no significance testing.")
         st.divider()
 
         render_agent_markdown(rec)
@@ -877,6 +782,7 @@ with tab2:
         with approve_col:
             if st.button("✅ Approve Recommendation", type="primary", use_container_width=True):
                 st.session_state["recommendation_approved"] = True
+                st.session_state["approved_plan"] = rec_ctx
                 st.success("Recommendation approved! Go to **Generate Pitch** tab.")
         with regen_col:
             if st.button("🔄 Regenerate", use_container_width=True):
@@ -1066,33 +972,27 @@ with tab3:
 # ============================
 with tab4:
     if st.session_state.get("recommendation_approved"):
+        approved = st.session_state.get("approved_plan") or {
+            "client": selected_client, "product": selected_product, "objective": objective, "budget": budget,
+            "plan": compute_channel_plan(load_channel_rates(client_id), budget, objective)}
+        p_client, p_product, p_objective, p_budget = (approved["client"], approved["product"],
+                                                      approved["objective"], approved["budget"])
         st.markdown(f"## 📋 Campaign Pitch")
-        st.markdown(f"**Client:** {selected_client} | **Product:** {selected_product} | **Budget:** ${budget:,} | **Date:** {TODAY}")
+        st.markdown(f"**Client:** {p_client} | **Product:** {p_product} | **Budget:** ${p_budget:,} | **Date:** {TODAY}")
+        st.markdown("#### Approved channel plan and KPIs (from the recommendation, not recomputed)")
+        show_df(pd.DataFrame(plan_rows(approved["plan"])))
         st.divider()
 
         if "pitch_content" not in st.session_state:
             if st.button("📝 Generate Full Pitch", type="primary"):
                 with st.spinner("Generating pitch document (auto-continues if needed)..."):
-                    prompt = (
-                        f"Generate a complete client-ready campaign pitch document for {selected_client}, "
-                        f"product: {selected_product}, objective: {objective}, budget: ${budget:,}. "
-                        f"Include these sections with ## markdown headers: "
-                        f"1. Executive Summary, "
-                        f"2. Client & Product Overview, "
-                        f"3. Campaign Objective & KPIs, "
-                        f"4. Target Audience Analysis, "
-                        f"5. Channel Strategy with budget allocation, "
-                        f"6. Creative Direction (based on brand guidelines), "
-                        f"7. Expected Impact and projected metrics. "
-                        f"End with a Confidence Level (HIGH/MEDIUM/LOW) with explanation. "
-                        f"Make it professional, data-backed, and aligned with the brand voice."
-                    )
+                    prompt = pitch_prompt(p_client, p_product, p_objective, p_budget, approved["plan"])
                     pitch = call_agent_with_auto_continue(
                         'MARKETING_COPILOT.SEMANTIC.MARKETING_COPILOT',
                         prompt,
                         lambda n: (
-                            f"Continue the campaign pitch document you were writing for {selected_client}, "
-                            f"product: {selected_product}. Pick up exactly where you left off. "
+                            f"Continue the campaign pitch document you were writing for {p_client}, "
+                            f"product: {p_product}. Pick up exactly where you left off. "
                             f"Do not repeat sections already written. Complete the remaining sections. "
                             f"This is continuation #{n}."
                         )
@@ -1111,23 +1011,23 @@ with tab4:
 
             pitch_html = build_html_document(
                 title="Campaign Pitch",
-                subtitle=f"{selected_client} — {selected_product}",
-                metadata={"Client": selected_client, "Product": selected_product,
-                          "Objective": objective, "Budget": f"${budget:,}", "Date": TODAY},
+                subtitle=f"{p_client} — {p_product}",
+                metadata={"Client": p_client, "Product": p_product,
+                          "Objective": p_objective, "Budget": f"${p_budget:,}", "Date": TODAY},
                 content=parse_agent_response(pitch)
             )
 
             dl_col, reset_col = st.columns([1, 4])
             with dl_col:
-                safe_product = selected_product.replace(" ", "_").replace("/", "_")
+                safe_product = p_product.replace(" ", "_").replace("/", "_")
                 js_download_button(
                     content=pitch_html,
-                    filename=f"{selected_client}_{safe_product}_pitch.html",
+                    filename=f"{p_client}_{safe_product}_pitch.html",
                     label="⬇️ Download Pitch"
                 )
             with reset_col:
                 if st.button("🔄 Start Over"):
-                    for key in ["recommendation", "recommendation_approved", "pitch_content"]:
+                    for key in ["recommendation", "recommendation_approved", "pitch_content", "recommendation_plan", "approved_plan"]:
                         st.session_state.pop(key, None)
                     st.experimental_rerun()
     else:
@@ -1432,13 +1332,13 @@ with tab5:
     ei_col1, ei_col2 = st.columns([2, 1])
 
     with ei_col1:
-        event_options = [
-            "FIFA World Cup 2026", "Black Friday 2026",
-            "Super Bowl 2025", "Black Friday 2025", "Holiday Season 2025",
-            "Back to School 2025", "Valentine's Day 2026", "Summer Olympics 2028",
-            "New Year Campaign 2026", "Spring Launch 2025"
-        ]
+        event_options = list(EVENT_CATALOG)
         selected_event = st.selectbox("Select Market Event", event_options, key="ei_event")
+        ev_start, ev_end, ev_note = EVENT_CATALOG[selected_event]
+        st.caption(f"{ev_start}{'' if ev_start == ev_end else ' to ' + ev_end} · {event_status(ev_start, ev_end)}"
+                   + (f" · {ev_note}" if ev_note else "")
+                   + " Stored intelligence runs exist for FIFA World Cup 2026 (retrospective, ended July 19, 2026) "
+                     "and Black Friday 2026 (the live example).")
 
         ei_keywords = st.text_input(
             "Event Keywords (comma-separated)",
@@ -1496,17 +1396,10 @@ with tab5:
         # Step 1: Call Internet Intelligence Agent with auto-continue
         progress.progress(10, text="Calling Internet Intelligence Agent...")
         try:
-            intel_prompt = (
-                f"Research the market event '{selected_event}' for client {selected_client}. "
-                f"Keywords: {', '.join(keywords_list)}. "
-                f"Competitors: {', '.join(competitors_list)}. "
-                f"Target markets: {', '.join(markets_list)}. "
-                f"Gather Google Trends data, recent news articles, and web intelligence about "
-                f"competitive positioning and market opportunities for this event."
-            )
+            intel_prompt_text = intel_prompt(selected_client, selected_event, keywords_list, competitors_list, markets_list)
             intel_response = call_agent_with_auto_continue(
                 'MARKETING_COPILOT.SEMANTIC.INTERNET_INTELLIGENCE_AGENT',
-                intel_prompt,
+                intel_prompt_text,
                 lambda n: (
                     f"Continue your research on '{selected_event}' for {selected_client}. "
                     f"Pick up where you left off. Do not repeat sections. Continuation #{n}."
@@ -1575,7 +1468,7 @@ with tab5:
 
         # Agent response — use st.markdown directly to avoid nested expanders
         with st.expander("🤖 Intelligence Agent Findings", expanded=True):
-            clean = parse_agent_response(st.session_state["ei_intel_response"])
+            clean = clean_agent_markdown(parse_agent_response(st.session_state["ei_intel_response"]))
             st.markdown(clean)
 
         # Trends visualization
@@ -1652,23 +1545,11 @@ with tab5:
             if st.button("🧠 Generate Event Strategy", type="primary", key="ei_strategy_btn"):
                 with st.spinner("Strategy Synthesis Agent is building your event strategy (auto-continues if needed)..."):
                     try:
-                        strategy_prompt = (
-                            f"Create a comprehensive event marketing strategy for {selected_client} "
-                            f"targeting the '{selected_event}' event. "
-                            f"Budget: ${ei_budget:,}. Objective: {ei_objective}. "
-                            f"Competitors: {competitors_input}. Markets: {markets_input}. "
-                            f"Include: 1) Channel allocation with percentages, "
-                            f"2) Creative direction and messaging themes, "
-                            f"3) Timeline with key milestones, "
-                            f"4) Expected impact metrics (reach, engagement, conversions), "
-                            f"5) Competitive positioning strategy. "
-                            f"Use ## markdown headers for each section. "
-                            f"Base recommendations on both historical campaign performance data "
-                            f"and current market intelligence."
-                        )
+                        strategy_prompt_text = strategy_prompt(selected_client, selected_event, ei_budget, ei_objective,
+                                                               competitors_input, markets_input)
                         strategy = call_agent_with_auto_continue(
                             'MARKETING_COPILOT.SEMANTIC.STRATEGY_SYNTHESIS_AGENT',
-                            strategy_prompt,
+                            strategy_prompt_text,
                             lambda n: (
                                 f"Continue the event strategy you were writing for {selected_client} "
                                 f"and '{selected_event}'. Pick up where you left off. "

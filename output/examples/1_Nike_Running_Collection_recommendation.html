@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campaign Recommendation</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0A0E27;color:#CBD5E1;min-height:100vh;padding:40px 20px;}
+.container{max-width:900px;margin:0 auto;}
+.header{background:linear-gradient(135deg,#0D1117 0%,#1a1f3a 100%);border:1px solid #1E293B;border-top:4px solid #0068FF;border-radius:12px;padding:40px;margin-bottom:32px;}
+.agency-tag{color:#0068FF;font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;}
+.doc-title{font-size:32px;font-weight:800;color:#FFFFFF;line-height:1.2;margin-bottom:8px;}
+.doc-subtitle{font-size:16px;color:#64748B;margin-bottom:24px;}
+.meta-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.content-card{background:#0D1117;border:1px solid #1E293B;border-radius:12px;padding:40px;margin-bottom:24px;}
+table{width:100%;border-collapse:collapse;margin:16px 0;}
+th{background:#0068FF;color:white;padding:10px 14px;text-align:left;font-size:13px;font-weight:600;}
+td{padding:10px 14px;border-bottom:1px solid #1E293B;color:#CBD5E1;font-size:14px;}
+tr:nth-child(even) td{background:#0D1117;}
+tr:nth-child(odd) td{background:#111827;}
+.footer{text-align:center;padding:32px;color:#374151;font-size:12px;border-top:1px solid #1E293B;margin-top:40px;}
+.footer span{color:#0068FF;font-weight:600;}
+@media print{body{background:white;color:black;}.content-card{border:1px solid #ddd;}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<div class="agency-tag">NovaSpark Agency</div>
+<div class="doc-title">Campaign Recommendation</div>
+<div class="doc-subtitle">Nike — Running Collection</div>
+<div class="meta-row"><span style="background:#1E293B;color:#94A3B8;padding:4px 12px;border-radius:20px;font-size:12px;margin-right:8px;"><b style="color:#E2E8F0">Client:</b> Nike</span><span style="background:#1E293B;color:#94A3B8;padding:4px 12px;border-radius:20px;font-size:12px;margin-right:8px;"><b style="color:#E2E8F0">Product:</b> Running Collection</span><span style="background:#1E293B;color:#94A3B8;padding:4px 12px;border-radius:20px;font-size:12px;margin-right:8px;"><b style="color:#E2E8F0">Objective:</b> Brand Awareness</span><span style="background:#1E293B;color:#94A3B8;padding:4px 12px;border-radius:20px;font-size:12px;margin-right:8px;"><b style="color:#E2E8F0">Budget:</b> $200,000</span><span style="background:#1E293B;color:#94A3B8;padding:4px 12px;border-radius:20px;font-size:12px;margin-right:8px;"><b style="color:#E2E8F0">Date:</b> 2026-10-06</span></div>
+</div>
+<div class="content-card">
+<h2 style="color:#0068FF;margin-top:32px;margin-bottom:12px;font-size:20px;border-bottom:2px solid #0068FF;padding-bottom:8px;">Campaign Recommendation — Nike "Running Collection" | Brand Awareness | $200,000</h2>
+
+<strong style="color:#E2E8F0">Overall confidence: MEDIUM.</strong> Channel rankings and projected KPIs are historical averages drawn from synthetic campaign data with no significance testing, so the relative ranking of channels should be treated as directional. Audience and creative guidance below are grounded in Nike brand documentation and Running Collection channel history.
+
+<h2 style="color:#0068FF;margin-top:32px;margin-bottom:12px;font-size:20px;border-bottom:2px solid #0068FF;padding-bottom:8px;">Channel Plan &amp; Projected KPIs</h2>
+
+<p style="color:#CBD5E1;line-height:1.7;margin-bottom:12px;">The plan below is used exactly as provided — channels ranked by historical impressions per dollar, with KPIs derived from pooled historical per-dollar rates (so clicks × CPC reconciles to the allocated budget). The "campaigns behind rates" column is the sample size behind each channel's per-dollar figures.</p>
+
+<table>
+<tr><th>Channel</th><th>Allocation</th><th>Budget</th><th>Campaigns behind rates</th><th>Impressions</th><th>Clicks</th><th>CPC</th><th>Conversions</th><th>Revenue</th><th>ROAS</th></tr>
+<tr><td>TikTok</td><td>25%</td><td>$50,000</td><td>17</td><td>6,666,486</td><td>195,704</td><td>$0.26</td><td>8,562</td><td>$127,195</td><td>2.54x</td></tr>
+<tr><td>Facebook</td><td>25%</td><td>$50,000</td><td>18</td><td>6,656,896</td><td>190,122</td><td>$0.26</td><td>9,302</td><td>$125,682</td><td>2.51x</td></tr>
+<tr><td>Programmatic Display</td><td>25%</td><td>$50,000</td><td>10</td><td>6,604,025</td><td>230,761</td><td>$0.22</td><td>10,235</td><td>$101,892</td><td>2.04x</td></tr>
+<tr><td>Google Search</td><td>25%</td><td>$50,000</td><td>10</td><td>6,557,410</td><td>131,847</td><td>$0.38</td><td>6,409</td><td>$127,094</td><td>2.54x</td></tr>
+<tr><td><strong style="color:#E2E8F0">Total</strong></td><td><strong style="color:#E2E8F0">100%</strong></td><td><strong style="color:#E2E8F0">$200,000</strong></td><td></td><td><strong style="color:#E2E8F0">26,484,817</strong></td><td><strong style="color:#E2E8F0">748,434</strong></td><td><strong style="color:#E2E8F0">$0.27</strong></td><td><strong style="color:#E2E8F0">34,508</strong></td><td><strong style="color:#E2E8F0">$481,862</strong></td><td><strong style="color:#E2E8F0">2.41x</strong></td></tr>
+</table>
+
+
+
+
+
+<strong style="color:#E2E8F0">Headline projections:</strong> ~26.5M impressions, ~748K clicks at a blended $0.27 CPC, ~34,508 conversions, ~$481,862 revenue, and a blended 2.41x ROAS on the $200K spend. The four channels are near-parity on impressions (the awareness KPI), which supports an even 25% split; TikTok and Google Search lead on efficiency (2.54x ROAS), while Programmatic Display delivers the most clicks and conversions but the lowest ROAS (2.04x).
+
+<h2 style="color:#0068FF;margin-top:32px;margin-bottom:12px;font-size:20px;border-bottom:2px solid #0068FF;padding-bottom:8px;">Target Audience Segments</h2>
+
+<p style="color:#CBD5E1;line-height:1.7;margin-bottom:12px;">Nike's brand guidance requires each brief to name at least two personas and to let data drive persona refinement rather than assumptions. Nike's primary audience is decision-makers aged 25–54 who value quality and innovation, with a secondary digital-native audience aged 18–24 who discover brands on social platforms. Mapping that to Nike's registered segments, the recommended targeting for the Running Collection is:</p>
+<ul style="padding-left:20px;margin:12px 0;"><li style="margin-bottom:6px;color:#CBD5E1;"><strong style="color:#E2E8F0">Athleisure Fans (22–39, balanced gender, medium income; ~1.44M reach)</strong> — core running/active lifestyle buyers; anchor segment for TikTok and Facebook social reach.</li>
+<li style="margin-bottom:6px;color:#CBD5E1;"><strong style="color:#E2E8F0">Occasion Shoppers (25–44, female-leaning, medium-high income; ~1.67M reach)</strong> — Nike's largest addressable segment; strong fit for Programmatic Display prospecting.</li>
+<li style="margin-bottom:6px;color:#CBD5E1;"><strong style="color:#E2E8F0">Luxury Fashion Buyers (25–49, female-leaning, high income; ~1.53M reach)</strong> — premium runners/athleisure crossover; aligns with Nike's quality-and-innovation positioning on Google Search intent.</li>
+<li style="margin-bottom:6px;color:#CBD5E1;"><strong style="color:#E2E8F0">Streetwear Enthusiasts (18–29, balanced; ~196K reach)</strong> — the digital-native 18–24 secondary audience, best activated on TikTok.</li>
+</ul>
+<p style="color:#CBD5E1;line-height:1.7;margin-bottom:12px;">Lead with Athleisure Fans + Occasion Shoppers as the two required primary personas, with Streetwear Enthusiasts as a TikTok-specific youth layer.</p>
+
+<h2 style="color:#0068FF;margin-top:32px;margin-bottom:12px;font-size:20px;border-bottom:2px solid #0068FF;padding-bottom:8px;">Strategy Rationale (grounded in historical data)</h2>
+
+<p style="color:#CBD5E1;line-height:1.7;margin-bottom:12px;">Nike's own Running Collection history reinforces the plan's channel mix and sets realistic efficiency expectations. In historical Running Collection campaigns:</p>
+<ul style="padding-left:20px;margin:12px 0;"><li style="margin-bottom:6px;color:#CBD5E1;"><strong style="color:#E2E8F0">Social (TikTok, Facebook)</strong> has been the awareness workhorse — TikTok delivered ~26.1M impressions across <strong style="color:#E2E8F0">5 campaigns</strong> (avg ROAS 2.44x) and Facebook ~18.5M across <strong style="color:#E2E8F0">5 campaigns</strong> (avg ROAS 2.02x). This supports the 25%/25% social allocation for top-of-funnel reach.</li>
+<li style="margin-bottom:6px;color:#CBD5E1;"><strong style="color:#E2E8F0">Programmatic Display</strong> generated ~22.7M impressions across <strong style="color:#E2E8F0">3 campaigns</strong> at a lower historical avg ROAS (~1.97x), consistent with its role in the plan as the volume/efficiency-on-clicks channel rather than the revenue driver.</li>
+<li style="margin-bottom:6px;color:#CBD5E1;"><strong style="color:#E2E8F0">Google Search</strong> historically carried the highest avg ROAS (~3.89x) but on a small base of <strong style="color:#E2E8F0">2 campaigns</strong> and lower impression volume (~5.4M) — so it earns its 25% awareness share for capturing high-intent runners, but the small sample is a reason to keep confidence at MEDIUM.</li>
+</ul>
+<p style="color:#CBD5E1;line-height:1.7;margin-bottom:12px;">Because the ranking is built on pooled per-dollar rates with uneven and modest sample sizes (10–18 campaigns per channel in the plan; as few as 2–5 in Nike-specific Running history), treat the channel ordering as directional and validate in-flight.</p>
+
+<strong style="color:#E2E8F0">Creative &amp; messaging direction.</strong> Nike's voice is bold, elegant, and expressive, speaking to the audience as a trusted advisor and always empowering the reader to take confident action; tone should skew casual on TikTok/Facebook and more authoritative where appropriate. Follow the messaging hierarchy Brand Promise → Category Message → Product Message → Call to Action, lead with benefits over features, include a clear measurable CTA, and A/B test headlines before scaling. Keep competitive framing to Nike's own strengths — never disparage rivals directly — and substantiate any competitive claims with data and legal approval.
+
+<strong style="color:#E2E8F0">Market timing.</strong> Upcoming cultural moments favor a running/sportswear awareness push: the FIFA Women's World Cup 2027 (hosted by Brazil) is a major moment for football sponsorship and women's sports marketing, Coachella is a key youth-marketing and fashion-collaboration moment that pairs well with the TikTok/Streetwear layer, and Valentine's Day 2027 is a gifting window for apparel and wearables. Align flighting and creative refreshes to these windows, with the female-leaning segments (Occasion Shoppers, Luxury Fashion Buyers) emphasized around the Women's World Cup narrative.
+
+<strong style="color:#E2E8F0">Measurement.</strong> Primary KPI is impressions/reach (awareness objective); secondary diagnostics are CTR, CPC, conversions, and ROAS against the projected 2.41x blended benchmark. Hold Google Search and Programmatic Display to in-flight review given their smaller historical sample, and reallocate toward TikTok/Facebook if social efficiency holds at the projected ~$0.26 CPC and ~2.5x ROAS.
+<p style="color:#64748B;font-size:12px;margin-top:24px;"><em>Charts shown in the app are not included in this download; the figures behind them are in the tables above.</em></p>
+</div>
+<div class="footer">
+Generated by <span>NovaSpark Co-Pilot</span> · Powered by <span>Snowflake Cortex</span> · October 06, 2026 at 14:37
+</div>
+</div>
+</body>
+</html>

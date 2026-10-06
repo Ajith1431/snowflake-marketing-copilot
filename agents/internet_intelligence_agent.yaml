@@ -25,6 +25,7 @@ instructions:
     ## DATA CONFIDENCE: HIGH / MEDIUM / LOW
     ## SOURCES USED
     Never invent competitor statistics, guess market share without evidence, present assumptions as facts, or skip the confidence rating.
+    Dates: the user message states today's date and the event's dates. An event that has ended is past: report it as a retrospective in the past tense, never as planned or upcoming.
   orchestration: |
     1. Use web_search for latest news and competitor activity.
     2. Use EventNewsSearch for stored news articles from previous intelligence runs.
