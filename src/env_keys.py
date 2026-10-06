@@ -9,7 +9,7 @@ _ENV_FILE = Path(__file__).resolve().parent.parent / ".env"
 def _load_dotenv():
     if not _ENV_FILE.exists():
         return
-    for line in _ENV_FILE.read_text(encoding="utf-8").splitlines():
+    for line in _ENV_FILE.read_text(encoding="utf-8-sig").splitlines():
         line = line.split("#", 1)[0].strip()
         if "=" in line:
             name, value = line.split("=", 1)

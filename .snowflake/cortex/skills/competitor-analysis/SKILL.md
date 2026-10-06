@@ -106,8 +106,7 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE(
 ```json
 {
   "comparison_matrix": [
-    {"brand": "UrbanThread", "brand_type": "OUR_BRAND", "media_presence": "-", "sentiment": "Positive", "estimated_threat": "N/A"},
-    {"brand": "Nike", "brand_type": "COMPETITOR", "media_presence": "HIGH", "sentiment": "Neutral", "estimated_threat": "HIGH"},
+    {"brand": "Nike", "brand_type": "OUR_BRAND", "media_presence": "-", "sentiment": "Positive", "estimated_threat": "N/A"},
     {"brand": "Adidas", "brand_type": "COMPETITOR", "media_presence": "MEDIUM", "sentiment": "Neutral", "estimated_threat": "MEDIUM"},
     {"brand": "Puma", "brand_type": "COMPETITOR", "media_presence": "LOW", "sentiment": "Positive", "estimated_threat": "LOW"}
   ],
@@ -131,8 +130,7 @@ SELECT SNOWFLAKE.CORTEX.COMPLETE(
 ```
 Brand         | Presence | Sentiment | Score | Threat
 ------------------------------------------------------
-UrbanThread   | -        | Positive  |  0.20 | N/A (us)
-Nike          | HIGH     | Neutral   | -0.20 | HIGH
+Nike          | -        | Positive  |  0.20 | N/A (us)
 Adidas        | MEDIUM   | Neutral   |  0.00 | MEDIUM
 Puma          | LOW      | Positive  |  0.10 | LOW
 ------------------------------------------------------

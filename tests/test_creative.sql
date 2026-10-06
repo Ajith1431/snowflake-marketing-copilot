@@ -44,6 +44,17 @@ SELECT 'C5: NET_LEAN class rules hold' AS test_name,
            'PASS', 'FAIL') AS result, '' AS detail
 FROM NET_LEAN;
 
+-- C12: reference coding: every row names a reference, no value is its own reference, binary families have one row
+SELECT 'C12: NET_LEAN reference coding consistent' AS test_name,
+       IFF(COUNT_IF(reference_value IS NULL OR reference_value = attribute_value) = 0
+           AND (SELECT COUNT(*) FROM (SELECT stratum_type, market, objective, brand, attribute_family FROM NET_LEAN
+                WHERE attribute_family IN ('has_person', 'has_logo_first_3s')
+                GROUP BY ALL HAVING COUNT(*) <> 1)) = 0
+           AND COUNT_IF(NOT reference_is_fallback AND attribute_family = 'hook_type' AND reference_value <> 'promo_led') = 0,
+           'PASS', 'FAIL') AS result,
+       COUNT_IF(reference_is_fallback)::VARCHAR || ' rows use a fallback reference' AS detail
+FROM NET_LEAN;
+
 -- C6: MODEL_METRICS has rows for baseline, ridge, hgb at both levels, and coverage rows
 SELECT 'C6: MODEL_METRICS populated' AS test_name,
        IFF(COUNT_IF(model IN ('baseline', 'ridge', 'hgb')) = 6 AND COUNT_IF(p10_p90_coverage IS NOT NULL) >= 2,
@@ -69,6 +80,32 @@ FROM (SELECT $1 AS r FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
 -- C9: answer-key table is not readable by agent / MCP roles
 SHOW GRANTS ON TABLE EFFECT_RECOVERY;
 SELECT 'C9: EFFECT_RECOVERY has no grants beyond ownership' AS test_name,
+       IFF(COUNT_IF("privilege" <> 'OWNERSHIP') = 0, 'PASS', 'FAIL') AS result,
+       COUNT(*)::VARCHAR || ' grant rows' AS detail
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+-- C10: false-positive check exists and has a total row with a valid share
+SELECT 'C10: NULL_EFFECT_CHECK total row present, share in [0,1]' AS test_name,
+       IFF(COUNT(*) = 1 AND MIN(false_positive_share) BETWEEN 0 AND 1 AND MIN(n_strata_tested) > 0, 'PASS', 'FAIL') AS result,
+       'rate=' || MIN(false_positive_share)::VARCHAR AS detail
+FROM NULL_EFFECT_CHECK WHERE attribute_family = 'ALL';
+
+-- C11: false-positive check (derived from the answer key) is not readable by agent / MCP roles
+SHOW GRANTS ON TABLE NULL_EFFECT_CHECK;
+SELECT 'C11: NULL_EFFECT_CHECK has no grants beyond ownership' AS test_name,
+       IFF(COUNT_IF("privilege" <> 'OWNERSHIP') = 0, 'PASS', 'FAIL') AS result,
+       COUNT(*)::VARCHAR || ' grant rows' AS detail
+FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));
+
+-- C13: model-level planted-effect check is populated
+SELECT 'C13: MODEL_EFFECT_CHECK populated' AS test_name,
+       IFF(COUNT(*) >= 20 AND COUNT_IF(direction_match IS NULL) = 0, 'PASS', 'FAIL') AS result,
+       COUNT_IF(direction_match)::VARCHAR || '/' || COUNT(*)::VARCHAR || ' direction match' AS detail
+FROM MODEL_EFFECT_CHECK;
+
+-- C14: model-level check (derived from the answer key) is not readable by agent / MCP roles
+SHOW GRANTS ON TABLE MODEL_EFFECT_CHECK;
+SELECT 'C14: MODEL_EFFECT_CHECK has no grants beyond ownership' AS test_name,
        IFF(COUNT_IF("privilege" <> 'OWNERSHIP') = 0, 'PASS', 'FAIL') AS result,
        COUNT(*)::VARCHAR || ' grant rows' AS detail
 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID()));

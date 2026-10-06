@@ -130,7 +130,7 @@ def get_web_intelligence(
     queries.append(f"{event} consumer sentiment social media")
     market_str = markets[0] if markets else "US"
     queries.append(f"best marketing channels {event} {market_str}")
-    queries.append(f"competitor advertising {event} fashion apparel")
+    queries.append(f"competitor advertising {event} {client_brand} category")
 
     raw_responses = []
     competitor_themes = {c: [] for c in competitors}
@@ -218,9 +218,9 @@ if __name__ == "__main__":
     print("Web Intelligence Puller - Test Run")
     print("=" * 60)
     result = get_web_intelligence(
-        client_brand="UrbanThread",
+        client_brand="Nike",
         event="FIFA World Cup 2026",
-        competitors=["Nike", "Adidas", "Puma"],
+        competitors=["Adidas", "Puma"],
         markets=["US", "GB"],
     )
     print(f"\nQueries run: {result['queries_run']}")
