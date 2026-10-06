@@ -35,7 +35,7 @@ Pick top 3-4 channels by historical ROAS for this client. If no history, use ind
 - Technology: LinkedIn, Google Search, YouTube, Programmatic Display
 - Healthcare: Facebook, Google Search, Email, YouTube
 - Finance: LinkedIn, Google Search, Programmatic Display, Email
-- Fashion: Instagram, TikTok, YouTube, Facebook
+- Sportswear / Fashion: Instagram, TikTok, YouTube, Facebook
 - (other industries use balanced mix)
 
 ### Step 3: Allocate Budget

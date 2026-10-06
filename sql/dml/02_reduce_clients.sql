@@ -54,3 +54,13 @@ UPDATE RAW_CUSTOMER_FEEDBACK SET feedback_text =
       'FC-OrganicBites', 'Sparkling Citrus'), 'FC-SnackAttack', 'Energy Drink'), 'FC-MealPrep Pro', 'Energy Drink'),
       'TV-CloudSync Pro', 'Flagship Smartphone'), 'TV-SecureNet', 'Flagship Smartphone'), 'TV-DevKit Starter', 'Flagship Smartphone'),
       'TV-DataVault', 'Smart TV'), 'TV-AI Insights', 'Wearables');
+
+-- Nike is a sportswear brand: industry and guideline wording (one-word swap, meaning unchanged)
+UPDATE RAW_CLIENTS SET industry = 'Sportswear' WHERE client_id = 'C010';
+UPDATE RAW_BRAND_GUIDELINES SET
+    section_title  = REPLACE(REPLACE(section_title,  'fashion', 'sportswear'), 'Fashion', 'Sportswear'),
+    guideline_text = REPLACE(REPLACE(guideline_text, 'fashion', 'sportswear'), 'Fashion', 'Sportswear'),
+    dos            = REPLACE(REPLACE(dos,            'fashion', 'sportswear'), 'Fashion', 'Sportswear'),
+    donts          = REPLACE(REPLACE(donts,          'fashion', 'sportswear'), 'Fashion', 'Sportswear'),
+    tone_keywords  = REPLACE(REPLACE(tone_keywords,  'fashion', 'sportswear'), 'Fashion', 'Sportswear')
+WHERE client_id = 'C010';

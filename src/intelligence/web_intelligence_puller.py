@@ -130,7 +130,7 @@ def get_web_intelligence(
     queries.append(f"{event} consumer sentiment social media")
     market_str = markets[0] if markets else "US"
     queries.append(f"best marketing channels {event} {market_str}")
-    queries.append(f"competitor advertising {event} fashion apparel")
+    queries.append(f"competitor advertising {event} {client_brand} category")
 
     raw_responses = []
     competitor_themes = {c: [] for c in competitors}

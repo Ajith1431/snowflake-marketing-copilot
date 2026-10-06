@@ -483,14 +483,14 @@ verified_queries:
     verified_by: NovaSpark Agency
     verified_at: 1724889600
 
-  - name: best_channel_fashion
-    question: Which channel performs best for fashion clients?
+  - name: best_channel_sportswear
+    question: Which channel performs best for sportswear clients?
     sql: >-
       SELECT m.CHANNEL_NAME, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr,
         SUM(m.CONVERSIONS) AS total_conversions
       FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
       JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID
-      WHERE fc.INDUSTRY = 'Fashion' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC
+      WHERE fc.INDUSTRY = 'Sportswear' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC
     verified_by: NovaSpark Agency
     verified_at: 1724889600
 

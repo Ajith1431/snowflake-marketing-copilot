@@ -100,7 +100,7 @@ The generator produces 12 fictional clients; `sql/dml/02_reduce_clients.sql` (ru
 
 | Client | Industry | Generated as |
 |---|---|---|
-| Nike | Fashion | UrbanThread (C010) |
+| Nike | Sportswear | UrbanThread (C010) |
 | Pepsi | Food & Beverage | FlavorCo (C009) |
 | Samsung | Technology | TechVista (C002) |
 
@@ -170,7 +170,7 @@ BRIDGE_CAMPAIGN_SEGMENT ─SEGMENT_ID──► DIM_AUDIENCE_SEGMENT
 
 11 metrics: TOTAL_IMPRESSIONS, TOTAL_CLICKS, TOTAL_CONVERSIONS, TOTAL_SPEND, TOTAL_REVENUE, AVG_CTR, AVG_ROAS, AVG_CPC, AVG_CONVERSION_RATE (FACT_CAMPAIGN_METRICS); TOTAL_BUDGET, CAMPAIGN_COUNT (FACT_CAMPAIGN).
 
-10 verified queries: highest-ROAS campaigns for Nike; spend by channel in 2024; best-converting segment; performance by industry; Samsung monthly revenue; best channel for fashion; CTR by campaign type; top 5 campaigns by ROI; lowest-CPC segment; budget vs actual spend by client.
+10 verified queries: highest-ROAS campaigns for Nike; spend by channel in 2024; best-converting segment; performance by industry; Samsung monthly revenue; best channel for sportswear; CTR by campaign type; top 5 campaigns by ROI; lowest-CPC segment; budget vs actual spend by client.
 
 ### 4.2 Cortex Search services
 **File:** `sql/ddl/07_cortex_search.sql` (TARGET_LAG 1 hour, embedding model snowflake-arctic-embed-m-v1.5)

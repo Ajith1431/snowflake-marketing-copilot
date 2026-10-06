@@ -70,7 +70,7 @@ Marketing agencies spend significant time manually assembling campaign performan
 ## Data Sources
 
 All data is synthetic, generated to simulate a realistic full-service marketing agency:
-- 3 client brands: Nike (Fashion), Pepsi (Food & Beverage), Samsung (Technology)
+- 3 client brands: Nike (Sportswear), Pepsi (Food & Beverage), Samsung (Technology)
 - 150 campaigns (2023-2025) with daily metrics across 10 channels
 - 2,522 customer profiles across 17 audience segments
 - 6,316 customer feedback records with sentiment scores

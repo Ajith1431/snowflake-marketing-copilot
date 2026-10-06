@@ -71,8 +71,8 @@
           "correspondingQuestion": "What is the monthly revenue trend for Samsung?"
         },
         {
-          "sqlText": "SELECT m.CHANNEL_NAME, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr, SUM(m.CONVERSIONS) AS total_conversions FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.INDUSTRY = 'Fashion' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC",
-          "correspondingQuestion": "Which channel performs best for fashion clients?"
+          "sqlText": "SELECT m.CHANNEL_NAME, AVG(m.ROAS) AS avg_roas, AVG(m.CTR) AS avg_ctr, SUM(m.CONVERSIONS) AS total_conversions FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID WHERE fc.INDUSTRY = 'Sportswear' GROUP BY m.CHANNEL_NAME ORDER BY avg_roas DESC",
+          "correspondingQuestion": "Which channel performs best for sportswear clients?"
         },
         {
           "sqlText": "SELECT m.CAMPAIGN_TYPE, AVG(m.CTR) AS avg_ctr FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m GROUP BY m.CAMPAIGN_TYPE ORDER BY avg_ctr DESC",
