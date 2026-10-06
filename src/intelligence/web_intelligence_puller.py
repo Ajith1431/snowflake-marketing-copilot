@@ -218,9 +218,9 @@ if __name__ == "__main__":
     print("Web Intelligence Puller - Test Run")
     print("=" * 60)
     result = get_web_intelligence(
-        client_brand="UrbanThread",
+        client_brand="Nike",
         event="FIFA World Cup 2026",
-        competitors=["Nike", "Adidas", "Puma"],
+        competitors=["Adidas", "Puma"],
         markets=["US", "GB"],
     )
     print(f"\nQueries run: {result['queries_run']}")

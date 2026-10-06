@@ -35,7 +35,7 @@ tables:
         expr: CLIENT_ID
         data_type: VARCHAR
       - name: CLIENT_NAME
-        description: Name of the client brand (e.g., LuminaRetail, TechVista)
+        description: Name of the client brand (e.g., Nike, Pepsi, Samsung)
         expr: CLIENT_NAME
         data_type: VARCHAR
       - name: CAMPAIGN_NAME
@@ -431,14 +431,14 @@ relationships:
     relationship_type: many_to_one
 
 verified_queries:
-  - name: highest_roas_luminaRetail
-    question: Which campaigns had the highest ROAS for LuminaRetail?
+  - name: highest_roas_nike
+    question: Which campaigns had the highest ROAS for Nike?
     sql: >-
       SELECT fc.CAMPAIGN_NAME, AVG(m.ROAS) AS avg_roas,
         SUM(m.REVENUE_USD) AS total_revenue, SUM(m.SPEND_USD) AS total_spend
       FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
       JOIN MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN fc ON m.CAMPAIGN_ID = fc.CAMPAIGN_ID
-      WHERE fc.CLIENT_NAME = 'LuminaRetail'
+      WHERE fc.CLIENT_NAME = 'Nike'
       GROUP BY fc.CAMPAIGN_NAME ORDER BY avg_roas DESC LIMIT 10
     verified_by: NovaSpark Agency
     verified_at: 1724889600
@@ -474,12 +474,12 @@ verified_queries:
     verified_by: NovaSpark Agency
     verified_at: 1724889600
 
-  - name: techvista_monthly_revenue
-    question: What is the monthly revenue trend for TechVista?
+  - name: samsung_monthly_revenue
+    question: What is the monthly revenue trend for Samsung?
     sql: >-
       SELECT DATE_TRUNC('MONTH', m.DATE) AS month, SUM(m.REVENUE_USD) AS monthly_revenue
       FROM MARKETING_COPILOT.ANALYTICS.FACT_CAMPAIGN_METRICS m
-      WHERE m.CLIENT_NAME = 'TechVista' GROUP BY month ORDER BY month
+      WHERE m.CLIENT_NAME = 'Samsung' GROUP BY month ORDER BY month
     verified_by: NovaSpark Agency
     verified_at: 1724889600
 

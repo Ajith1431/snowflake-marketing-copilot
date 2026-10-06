@@ -3,15 +3,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.creative.creative_studio import generate_creative_assets, build_assets_zip
 from src.env_keys import get_secret
 
-print("Generating creative assets for CareWell CW-FitTrack...")
+print("Generating creative assets for Nike UT-ActiveWear...")
 assets = generate_creative_assets(
-    client_name="CareWell",
-    product_name="CW-FitTrack",
+    client_name="Nike",
+    product_name="UT-ActiveWear",
     campaign_objective="Brand Awareness",
-    target_audience="Adults 25-45, health-conscious",
+    target_audience="Adults 18-34, active lifestyle",
     brand_colours="#0068FF, #00D4AA, #FF6B35",
     tone_keywords="bold, modern, confident, approachable",
-    creative_direction="Clean modern lifestyle visuals showing fitness tracking in everyday life",
+    creative_direction="Clean modern lifestyle visuals showing athleisure in everyday training",
     gemini_api_key=get_secret("GEMINI_API_KEY"),
     event_name="Super Bowl 2025"
 )

@@ -78,6 +78,7 @@ def deploy_data(conn):
         put(conn, csv, f"@{DB}.RAW.MARKETING_STAGE/{name}/", compress=True)
     print(f"  uploaded {len(CSV_TABLES)} CSV files")
     run_file(conn, "sql/dml/01_load_data.sql")
+    run_file(conn, "sql/dml/02_reduce_clients.sql")
 
 
 def deploy_semantic_view(conn):

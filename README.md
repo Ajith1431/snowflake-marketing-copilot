@@ -3,7 +3,7 @@
 AI-powered marketing intelligence platform for agency teams. It analyzes campaign performance, generates data-backed recommendations and pitches, researches market events live, and produces creative briefs grounded in each client's own data. Built on Snowflake Cortex and Streamlit in Snowflake.
 
 **Hackathon:** Snowflake CoCo CLI Hackathon (GCC Edition)
-**Agency:** NovaSpark Agency (fictional, 12 client brands)
+**Agency:** NovaSpark Agency (fictional; 3 client brands: Nike, Pepsi, Samsung; data is synthetic)
 **Deployed account:** CLVULGZ-ZJ61620 · database `MARKETING_COPILOT`
 
 **Full documentation:** [docs/marketing_copilot_complete_documentation.md](docs/marketing_copilot_complete_documentation.md)

@@ -533,6 +533,23 @@ def load_net_lean(stratum_type, market, objective, brand_label):
 
 
 @st.cache_data(ttl=300)
+def load_ad_counts():
+    return run_query("SELECT brand, market, objective, COUNT(*) AS n FROM MARKETING_COPILOT.CREATIVE.DIM_AD GROUP BY 1, 2, 3")
+
+
+@st.cache_data(ttl=300)
+def load_market_strip():
+    """Strongest NET_HELPED value per market, all brands, all objectives."""
+    return run_query("""
+        SELECT market, attribute_family, attribute_value, reference_value, adj_lift_pct, n_ads
+        FROM MARKETING_COPILOT.CREATIVE.NET_LEAN
+        WHERE stratum_type = 'MARKET_X_OBJECTIVE' AND objective = 'ALL' AND brand = 'ALL' AND market <> 'ALL'
+          AND net_lean_class = 'NET_HELPED'
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY market ORDER BY adj_lift_pct DESC) = 1
+    """)
+
+
+@st.cache_data(ttl=300)
 def load_net_lean_takeaway(stratum_type, market, objective, brand_label):
     return run_query(f"""
         SELECT * FROM MARKETING_COPILOT.CREATIVE.NET_LEAN_TAKEAWAY
@@ -1478,8 +1495,9 @@ with tab5:
 
         competitors_input = st.text_input(
             "Competitors (comma-separated)",
-            value="Nike, Adidas, Apple, Samsung",
-            key="ei_comp_input"
+            value={"Nike": "Adidas, Puma", "Samsung": "Apple, Xiaomi", "Pepsi": "Coca-Cola, Red Bull"}
+                  .get(selected_client, ""),
+            key=f"ei_comp_input_{selected_client}"
         )
 
         markets_input = st.text_input(
@@ -1763,18 +1781,43 @@ with tab7:
         "INSUFFICIENT_DATA": ("#1E293B", "not enough data: fewer than 30 ads have this value"),
     }
 
+    if "pdv_market_pending" in st.session_state:
+        st.session_state["pdv_market2"] = st.session_state.pop("pdv_market_pending")
     f1, f2, f3 = st.columns(3)
     pd_brand = f1.selectbox("Brand (label)", CI_BRANDS + ["ALL brands"], index=0, key="pdv_brand2")
     pd_market = f2.selectbox("Drill down: market", ["ALL"] + CI_MARKETS, key="pdv_market2")
     pd_objective = f3.selectbox("Drill down: objective", ["ALL"] + CI_OBJECTIVES, key="pdv_objective2")
 
-    if pd_brand != "ALL brands" and pd_objective == "ALL":
-        stype, s_mkt, s_obj, s_brand = "MARKET_X_BRAND", pd_market, "ALL", pd_brand
-    else:
+    MIN_CELL_ADS = 60
+    counts = load_ad_counts()
+
+    def _n_ads(brand=None, market=None, objective=None):
+        c = counts
+        for col, v in (("BRAND", brand), ("MARKET", market), ("OBJECTIVE", objective)):
+            if v is not None and v != "ALL":
+                c = c[c[col] == v]
+        return int(pd.to_numeric(c["N"]).sum()) if not c.empty else 0
+
+    fallback_note = None
+    if pd_brand == "ALL brands":
         stype, s_mkt, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_market, pd_objective, "ALL"
-        if pd_brand != "ALL brands":
-            st.info(f"Brand × objective cells are not computed (too few ads), so this view shows all brands for "
-                    f"objective = {pd_objective}. Set objective to ALL to see {pd_brand} on its own.")
+    elif pd_objective != "ALL":
+        # brand x objective cells are not computed; always show all brands for that objective
+        stype, s_mkt, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_market, pd_objective, "ALL"
+        m = _n_ads(pd_brand, pd_market, pd_objective)
+        where = pd_objective if pd_market == "ALL" else f"{pd_market} · {pd_objective}"
+        fallback_note = (where, _n_ads(None, pd_market, pd_objective), m)
+    else:
+        m = _n_ads(pd_brand, pd_market)
+        if pd_market != "ALL" and m < MIN_CELL_ADS:
+            stype, s_mkt, s_obj, s_brand = "MARKET_X_OBJECTIVE", pd_market, "ALL", "ALL"
+            fallback_note = (pd_market, _n_ads(None, pd_market), m)
+        else:
+            stype, s_mkt, s_obj, s_brand = "MARKET_X_BRAND", pd_market, "ALL", pd_brand
+    if fallback_note:
+        where, n_all, m = fallback_note
+        st.info(f"Showing all brands in {where} ({n_all} ads) because {pd_brand} alone has {m} ads."
+                + ("" if m < MIN_CELL_ADS else " Brand × objective cells are not computed."))
 
     nl = load_net_lean(stype, s_mkt, s_obj, s_brand)
     tk = load_net_lean_takeaway(stype, s_mkt, s_obj, s_brand)
@@ -1784,7 +1827,7 @@ with tab7:
         n_ads = int(nl["N_ADS"].iloc[0])
         st.caption(f"Stratum: {nl['STRATUM'].iloc[0]}  ·  {n_ads} ads  ·  adjusted CTR lift controls for log spend, "
                    f"brand, placement, market, objective (when not fixed by the filter) and the other attribute families; 95% bootstrap interval over ads.")
-        if n_ads < 60:
+        if n_ads < 60 and not fallback_note:
             st.info(f"Only {n_ads} ads in this cell, so most values will show 'not enough data'. "
                     f"Widen the drill-down (set market or objective to ALL) for more evidence.")
         if not tk.empty:
@@ -1813,6 +1856,23 @@ with tab7:
                 h = hurt.iloc[0]
                 st.error(f"**Worst attribute:** {h['LABEL']}\n\n{h['ADJ_LIFT_PCT']:+.1f}% adjusted CTR "
                          f"(95% CI {h['CI_LOW_PCT']:+.1f}% to {h['CI_HIGH_PCT']:+.1f}%, {int(h['N_ADS_WITH'])} ads)")
+
+        st.markdown("#### Markets at a glance (all brands)")
+        strip = load_market_strip()
+        tiles = st.columns(len(CI_MARKETS))
+        for col, mk in zip(tiles, CI_MARKETS):
+            row = strip[strip["MARKET"] == mk] if not strip.empty else strip
+            with col:
+                if row is not None and not row.empty:
+                    r0 = row.iloc[0]
+                    col.markdown(f"**{mk}** ({int(r0['N_ADS'])} ads)  \nHelped by: {r0['ATTRIBUTE_VALUE']} vs "
+                                 f"{r0['REFERENCE_VALUE']} ({float(r0['ADJ_LIFT_PCT']):+.0f}%)")
+                else:
+                    col.markdown(f"**{mk}**  \nNo clear net driver")
+                if col.button("Selected" if pd_market == mk else f"View {mk}", key=f"pdv_tile_{mk}",
+                              disabled=pd_market == mk):
+                    st.session_state["pdv_market_pending"] = mk
+                    st.experimental_rerun()
 
         st.markdown("#### Net lean by attribute family")
         st.markdown(" ".join(

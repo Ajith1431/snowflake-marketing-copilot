@@ -16,17 +16,17 @@ from snowflake_loader import load_intelligence_run
 
 RUNS = [
     {
-        "client_name": "UrbanThread",
+        "client_name": "Nike",
         "event_name": "FIFA World Cup 2026",
-        "event_keywords": ["FIFA 2026", "World Cup 2026", "football shoes", "Nike FIFA", "Adidas World Cup"],
-        "competitors": ["Nike", "Adidas", "Puma"],
+        "event_keywords": ["FIFA 2026", "World Cup 2026", "football boots", "Nike FIFA", "Adidas World Cup"],
+        "competitors": ["Adidas", "Puma"],
         "markets": ["US", "GB"],
     },
     {
-        "client_name": "LuminaRetail",
+        "client_name": "Samsung",
         "event_name": "Black Friday 2026",
-        "event_keywords": ["Black Friday 2026", "Black Friday deals", "Cyber Monday", "holiday shopping"],
-        "competitors": ["Walmart", "Target", "Amazon"],
+        "event_keywords": ["Black Friday 2026", "Black Friday deals", "Samsung Black Friday", "smartphone deals"],
+        "competitors": ["Apple", "Xiaomi"],
         "markets": ["US"],
     },
 ]

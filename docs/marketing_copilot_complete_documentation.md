@@ -35,7 +35,7 @@
 ### What it is
 An AI-powered marketing intelligence platform built on Snowflake. It helps agency teams:
 
-- Analyze campaign performance across 12 client brands
+- Analyze campaign performance across 3 client brands (Nike, Pepsi, Samsung)
 - Generate data-backed campaign recommendations and client pitch documents
 - Compare budget-allocation scenarios with projected outcomes
 - Pull live market intelligence (Google Trends, news, Cortex web research) for market events
@@ -47,7 +47,7 @@ An AI-powered marketing intelligence platform built on Snowflake. It helps agenc
 Agencies spend days assembling performance data, audience insights and competitive intelligence for a single pitch. Analysts, strategists and creatives work from disconnected sources. NovaSpark collapses that workflow into one Snowflake-native app where every recommendation, strategy and creative brief is grounded in the same governed data.
 
 ### What it is not
-NovaSpark is a marketing intelligence platform at the client-brand, campaign, channel and segment level. It is not a Customer 360: customer profiles and feedback exist (10,000 profiles, 25,000 feedback rows) but there is no individual-level identity resolution or per-customer activation.
+NovaSpark is a marketing intelligence platform at the client-brand, campaign, channel and segment level. It is not a Customer 360: customer profiles and feedback exist (2,522 profiles, 6,316 feedback rows) but there is no individual-level identity resolution or per-customer activation.
 
 ---
 
@@ -96,14 +96,15 @@ NovaSpark is a marketing intelligence platform at the client-brand, campaign, ch
 ### 3.1 Synthetic data generation
 **File:** `data/generators/generate_all.py` — generates 11 CSVs (114,365 rows) for the fictional NovaSpark Agency.
 
-| Client | Industry | Client | Industry |
-|---|---|---|---|
-| LuminaRetail | Retail | Wanderlux | Travel |
-| TechVista | Technology | ConnectSphere | Telecom |
-| CareWell | Healthcare | FlavorCo | Food & Beverage |
-| FinEdge | Finance | UrbanThread | Fashion |
-| PureLife | CPG | MediaPulse | Media & Entertainment |
-| DriveMax | Automotive | GreenCore | Energy |
+The generator produces 12 fictional clients; `sql/dml/02_reduce_clients.sql` (run by `deploy_all.py` right after the load) keeps three and renames them, deleting the other nine and all their dependent rows:
+
+| Client | Industry | Generated as |
+|---|---|---|
+| Nike | Fashion | UrbanThread (C010) |
+| Pepsi | Food & Beverage | FlavorCo (C009) |
+| Samsung | Technology | TechVista (C002) |
+
+Product names keep the generator's prefixes (UT-, FC-, TV-). Brand names are labels on synthetic data.
 
 Distributions are realistic and self-consistent: CTR 0.5–5% (beta), ROAS 1.2–7.0 (lognormal), conversion rate 1–8% (beta); clicks = impressions × CTR, conversions = clicks × conversion rate, revenue = spend × ROAS. Channel spend scales by channel type (TV $2K–10K/day, social $100–2K/day, email $50–500/day).
 
@@ -112,17 +113,17 @@ Distributions are realistic and self-consistent: CTR 0.5–5% (beta), ROAS 1.2�
 
 | Table | Rows | Source | Description |
 |---|---|---|---|
-| RAW_CLIENTS | 12 | CSV | Client brands |
-| RAW_PRODUCTS | 52 | CSV | 3–5 products per client |
+| RAW_CLIENTS | 3 | CSV | Client brands |
+| RAW_PRODUCTS | 14 | CSV | 3–5 products per client |
 | RAW_CHANNELS | 10 | CSV | Instagram, YouTube, Google Search, Facebook, LinkedIn, TikTok, Email, Programmatic Display, TV, Out-of-Home |
-| RAW_AUDIENCE_SEGMENTS | 71 | CSV | 5–8 segments per client, interests as JSON |
-| RAW_CUSTOMER_PROFILES | 10,000 | CSV | Customer demographics |
-| RAW_CAMPAIGNS | 600 | CSV | 50 campaigns per client, 2023–2025 |
-| RAW_BRIDGE_CAMPAIGN_SEGMENT | 1,789 | CSV | Campaign→segment allocation (sums to 100%) |
-| RAW_CAMPAIGN_METRICS | 76,668 | CSV | Daily campaign × channel metrics |
-| RAW_CUSTOMER_FEEDBACK | 25,000 | CSV | Sentiment-scored feedback |
+| RAW_AUDIENCE_SEGMENTS | 17 | CSV | 5–8 segments per client, interests as JSON |
+| RAW_CUSTOMER_PROFILES | 2,522 | CSV | Customer demographics |
+| RAW_CAMPAIGNS | 150 | CSV | 50 campaigns per client, 2023–2025 |
+| RAW_BRIDGE_CAMPAIGN_SEGMENT | 467 | CSV | Campaign→segment allocation (sums to 100%) |
+| RAW_CAMPAIGN_METRICS | 19,535 | CSV | Daily campaign × channel metrics |
+| RAW_CUSTOMER_FEEDBACK | 6,316 | CSV | Sentiment-scored feedback |
 | RAW_MARKET_EVENTS | 53 | CSV | Holidays, economic, competitor, regulatory, cultural events (2025) |
-| RAW_BRAND_GUIDELINES | 110 | CSV | 8–10 guideline sections per client incl. dos/donts, tone, palette |
+| RAW_BRAND_GUIDELINES | 29 | CSV | 8–10 guideline sections per client incl. dos/donts, tone, palette |
 | EVENT_INTELLIGENCE_RUNS | 2 | pipeline | One row per intelligence run (client, event, competitors, markets, confidence) |
 | GOOGLE_TRENDS_DATA | 837 | pipeline | Daily interest score per keyword, peak flag |
 | NEWS_ARTICLES | 73 | pipeline | Event / brand / competitor news with sentiment |
@@ -169,7 +170,7 @@ BRIDGE_CAMPAIGN_SEGMENT ─SEGMENT_ID──► DIM_AUDIENCE_SEGMENT
 
 11 metrics: TOTAL_IMPRESSIONS, TOTAL_CLICKS, TOTAL_CONVERSIONS, TOTAL_SPEND, TOTAL_REVENUE, AVG_CTR, AVG_ROAS, AVG_CPC, AVG_CONVERSION_RATE (FACT_CAMPAIGN_METRICS); TOTAL_BUDGET, CAMPAIGN_COUNT (FACT_CAMPAIGN).
 
-10 verified queries: highest-ROAS campaigns for LuminaRetail; spend by channel in 2024; best-converting segment; performance by industry; TechVista monthly revenue; best channel for fashion; CTR by campaign type; top 5 campaigns by ROI; lowest-CPC segment; budget vs actual spend by client.
+10 verified queries: highest-ROAS campaigns for Nike; spend by channel in 2024; best-converting segment; performance by industry; Samsung monthly revenue; best channel for fashion; CTR by campaign type; top 5 campaigns by ROI; lowest-CPC segment; budget vs actual spend by client.
 
 ### 4.2 Cortex Search services
 **File:** `sql/ddl/07_cortex_search.sql` (TARGET_LAG 1 hour, embedding model snowflake-arctic-embed-m-v1.5)
@@ -211,8 +212,8 @@ Loaded runs:
 
 | Client / event | Competitors | Confidence | Trends | News | Web queries |
 |---|---|---|---|---|---|
-| UrbanThread / FIFA World Cup 2026 | Nike, Adidas, Puma | HIGH | 465 | 39 | 8 |
-| LuminaRetail / Black Friday 2026 | Walmart, Target, Amazon | HIGH | 372 | 34 | 8 |
+| Nike / FIFA World Cup 2026 | Adidas, Puma | MEDIUM | 0 (Google Trends HTTP 429) | 39 | 7 |
+| Samsung / Black Friday 2026 | Apple, Xiaomi | MEDIUM | 0 (Google Trends HTTP 429) | 31 | 7 |
 
 After a run, the 4 event dynamic tables refresh within a minute and `EVENT_NEWS_SEARCH` within an hour (or immediately with `ALTER CORTEX SEARCH SERVICE … REFRESH`).
 
@@ -246,7 +247,7 @@ Rules that keep the output honest:
 - If the trend peak is already in the past, `peak_in_past` is set, no launch date is recommended, and the prompt says "ride proven demand" rather than inventing a future date.
 - A market event is only described as upcoming if its start date is in the future; otherwise it's labelled "latest relevant market event" and kept out of the prompt.
 
-Example (UrbanThread, FIFA World Cup 2026):
+Example (Nike, FIFA World Cup 2026; figures from the original 12-client build):
 > …Event: FIFA World Cup 2026. Cast and styling for the highest-converting segment 'Athleisure Fans' (22-39, Balanced, Medium income; interests: yoga, running, comfortable). Compose primarily for YouTube (best channel, avg ROAS 2.64x): bold focal point, legible at small sizes, clear space for a call to action. Brand dos: Optimize for mobile; … Avoid: Use stock photos; … Ride proven 'World Cup 2026' search demand (peaked 2026-07-19)…
 
 ### 6.3 Image generation
@@ -405,8 +406,8 @@ Keys committed before this change are still in git history; they must be rotated
 | T8 | CAMPAIGN_ANALYTICS semantic view is queryable | PASS |
 
 Additional checks performed after the build:
-- MARKETING_COPILOT answered "best ROAS channel for UrbanThread" with "YouTube, ~2.64x (confidence HIGH)", matching `GET_CREATIVE_INTELLIGENCE`.
-- `GET_CREATIVE_INTELLIGENCE` and the 9-argument `BUILD_POSTER_PROMPT` were tested for UrbanThread, TechVista and LuminaRetail; the 8-argument call still works.
+- MARKETING_COPILOT answered "best ROAS channel for Nike (then UrbanThread)" with "YouTube, ~2.64x (confidence HIGH)", matching `GET_CREATIVE_INTELLIGENCE`.
+- `GET_CREATIVE_INTELLIGENCE` and the 9-argument `BUILD_POSTER_PROMPT` were tested for Nike, Samsung and one since-removed client; the 8-argument call still works.
 - The corrected Tab 5 queries return 200 trend rows, 39 news rows and 3 competitors for FIFA World Cup 2026.
 - The app UI itself has not been tested by an automated browser run; open it in Snowsight to confirm layout.
 
@@ -532,12 +533,12 @@ SnowflakeHackathon/
 
 ## 17. Demo Walkthrough
 
-1. **Client Intelligence:** select LuminaRetail. Tab 1 shows campaigns, ROAS, spend, revenue and sentiment with channel and trend charts.
-2. **Recommendation:** select UrbanThread, a product, "Brand Awareness" and $300,000, then click Analyze and Recommend. The agent combines UrbanThread's channel history, brand guidelines and market events. Approve the recommendation.
+1. **Client Intelligence:** select Pepsi. Tab 1 shows campaigns, ROAS, spend, revenue and sentiment with channel and trend charts.
+2. **Recommendation:** select Nike, a product, "Brand Awareness" and $300,000, then click Analyze and Recommend. The agent combines Nike's channel history, brand guidelines and market events. Approve the recommendation.
 3. **What-If:** in Tab 3, move budget from TV to TikTok and compare projected revenue and conversions.
 4. **Pitch:** in Tab 4, generate the 7-section pitch and download it as HTML.
-5. **Event Intelligence:** in Tab 5, pick FIFA World Cup 2026 with competitors "Nike, Adidas, Puma". You get the research report, Google Trends chart, news sentiment and competitor media presence. Then generate the 9-section strategy.
-6. **Creative Studio:** in Tab 6, with client UrbanThread and event "FIFA World Cup 2026", the intelligence panel shows YouTube as the top channel (2.64x), "Athleisure Fans" as the primary segment, the brand guardrails and the World Cup trend peak. Generate assets, copy the enriched poster prompt, and download the ZIP.
+5. **Event Intelligence:** in Tab 5, pick FIFA World Cup 2026 with client Nike and competitors "Adidas, Puma". You get the research report, Google Trends chart, news sentiment and competitor media presence. Then generate the 9-section strategy.
+6. **Creative Studio:** in Tab 6, with client Nike and event "FIFA World Cup 2026", the intelligence panel shows YouTube as the top channel (2.64x), "Athleisure Fans" as the primary segment, the brand guardrails and the World Cup trend peak. Generate assets, copy the enriched poster prompt, and download the ZIP.
 7. **MCP:** connect Claude or Cursor to `NOVASPARK_MCP`, call `get_creative_intelligence` for a client, then `build_poster_prompt` with the result as `intel_json`.
 
 ---

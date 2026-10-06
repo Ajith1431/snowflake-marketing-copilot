@@ -165,7 +165,7 @@ SELECT
 {
   "strategy_id": "STR_RUN_20260829_183117",
   "run_id": "RUN_20260829_183117",
-  "client_name": "UrbanThread",
+  "client_name": "Nike",
   "event_name": "FIFA World Cup 2026",
   "strategy_narrative": "Full 9-section markdown strategy document",
   "channel_allocation": {

@@ -31,8 +31,8 @@ instructions:
     4. web_search for additional market data.
     5. Synthesize into the 9-section strategy.
   sample_questions:
-    - question: "Build a FIFA World Cup 2026 strategy for UrbanThread with 300K budget"
-    - question: "Create a Black Friday event strategy for LuminaRetail"
+    - question: "Build a FIFA World Cup 2026 strategy for Nike with 300K budget"
+    - question: "Create a Black Friday event strategy for Samsung"
 
 tools:
   - tool_spec:
